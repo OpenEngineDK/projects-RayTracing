@@ -1,0 +1,32 @@
+\chapter{Introduction}
+
+% Why global illumination vs local illumination used in most rasterizers
+
+% Before photon mapping it was raytracing and radiosity
+
+% introduction of photon mapping in 1996
+\citealp{275461}
+
+% Photon mapping is 'rendering' independent. Works both with ray
+% tracing and rasterization.
+
+
+% importance of efficient datastructures, several datastructures have
+% been used for raytracing (BVH, kd-trees, octrees, bla bla...) Some
+% are good for bla, others blank
+
+
+% Needs to be able to quickly create the data structure aswell for
+% photon mapping with dynamic geometry/lighting.
+
+% Needs to exploit the massively parallel architecture of GPGPU's
+% which require oh so many thread
+
+% can be done by parallising evaluating the approximate cost of each
+% node
+
+\textit{Surface Area Heuristic}, $SAH$, 
+
+\textit{Voxel Volume Heuristic}, $VVH$,
+
+% and creation of nodes at lower tree levels

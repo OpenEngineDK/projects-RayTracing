@@ -1,0 +1,27 @@
+\chapter{Road Map}
+
+\begin{itemize}
+\item Create the KD-tree from points on the GPU
+\item Visualize the KD-tree (as part of debugging), draw frame around
+  splitting plane in color corrosponding to splitting axis.
+\item (Possibly) Extend KD-tree to work on triangles (not particularly optimized
+  version, just make it work, no dynamic geometry for now)
+\item raytrace the triangle KD-tree and map photons
+\item visualize photons
+\item Create lighting/caustics from photons
+\item Dynamic photon mapping (just recalculate everything 'cept geometry)
+\end{itemize}
+
+If time allows
+
+\begin{itemize}
+\item Optimize raytracing (packets, stack)
+\item Optimize photon mapping, create different photon maps for
+  indirect illumination and caustucs, only send accustic photons
+  toward specular surfaces.
+\item Create the screen space grid data structure and sort photons in
+  it. Needs to be really fast, since it has to be updated every frame
+  (that the camera moves). How to handle final gather with this data
+  structure? Plane rendering as proposed in Bent's phd thesis would
+  work. Raytracing is probably out.
+\end{itemize}

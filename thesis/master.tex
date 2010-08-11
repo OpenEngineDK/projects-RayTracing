@@ -1,0 +1,95 @@
+% -*- mode: latex; mode: auto-fill; coding: utf-8; -*-
+
+\documentclass[a4paper,english]{report} 
+
+\usepackage{fullpage}
+\usepackage{subfig}
+\usepackage[usenames,dvipsnames]{color}
+
+\include{preamble}
+
+\newcommand{\reffig}[1]{figure \ref{#1}}
+\newcommand{\reflst}[1]{listing \ref{#1}}
+
+\newcommand{\citebook}[2]{[\citealp[#1]{#2}]}
+\newcommand{\citeabook}[1]{[\citealp{#1}]}
+
+\citestyle{chicago} % Chicago Manual of Style citations
+\bibliographystyle{is-alpha} % is- shows ISBN in references
+
+%\title{Rendering natural looking outdoor environments}
+%\author{
+%  Asger Dam Hoedt \\ asgerhoedt@gmail.com \\ 20051770  \and 
+%  Christian P. V. Christoffersen \\ cpvc@cs.au.dk \\ 20050879
+%}
+
+
+
+
+\begin{document}
+
+\begin{titlepage}
+\pagenumbering{alph}
+
+\thispagestyle{empty}
+\centering
+{ \baselineskip=24pt
+    \vspace*{80pt}
+    {\LARGE Datastructures for Photon Mapping\\
+    (Real-time/Effective) Caustics Generation using Photon Mapping\\
+    Efficient algorithms for Global Illumination on the GPGPU}\\
+    Master's Thesis
+    \vspace*{20pt}
+    \\
+    \includegraphics[width=12cm]{cornellBoxWater}
+    \vspace*{40pt}
+    \\
+    \begin{minipage}{0.4\textwidth}
+      \centering
+      Asger Dam Hoedt \\ asgerhoedt@gmail.com \\ 20051770
+    \end{minipage}
+    \begin{minipage}{0.4\textwidth}
+      \centering
+      Thomas Sangild Sørensen \\ sangild@cs.au.dk
+    \end{minipage}
+}
+\vfill
+\small
+Department of Computer Science\\
+Aarhus Universitet
+\end{titlepage}
+
+\clearpage\pagenumbering{Roman}
+
+\input{roadmap}
+
+\input{abstract}
+
+\tableofcontents
+
+\clearpage\pagenumbering{arabic}
+
+
+%\maketitle
+
+\input{intro}
+
+\input{previous}
+
+\input{algorithm}
+
+\input{kdtrees}
+
+\input{Conclussion}
+
+\appendix
+
+\bibliography{refs}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% TeX-PDF-mode: t
+%%% End:
