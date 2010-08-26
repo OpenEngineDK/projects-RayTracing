@@ -28,4 +28,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
   OpenEngine_Scene
   # Extension dependencies
   Extensions_SDL
+  Extensions_OpenGLRenderer
+  Extensions_PhotonMapping
+  Extensions_GenericHandlers
 )

@@ -14,16 +14,19 @@
 \newcommand{\citebook}[2]{[\citealp[#1]{#2}]}
 \newcommand{\citeabook}[1]{[\citealp{#1}]}
 
+\newcommand{\PARALLELFOR}[1]{\FOR{\textbf{each} #1 \textbf{in
+      parallel}}}
+\newcommand{\COMMENTIT}[1]{\STATE{\textit{#1}}}
+\newcommand{\PROCEDURE}[4]{\STATE{\hspace*{-1em}\textbf{procedure} #1 \\ 
+    \hspace*{0.5em} \textbf{in} #2 \\ 
+    \hspace*{0.5em} \textbf{out} #3 \\
+    \hspace*{-1em}\textbf{begin} \\
+    #4 \\
+    \hspace*{-1em}\textbf{end}}}
+\newcommand{\VAR}[1]{$#1$}
+
 \citestyle{chicago} % Chicago Manual of Style citations
 \bibliographystyle{is-alpha} % is- shows ISBN in references
-
-%\title{Rendering natural looking outdoor environments}
-%\author{
-%  Asger Dam Hoedt \\ asgerhoedt@gmail.com \\ 20051770  \and 
-%  Christian P. V. Christoffersen \\ cpvc@cs.au.dk \\ 20050879
-%}
-
-
 
 
 \begin{document}
@@ -76,15 +79,19 @@ Aarhus Universitet
 
 \input{previous}
 
-\input{algorithm}
-
 \input{kdtrees}
+
+\input{raytracing}
+
+\input{algorithm}
 
 \input{Conclussion}
 
+\bibliography{refs}
+
 \appendix
 
-\bibliography{refs}
+\input{helpers}
 
 \end{document}
 

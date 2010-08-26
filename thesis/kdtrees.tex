@@ -1,6 +1,11 @@
 \chapter{KD-Trees}
 
-%About KD-trees
+% About KD-trees
+
+% Vlastimil Havran did an extensive study of available spatial
+% subdivision schemes (including regular grids, nested grids, octrees
+% and kd-trees) and concludes in his thesis that the kd-tree beats the
+% other schemes in most cases.
 
 \section{Creating KD-trees}
 
@@ -19,16 +24,6 @@ traversing the right child node
   \frac{C_R(x) V(d_R(x) \pm R)}{V(d \pm R)}
 \end{displaymath}
 
-\section{Adopting the algorithm for GPGPUs}
-
-% Needs to exploit the dataparallel nature of GPGPU's
-
-% A GPGPU requires (more than) 10^3~10^4 threads for optimal
-% performance. To hide latency from texture fetches? cite NVIDIA?
-
-% At upper tree level nodes exploit data parallelism by parallising
-% the cost computation over triangles or photons. 
-
 % SAH assumes that each split results in 2 leaf nodes, which is
 % practically always wrong at high level nodes, therefore
 % \citealp{1409079} suggests splitting along the spatial median of the
@@ -43,6 +38,29 @@ traversing the right child node
 % trees
 
 
+\section{Nearest neighbour search?\\Traversing the tree?}
+
+% More on ray tracing in the next section.
+
+
+% Make this a seperat chapter? Then non kd stuff can be placed there aswell
+\section{Adopting the algorithms for GPGPUs}
+
+% Needs to exploit the dataparallel nature of GPGPU's
+
+% A GPGPU requires (more than) 10^3~10^4 threads for optimal
+% performance. To hide latency from texture fetches? cite NVIDIA?
+
+% Use GPU for computations and let CPU handle minor book keeping.
+
+% Handles structures of arrays better than arrays of structures
+% chapter 33 \citealp{GPUGEMS2}
+
+% At upper tree level nodes exploit data parallelism by parallising
+% the cost computation over triangles or photons. 
+
+
+
 % Creating the KD-tree in BFS will optimize GPU performance at lower
 % tree levels, as there would be thousands of nodes created at the
 % same time.
@@ -50,8 +68,42 @@ traversing the right child node
 % At lower tree levels where SAH/VVH isn't computed parallel, perhaps
 % and early out ``good enough'' value/ratio can be given, as done in
 % BSP. Might only increase instructions, branching and still wait for
-% the slowest thread. (Try and watch it fail)
+% the slowest thread. (Try and watch it fail) Perhaps without an if
+% statement but by arithmetic instead?
 
-\section{Raytracing KD-trees}
+\begin{algorithm}
+  \caption{Photon KD-Tree upper node handling}
+  \label{alg:PhotonUpperNode}
+  \begin{algorithmic}
+    \PROCEDURE{CreateUpperPhotonNodes}
+              {\VAR{activeList}:list \textit{list of kd-nodes not processed yet}}
+              {\VAR{lowerList,nextList}:list}{
+      \STATE{Check size of upper nodes arrays and allocate more if needed.}
 
-\section{Nearest neighbour search}
+      \COMMENTIT{Compute bounding box of all active nodes.}
+      \PARALLELFOR{active node}
+      \STATE{Compute the bounding box off all it's photons.}
+      \ENDFOR
+
+      \PARALLELFOR{active node}
+      \STATE{Insert split position, axis and child index}
+      \ENDFOR
+
+      %% \PARALLELFOR{active node}
+      %% \STATE{Create child nodes.}
+      %% \ENDFOR
+
+      \COMMENTIT{Split photons along axis and store the split index in
+        the child node}
+      \FOR{active node}
+      \STATE{Split the photons in the node \textbf{in parallel}} % Using scan primitives from Sengupta
+      \ENDFOR
+
+      \COMMENTIT{CPU bookkeeping}
+      \STATE{Split small child nodes and larger child nodes}
+      \STATE{Set links from parent nodes to child nodes final position}
+      \STATE{Copy small child nodes to lowerList}
+    }
+  \end{algorithmic}
+\end{algorithm}
+
