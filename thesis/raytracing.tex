@@ -1,0 +1,34 @@
+\chapter{Ray Tracing}
+
+% Generel ray tracing code.
+
+% Ray triangle intersection, refer to Wald's thesis. Something
+% something about projecting triangles onto planes and doing a lot of
+% precalculation. Should be faster than Möller-Trumbore's method. Lets
+% test it :)
+
+\section{Acceleration Techniques}
+
+% KD restart is the simplest
+
+% Packets: 2x2 packets on the CPU for to take advantage of SIMD
+% instructions (Wald), larger packets on the GPU (for roped kd-trees)
+
+% short stacks: Implement stacks or perhaps a link to the parent in
+% each node. Would save us the hazzle of updating the stacks, which
+% could be a waste of time.
+
+% stackless raytracing using ropes. 
+
+
+
+% Novel? stack scheme with parent info in nodes and left/right node
+% placed next to each other. Removes overhead of creating and
+% maintaning short stack. Needs a way to avoid traversing same
+% branches (and short stacks isn't a solution!)
+
+\section{Implementation}
+
+% Start with kd restart, simple to get up and running.
+
+% Implement packets and short stack? Talk to trier
