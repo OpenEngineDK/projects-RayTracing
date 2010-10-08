@@ -3,10 +3,65 @@
 % In order to create algorithms on the GPU that run faster than their
 % CPU version, we need to understand the gpu.
 
+\quotebook{
+  It is important to include the overhead of transferring data to and
+  from the device in determining whether operations should be
+  performed on the host or on the device.
+}{CUDABPG}
+
 % NVIDIA mentioned 3 optimization points
 
-% Coelesced memory access
+% Coelesced memory access, float4 instead of float3
 
 % Bank conflicts?
 
-% Structures of arrays vs arrays of structs.
+% Structures of arrays vs arrays of structs. Usefull when fx
+% sorting. CUDPP article/forum
+
+% Unrolling loops, even when it means more work. Preprocess lower
+% nodes yields nearly a 50% speedup from this.
+
+\section{Case Study: Segmented Reduction}
+
+% Alot of reductions and iterative algorithms. It is therefore
+% important to know how to optimize these from a naive implementation.
+
+% Algorithm from bla
+
+\subsection{Naive implementation}
+
+\subsection{Switching to shared memory}
+
+
+\subsection{Rewriting slow math operations}
+
+% Pow is 'expensive' and can be replaced by a simple doubling of the
+% indices.
+
+\subsection{Unrolling the loops}
+
+% Can be done with a template parameter. Would still need to check
+% range, but could remove the loop variables. Would need a few speciel
+% cases for small kernelsizes (1 - 4 threads).
+
+% Pros
+
+% Shared memory is almost halved
+
+% Only needs half the threads
+
+% No dummy variables
+
+% Cons
+
+% Unrolling yields more instructions for executions that would only
+% loop once. However since that only account for the last couple of
+% nodes, it is more than made up for by all the previous
+% nodes. Version 2 could be used for executions with 2 or less threads.
+
+% Unrolling must also adds a check for out of bounds (or replaces the
+% loop with that check) However making sure that single block bounding
+% box reductions are never brought to the segmented reducer will
+% ensure at least 2 values exist and one bounds check can be omitted.
+
+\subsection{More? Article form gpu gems 3 has anything of interest?}

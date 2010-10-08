@@ -5,7 +5,7 @@
 % Before photon mapping it was raytracing and radiosity
 
 % introduction of photon mapping in 1996
-\citealp{275461}
+\citebook{275461}
 
 % Photon mapping is 'rendering' independent. Works both with ray
 % tracing and rasterization.
@@ -19,6 +19,10 @@
 
 % Needs to be able to quickly create the data structure aswell for
 % photon mapping with dynamic geometry/lighting.
+
+% Why use the GPU? Offloading? Especially when the time complexity for
+% GPU's are worse than for CPU's? The CPU can do a lot of other things
+% while the GPU crunch away at those KD trees. Om nom nom nom nom....
 
 % Needs to exploit the massively parallel architecture of GPGPU's
 % which require oh so many thread

@@ -11,8 +11,12 @@
 \newcommand{\reffig}[1]{figure \ref{#1}}
 \newcommand{\reflst}[1]{listing \ref{#1}}
 
-\newcommand{\citebook}[2]{[\citealp[#1]{#2}]}
-\newcommand{\citeabook}[1]{[\citealp{#1}]}
+\newcommand{\citebook}[1]{\citep{#1}}
+\newcommand{\quotebook}[2]{
+  \begin{quote}
+    \emph{#1}\\
+    \raggedleft{\citebook{#2}}
+  \end{quote}}
 
 \newcommand{\PARALLELFOR}[1]{\FOR{\textbf{each} #1 \textbf{in
       parallel}}}
@@ -24,9 +28,9 @@
     #4 \\
     \hspace*{-1em}\textbf{end}}}
 \newcommand{\VAR}[1]{$#1$}
-
-\citestyle{chicago} % Chicago Manual of Style citations
-\bibliographystyle{is-alpha} % is- shows ISBN in references
+\newcommand{\ASSIGN}[2]{
+  \STATE{#1 $\leftarrow$ #2}
+}
 
 
 \begin{document}
@@ -89,9 +93,14 @@ Aarhus Universitet
 
 \input{Conclussion}
 
+\clearpage
+\addcontentsline{toc}{chapter}{Bibliography}
+\bibliographystyle{amsplain}
 \bibliography{refs}
 
 \appendix
+
+\input{Optimizations}
 
 \end{document}
 

@@ -2,48 +2,150 @@
 
 % About KD-trees
 
+\section{Motivation}
+
+% Why KD tree
+
+% Has time and time again been arguibly the best datastructure.
+
 % Vlastimil Havran did an extensive study of available spatial
 % subdivision schemes (including regular grids, nested grids, octrees
 % and kd-trees) and concludes in his thesis that the kd-tree beats the
-% other schemes in most cases.
+% other schemes in most cases. 
 
-\section{Creating KD-trees}
+% Example of kd-tree flexibility over octree (important in sparse
+% scenes / empty space partitioning)
+
+% Cheap intersection / distance to tests. Havran p. 65
 
 
-\begin{displaymath}
-  SAH(x) = C_N + \frac{C_L(x) A_L(x)}{A} + \frac{C_R(x) A_R(x)}{A}
-\end{displaymath}
+\section{Building KD-trees}
 
-where $C_N$ is the cose of traversing the node itself and is
-independen of the splitting plane, $C_L{x}$ is the cost of traversing
-the left child node given a split at $x$ and $C_R{x}$ is the cost of
-traversing the right child node
+% Left blanced non pointer vs pointers
 
-\begin{displaymath}
-  VVH(x) = C_N + \frac{C_L(x) V(d_L(x) \pm R)}{V(d \pm R)} +
-  \frac{C_R(x) V(d_R(x) \pm R)}{V(d \pm R)}
-\end{displaymath}
+% Choose pointers as that would lead to less memory consumption and it
+% places all nodes of the same level in a continues block, making it
+% easier to work with them.
 
-% SAH assumes that each split results in 2 leaf nodes, which is
-% practically always wrong at high level nodes, therefore
-% \citealp{1409079} suggests splitting along the spatial median of the
-% nodes longest axis. To do this a preprocess pass is required to
-% compute tight AABB's for each triangle.
+% Balanced trees suck, example of partition with high density in one
+% side and no triangles in other side. Non balanced tree would leed to
+% early exit.
 
-% Unlike \citealp{1409079} triangles will not be split in upper tree
+
+\quotebook{Balancing is optimal only for binary searching, and if all
+  nodes have equal access probabilities. Neither of these two
+  prerequisites are fulfilled for range queries (such as ray traversal
+  and kNN queries), nor for unevenly distributed primitives such as
+  photons or triangles.}{wald:04:VVH}
+
+
+\subsection{Splitting the geometry}
+
+% Infinitely many splitting planes.
+
+% Only interested in those finitely many planes where the resulting
+% left and right voxel changes.
+
+
+% Unlike \citebook{1409079} triangles will not be split in upper tree
 % nodes. Instead two new bounding boxes (maybe triangles) will be
 % created and updated to be inside the child nodes bounds. This is
 % done to avoid creating extra triangles when splitting (1 triangle
 % split often produces 3 triangles), which would result in deeper
-% trees
+% trees. 
+% But this method requires us to text that an intersection is in fact
+% inside the bb. Do we want that?
 
 
-\section{Nearest neighbour search?\\Traversing the tree?}
+% Different splitting planes heuristics.
+
+\subsubsection{Spatial median}
+
+% Split at the spatial median.
+
+% Refered to as the naive implementation in Wald07.
+
+% Easy to understand, easy to implement and nice for getting things
+% off the ground.
+
+% Axis to split along can be choosen in a round robin fashion or the
+% largest axis can be choosen. (Which initially minimises the surface
+% of the children)
+
+% Perform a check to reduce do empty space clipping and facilitate
+% early out option for the rays. Requires ``magic splitting
+% constants'', which can be very scene specific. (I haven't yet and
+% it's not easy!)
+
+
+\subsubsection{Surface Area Heuristic}
+
+% SAH assumptions can be seen in Wald07
+
+% Globlly optimal is infeasable for complex scenes and instead a local
+% greedy approximation is used.
+
+\begin{displaymath}
+  SAH(N \rightarrow \{L, R\}) = C_N + \frac{C_L A_L}{A_N} +
+  \frac{C_R A_R}{A_N}
+\end{displaymath}
+
+where $C_N$ is the cost of traversing the node itself and is
+independent of the splitting plane, $C_L$ is the cost of traversing
+the left child nodeand $C_R$ is the cost of traversing the right child
+node
+
+% SAH assumes that each split results in 2 leaf nodes, which is
+% practically always wrong at high level nodes, therefore
+% \citebook{1409079} suggests splitting along the spatial median of the
+% nodes longest axis. To do this a preprocess pass is required to
+% compute tight AABB's for each triangle.
+
+% SAH yields best result
+
+
+\subsubsection{Voxel Volume Heuristic}
+
+% Voxels have no surface and thus SAH doesn't neceserraly work very
+% well with them as primitives. Instead we use VVH
+
+\begin{displaymath}
+  \begin{array}{rl}
+    VVH(N \rightarrow \{L, R\}) &= C_N + C_L * P_L + C_R * P_R \\
+    &= C_N + \frac{C_L * Vol(L \pm r)}{Vol(N \pm r)} + 
+    \frac{C_R * Vol(R \pm r)}{Vol(N \pm r)} \\
+  \end{array}
+\end{displaymath}
+
+hvor $Vol(N \pm r) = \prod_{a \in K} (max(N_a) - min(N_a) + 2 * r)$
+
+
+
+\subsection{Algorithm for creating KD-tree}
+
+% O ( N log N )
+
+
+
+\section{Nearest neighbour search}
 
 % More on ray tracing in the next section.
 
+% Novel radius scheme? Let the search radius depent on the distance
+% the photon has traveled. Nodes that have traveled further represent
+% a larger cone from the light, and should therefor cover more
+% ground. Check if it really is a novel idea! Now go home! 
 
-% Make this a seperat chapter? Then non kd stuff can be placed there aswell
+% Perhaps use a median of this radius when calculating splits for
+% lower nodes? Hope that distribution across neighbouring nodes is
+% similar (which it probably is)
+
+% Instead of holding all N neighbours index and distance (squared) in
+% memory, can their contribution be calculated while processing and
+% thus save lots and lots of shared memory?
+
+
+
 \section{Adopting the algorithms for GPGPUs}
 
 % Needs to exploit the dataparallel nature of GPGPU's
@@ -53,13 +155,19 @@ traversing the right child node
 
 % Use GPU for computations and let CPU handle minor book keeping.
 
+% While the CPU can create it in O ( N log N), some of the operations
+% on the gpu, like splitting and sweeping over the dataset, do not
+% take O(N) time on the GPU but O(N log N) time. Thus the fastest a
+% time complexity possible on a GPU is O ( N log^2 N)
+
 % Handles structures of arrays better than arrays of structures
-% chapter 33 \citealp{GPUGEMS2}
+% chapter 33 \citebook{GPUGEMS2}
 
 % At upper tree level nodes exploit data parallelism by parallising
 % the cost computation over triangles or photons. 
 
-
+% Use spatiel median splitting for upper nodes. Way faster than SAH
+% calculations.
 
 % Creating the KD-tree in BFS will optimize GPU performance at lower
 % tree levels, as there would be thousands of nodes created at the
@@ -70,6 +178,8 @@ traversing the right child node
 % BSP. Might only increase instructions, branching and still wait for
 % the slowest thread. (Try and watch it fail) Perhaps without an if
 % statement but by arithmetic instead?
+
+\subsection{Photon Map}
 
 \begin{algorithm}
   \caption{Photon KD-Tree upper node handling}
@@ -89,21 +199,119 @@ traversing the right child node
       \STATE{Insert split position, axis and child index}
       \ENDFOR
 
-      %% \PARALLELFOR{active node}
-      %% \STATE{Create child nodes.}
-      %% \ENDFOR
-
       \COMMENTIT{Split photons along axis and store the split index in
         the child node}
       \FOR{active node}
       \STATE{Split the photons in the node \textbf{in parallel}} % Using scan primitives from Sengupta
       \ENDFOR
 
+      \PARALLELFOR{new node}
+      \STATE{Split into nextnodes and lowernodes.}
+      \STATE{Setup links from parents to childrens new position.}
+      \ENDFOR
+
       \COMMENTIT{CPU bookkeeping}
-      \STATE{Split small child nodes and larger child nodes}
-      \STATE{Set links from parent nodes to child nodes final position}
+      \COMMENTIT{Perhaps this can be done in a kernel aswell, no need
+        to do more on the cpu then absolutely necessary.}
       \STATE{Copy small child nodes to lowerList}
     }
   \end{algorithmic}
 \end{algorithm}
+
+
+\begin{algorithm}
+  \caption{Lower node handling of the photon kd-tree}
+  \label{alg:PhotonLowerNode}
+  \begin{algorithmic}
+    \PROCEDURE{CreateLowerPhotonNodes}
+              {\VAR{activeList}:list}
+              {\VAR{nextList}:list}{
+                \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
+                \COMMENTIT{Determine optimal splitting plane}
+                
+                \ASSIGN{\VAR{root}}{\VAR{i.smallRoot}}
+                \ASSIGN{\VAR{VVH_0}}{$\|$ \VAR{i.photonBitmap} $\|$}
+                \ASSIGN{$VVH$}{$\infty$}
+                \STATE{$splitCandidate$}
+
+                \FOR{\textbf{each} splitplane \VAR{s} where s.triangle $\in$ i.photonBitmap}
+                  \ASSIGN{\VAR{C_L}}{$\| i.triangleSet \cap s.left \|$}
+                  \ASSIGN{\VAR{C_R}}{$\| i.triangleSet \cap s.right \|$}
+                  \COMMENTIT{Can't precompute the max and min in splitplane, since triangles change}
+                  \ASSIGN{$V_L$}{$\sum^k s.max.k - s.min.k + 2 * R$}
+                  \ASSIGN{$V_L$}{$\sum^k s.max.k - s.min.k + 2 * R$}
+                  \ASSIGN{$VVH_s$}{$C_L * V_L + C_R * V_R$}
+                  \IF{$VVH_S < VVH_S$}
+                    \ASSIGN{$VVH$}{$VVH_S$}
+                    \ASSIGN{$splitCandidate$}{$s$}
+                  \ENDIF
+                \ENDFOR
+
+                \COMMENTIT{Split to new nodes (Perhaps move this to
+                  another kernel after doing a scan to determine where
+                  to place new nodes? Hmm?}
+
+                \ENDFOR
+              }
+  \end{algorithmic}
+\end{algorithm}
+
+\subsection{Triangle Map}
+
+\begin{itemize}
+\item
+Divide into segments of size smallNodeSize * 4. Tell the kernel how
+many threads it should at max expect pr block.
+
+\item
+Reduce the nodes bounding boxes, first pr segment, then do a segmented
+reduction. (Possibly unroll some of the loops)
+
+\item
+Sorter trekanter til deres nye placeringer. SplitSide er et array af
+størrelse activeTris * 2 som i node chunks indeholder hvor mange
+trekanter en trekant bliver splittet i på højre og venstre
+side. Prefix sum giver så positionen for disse trekanter.
+
+Eks
+
+Node 1 og 2
+
+Owner     [1, 1, 1, 1, 2, 2, 2, 2] // Den knude der ejer trekanten.\\
+side      [l, l, r, r, l, l, r, r] // Hvilken side splittet er på.\\
+trekant   [0, 1, 0, 1, 2, 3, 2, 3] // Trekanten der kigges på.\\
+splits    [2, 1, 1, 2, 1, 0, 0, 1] // Hvor mange trekanter på siden splittet resulterer i.\\
+addr      [0, 2, 3, 4, 6, 7, 7, 7, 8] // Start index for de enkelte trekanter og samlede antal trekanter. Beregnet ved prefix sum\\
+
+Så vi har 8 trekanter efter splitsne.
+
+\item
+Sorter nye child node trekanter ud i et result array og tilpas addr arrayet
+
+Størrelsen på knuden kan ses ud fra addr[index + range] - addr[index]
+for childnodes. Med en small size på 1 vil det ovenstående eksempel give
+
+Node3.child = 3
+Node4.child = 3
+Node5.child = 1
+Node6.child = 1
+
+leaf:      [0, 0, 0, 0, 1, 1, 1, 1] // Er trekanten del af et leaf
+leafSplit: [0, 0, 0, 0, 1, 0, 0, 1] // Splits
+leafAddr:  [0, 0, 0, 0, 0, 1, 1, 1, 2] // Leaf list addr
+addr:      [0, 2, 3, 4, 6, 6, 6, 6, 6] // Nye addrs. addr -= leafAddr.
+
+Så der bliver 6 nye knuder og 2 leaf knuder.
+
+``Færdige'' leaf trekanter bliver nødt til at blive kopieret til et
+andet array, fordi der hele tiden bliver produceret nye trekanter
+(Damn splits)
+
+\item
+Opret child nodes or sortere dem efter leaf/nonLeaf.
+
+\item
+Bøvle med leaf index/range.
+
+\end{itemize}
 

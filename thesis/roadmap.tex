@@ -1,4 +1,4 @@
-\chapter{Road Map}
+\section*{Road Map}
 
 \begin{itemize}
 \item Create the KD-tree from points on the GPU
@@ -25,3 +25,36 @@ If time allows
   structure? Plane rendering as proposed in Bent's phd thesis would
   work. Raytracing is probably out.
 \end{itemize}
+
+
+
+\subsection*{Trier}
+
+Photoner i nodes i stedet for kun leafs.
+
+VVH beregning.
+
+kNN search. Kan der summes direkte hen over bidraget? Sum vs
+integration (approximation men wth)
+
+Splitte trekanter eller bare beregne ny aabb og areal? Færre splits
+betyder mindre træ.
+
+\subsection*{Sangild}
+
+Smide pointere op som constant vars, hvorfor virker det ikke.
+
+Forskel på cudaArray og ``almindelige'' arrays
+
+Mulighed for at bruge cuda arrays direkte i gl?
+
+Coalesce float4 * 3 lookups.
+
+Hvordan bruger jeg profileren? (Måske cpvc ved det)
+
+Bank conflicts.
+
+Gemme float og int i samme 4 entry struct, eg. int4.
+
+Er NVidia gået væk fra SIMD instruktioner? Så 4 float er ligeså
+hurtige som float4?
