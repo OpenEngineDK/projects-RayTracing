@@ -260,8 +260,22 @@ hvor $Vol(N \pm r) = \prod_{a \in K} (max(N_a) - min(N_a) + 2 * r)$
 
 \begin{itemize}
 \item
-Divide into segments of size smallNodeSize * 4. Tell the kernel how
-many threads it should at max expect pr block.
+Indel i segmenter af smallnode max size * 4. Fortæl kernels, der
+arbejder på segmenter, hvor mange tråde de max kan forvente. Så kan
+compileren optimere local memory.
+
+segments [2, 1, 3, 2]
+addrs    [0, 2, 3, 6, 8]
+owners   [0, 0, 1, 1, 0, 0, 1, 0] -> [0, 0, 1, 2, 2, 2, 3, 3]
+
+Beregn trekants info:
+
+Først trekants index for segment i med nodeID = owners[i]:
+
+offset = SEGMENT_SIZE * (i - addrs[nodeID])
+index[i] = photonInfo[nodeID].x + offset
+range[i] = min(SEGMENT_SIZE, photonInfo[nodeID].y - offset);
+
 
 \item
 Reduce the nodes bounding boxes, first pr segment, then do a segmented
@@ -284,6 +298,8 @@ splits    [2, 1, 1, 2, 1, 0, 0, 1] // Hvor mange trekanter på siden splittet re
 addr      [0, 2, 3, 4, 6, 7, 7, 7, 8] // Start index for de enkelte trekanter og samlede antal trekanter. Beregnet ved prefix sum\\
 
 Så vi har 8 trekanter efter splitsne.
+
+Muligvis lav et rent left til right split. Burde give bedre coalescence.
 
 \item
 Sorter nye child node trekanter ud i et result array og tilpas addr arrayet
