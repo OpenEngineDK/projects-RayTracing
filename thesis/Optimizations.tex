@@ -1,0 +1,20 @@
+\chapter{Optimizations}
+
+Use chunks! Creating chunks will save me the trouble of copying the
+size of each node back to the cpu.
+
+Unroll the first and/or last step in FinalBoundingBox. Create a
+seperat kernel that handles bounding box reductions with blocksize 1,
+avoiding special cases when unrolling final
+
+Remove the aabb's from photon upper nodes. The aabb step can be
+performed in one kernel and leaf nodes can have their own aabb array
+(or calculate the VVH for the first small node when the splitting
+planes are being processed)
+
+When doing uncoalesced glabal memory accesses in the child node
+creation steps, copy block node info into shared memory access first.
+Also when doing pr triangle calculations that require random owner
+node info, the owner nodes are placed succesive and their info can be
+stored in shared memory first. (Do an overhaul of photon map to
+implement this aswell)
