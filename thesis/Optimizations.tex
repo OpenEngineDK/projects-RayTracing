@@ -18,3 +18,7 @@ Also when doing pr triangle calculations that require random owner
 node info, the owner nodes are placed succesive and their info can be
 stored in shared memory first. (Do an overhaul of photon map to
 implement this aswell)
+
+Use the same array for same node children and primitive info. Only
+children will actually have valid primitive info and the rest will
+simply need to point to their childrne for info.

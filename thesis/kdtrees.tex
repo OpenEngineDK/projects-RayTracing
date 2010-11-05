@@ -53,11 +53,17 @@
 % done to avoid creating extra triangles when splitting (1 triangle
 % split often produces 3 triangles), which would result in deeper
 % trees. 
-% But this method requires us to text that an intersection is in fact
+% But this method requires us to test that an intersection is in fact
 % inside the bb. Do we want that?
 
 
 % Different splitting planes heuristics.
+
+
+% When moving from upper nodes to lower nodes. Calculate a new tight
+% bounding box inside the modified bouding box. Then approximate the
+% new surface area by the reduction in BB volume.
+
 
 \subsubsection{Spatial median}
 
@@ -324,7 +330,7 @@ andet array, fordi der hele tiden bliver produceret nye trekanter
 (Damn splits)
 
 \item
-Opret child nodes or sortere dem efter leaf/nonLeaf.
+Opret child nodes og sortere dem efter leaf/nonLeaf.
 
 \item
 Bøvle med leaf index/range.
