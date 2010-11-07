@@ -1,34 +1,57 @@
 \chapter{Ray Tracing}
 
+
+% Motivate!
+
+% We will build a basic raytracer to test the quality of the kD tree.
+
+% An optimized raytracer will be used to test wether or not more time
+% spend on creating a better kD tree will pay off in final rendering
+% time.
+
+The optimized raytracer will use techniques from \citebook{Aila2009}
+and \citebook{1230129}.
+
 % Generel ray tracing code.
 
 % Ray triangle intersection, refer to Wald's thesis. Something
 % something about projecting triangles onto planes and doing a lot of
 % precalculation. Should be faster than Möller-Trumbore's method. Lets
-% test it :)
+% test it :) Or not :p
 
 \section{Acceleration Techniques}
 
 % KD restart is the simplest
 
+I will not be implementing the push-down approach from
+\citebook{1230129}. While it will most likely improve the generel ray
+tracing case, where some of the geometry will be located behind the
+rays and can safely be excluded, it will only add an overhead to worst
+case situations, where the uppermost splitting plane is intersected by
+the rays.
+
 % Packets: 2x2 packets on the CPU for to take advantage of SIMD
-% instructions (Wald), larger packets on the GPU (for roped kd-trees)
+% instructions (Wald), warp size packets on the GPU. While
+% \citebook{1230129} implemented packets, they merely assumed it would
+% yield a speedup and did not provide any results. Aila2009 is against
+% packets as they in practice seem to make it slower.
 
 % short stacks: Implement stacks or perhaps a link to the parent in
 % each node. Would save us the hazzle of updating the stacks, which
 % could be a waste of time.
 
+% Use persistent threads / own scheduler. Aila2009.
+
 % stackless raytracing using ropes. 
 
-
-
-% Novel? stack scheme with parent info in nodes and left/right node
-% placed next to each other. Removes overhead of creating and
-% maintaning short stack. Needs a way to avoid traversing same
-% branches (and short stacks isn't a solution!)
+% wrap node and geometry arrays in textures to utilize cache? Or
+% simply don't care and refere to cached global memory in future
+% GPU's?
 
 \section{Implementation}
 
 % Start with kd restart, simple to get up and running.
 
-% Implement packets and short stack? Talk to trier
+% Implement short stack and persistent threads.
+
+

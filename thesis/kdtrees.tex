@@ -107,48 +107,33 @@ node
 % nodes longest axis. To do this a preprocess pass is required to
 % compute tight AABB's for each triangle.
 
-% SAH yields best result
+% SAH yields the best trees.
 
+\subsubsection{Splitting or dividing}
 
-\subsubsection{Voxel Volume Heuristic}
+% Novel scheme?
 
-% Voxels have no surface and thus SAH doesn't neceserraly work very
-% well with them as primitives. Instead we use VVH
+% Dvide triangles eg. adjust bounding box instead of splitting the
+% triangles.
 
-\begin{displaymath}
-  \begin{array}{rl}
-    VVH(N \rightarrow \{L, R\}) &= C_N + C_L * P_L + C_R * P_R \\
-    &= C_N + \frac{C_L * Vol(L \pm r)}{Vol(N \pm r)} + 
-    \frac{C_R * Vol(R \pm r)}{Vol(N \pm r)} \\
-  \end{array}
-\end{displaymath}
+% Spliting will almost always produce 3 triangles, whereas divide will
+% always produce only 2.
 
-hvor $Vol(N \pm r) = \prod_{a \in K} (max(N_a) - min(N_a) + 2 * r)$
+% Adjusting area heuristic, computes the largest plane possible in the
+% bounding boxes and compares them. An optimization could be
+% precomputing the plane while gathering geometry.
 
+% Profile the time it takes to create the different trees, especially
+% the splitting kernels.
+
+% Compare amount of nodes.
+
+% Tree traversal time.
 
 
 \subsection{Algorithm for creating KD-tree}
 
 % O ( N log N )
-
-
-
-\section{Nearest neighbour search}
-
-% More on ray tracing in the next section.
-
-% Novel radius scheme? Let the search radius depent on the distance
-% the photon has traveled. Nodes that have traveled further represent
-% a larger cone from the light, and should therefor cover more
-% ground. Check if it really is a novel idea! Now go home! 
-
-% Perhaps use a median of this radius when calculating splits for
-% lower nodes? Hope that distribution across neighbouring nodes is
-% similar (which it probably is)
-
-% Instead of holding all N neighbours index and distance (squared) in
-% memory, can their contribution be calculated while processing and
-% thus save lots and lots of shared memory?
 
 
 
@@ -161,16 +146,11 @@ hvor $Vol(N \pm r) = \prod_{a \in K} (max(N_a) - min(N_a) + 2 * r)$
 
 % Use GPU for computations and let CPU handle minor book keeping.
 
-% While the CPU can create it in O ( N log N), some of the operations
-% on the gpu, like splitting and sweeping over the dataset, do not
-% take O(N) time on the GPU but O(N log N) time. Thus the fastest a
-% time complexity possible on a GPU is O ( N log^2 N)
-
 % Handles structures of arrays better than arrays of structures
-% chapter 33 \citebook{GPUGEMS2}
+% chapter 33 \citebook{GPUGEMS2} and coalescence
 
 % At upper tree level nodes exploit data parallelism by parallising
-% the cost computation over triangles or photons. 
+% the cost computation over triangles. 
 
 % Use spatiel median splitting for upper nodes. Way faster than SAH
 % calculations.
@@ -184,6 +164,8 @@ hvor $Vol(N \pm r) = \prod_{a \in K} (max(N_a) - min(N_a) + 2 * r)$
 % BSP. Might only increase instructions, branching and still wait for
 % the slowest thread. (Try and watch it fail) Perhaps without an if
 % statement but by arithmetic instead?
+
+% Try persistent threads method!
 
 \subsection{Photon Map}
 
@@ -278,9 +260,9 @@ Beregn trekants info:
 
 Først trekants index for segment i med nodeID = owners[i]:
 
-offset = SEGMENT_SIZE * (i - addrs[nodeID])
-index[i] = photonInfo[nodeID].x + offset
-range[i] = min(SEGMENT_SIZE, photonInfo[nodeID].y - offset);
+%% offset = SEGMENT_SIZE * (i - addrs[nodeID])
+%% index[i] = photonInfo[nodeID].x + offset
+%% range[i] = min(SEGMENT_SIZE, photonInfo[nodeID].y - offset);
 
 
 \item

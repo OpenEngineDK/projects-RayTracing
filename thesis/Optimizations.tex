@@ -9,15 +9,12 @@ avoiding special cases when unrolling final
 
 Remove the aabb's from photon upper nodes. The aabb step can be
 performed in one kernel and leaf nodes can have their own aabb array
-(or calculate the VVH for the first small node when the splitting
-planes are being processed)
 
 When doing uncoalesced glabal memory accesses in the child node
 creation steps, copy block node info into shared memory access first.
 Also when doing pr triangle calculations that require random owner
 node info, the owner nodes are placed succesive and their info can be
-stored in shared memory first. (Do an overhaul of photon map to
-implement this aswell)
+stored in shared memory first.
 
 Use the same array for same node children and primitive info. Only
 children will actually have valid primitive info and the rest will
