@@ -75,57 +75,27 @@ ISceneNode* SetupScene(){
     light->specular = lightColor * 0.3;
     lightTrans->AddNode(light);
 
-    ISceneNode* cornellBox = new SceneNode();
+    MeshPtr box = MeshCreator::CreateCube(10, 1, Vector<3,float>(1.0f, 1.0f, 1.0f), true);
+    Vector<4,float> red(1.0f, 0.0f, 0.0f, 1.0f);
+    Vector<4,float> blue(0.0f, 0.0f, 0.8f, 1.0f);
+    IDataBlockPtr colors = box->GetGeometrySet()->GetAttributeList("color");
+    colors->SetElement(8, red);
+    colors->SetElement(9, red);
+    colors->SetElement(10, red);
+    colors->SetElement(11, red);
+    colors->SetElement(12, blue);
+    colors->SetElement(13, blue);
+    colors->SetElement(14, blue);
+    colors->SetElement(15, blue);
+    MeshNode* cornellBox = new MeshNode(box);
     rsNode->AddNode(cornellBox);
-
-    MeshPtr plane = MeshCreator::CreatePlane(10, 1);
-    IDataBlockPtr c = IDataBlockPtr(new DataBlock<4, float>(plane->GetGeometrySet()->GetSize(),
-                                                                Vector<4, float>(1.0f)));
-    plane->GetGeometrySet()->AddAttributeList("color", c);
-    
-    MeshPtr top = MeshTransformer::Rotate(plane, Quaternion<float>(PI, 0.0f, 0.0f));
-    top = MeshTransformer::Translate(top, Vector<3,float>(0.0f, 5.0f, 0.0f));
-    MeshNode* topNode = new MeshNode(top);
-    cornellBox->AddNode(topNode);
-
-    MeshPtr bottom = MeshTransformer::Translate(plane, Vector<3,float>(0.0f, -5.0f, 0.0f));
-    MeshNode* bottomNode = new MeshNode(bottom);
-    cornellBox->AddNode(bottomNode);
-    
-    MeshPtr back = MeshTransformer::Rotate(plane, Quaternion<float>(PI/2.0f, 0.0f, 0.0f));
-    back = MeshTransformer::Translate(back, Vector<3,float>(0.0f, .0f, -5.0f));
-    MeshNode* backNode = new MeshNode(back);
-    cornellBox->AddNode(backNode);
-
-    MeshPtr front = MeshTransformer::Rotate(plane, Quaternion<float>(PI/-2.0f, 0.0f, 0.0f));
-    front = MeshTransformer::Translate(front, Vector<3,float>(0.0f, .0f, 5.0f));
-    MeshNode* frontNode = new MeshNode(front);
-    cornellBox->AddNode(frontNode);
-
-    plane = MeshCreator::CreatePlane(10, 1, Vector<3, float>(1.0f, 0.0f, 0.0f));
-    c = IDataBlockPtr(new DataBlock<4, float>(plane->GetGeometrySet()->GetSize(),
-                                              Vector<4, float>(1.0f, 0.0f, 0.0f, 1.0f)));
-    plane->GetGeometrySet()->AddAttributeList("color", c);
-    MeshPtr left = MeshTransformer::Rotate(plane, Quaternion<float>(0.0f, 0.0f, PI/-2.0f));
-    left = MeshTransformer::Translate(left, Vector<3,float>(-5.0f, 0.0f, 0.0f));
-    MeshNode* leftNode = new MeshNode(left);
-    cornellBox->AddNode(leftNode);
-
-    plane = MeshCreator::CreatePlane(10, 1, Vector<3, float>(0.0f, 0.0f, 0.8f));
-    c = IDataBlockPtr(new DataBlock<4, float>(plane->GetGeometrySet()->GetSize(),
-                                              Vector<4, float>(0.0f, 0.0f, 0.8f, 1.0f)));
-    plane->GetGeometrySet()->AddAttributeList("color", c);
-    MeshPtr right = MeshTransformer::Rotate(plane, Quaternion<float>(0.0f, 0.0f, PI/2.0f));
-    right = MeshTransformer::Translate(right, Vector<3,float>(5.0f, 0.0f, 0.0f));
-    MeshNode* rightNode = new MeshNode(right);
-    cornellBox->AddNode(rightNode);
 
     // Dragon
 
     TransformationNode* dragonTrans = new TransformationNode();
     dragonTrans->SetScale(Vector<3, float>(40, 40, 40));
     dragonTrans->SetPosition(Vector<3, float>(0, -7, 0));
-    cornellBox->AddNode(dragonTrans);
+    rsNode->AddNode(dragonTrans);
 
     IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res4.ply");
     duckRes->Load();
@@ -202,8 +172,8 @@ int main(int argc, char** argv) {
     LightRenderer *lightRenderer = new LightRenderer();
     renderer->PreProcessEvent().Attach(*lightRenderer);
 
-    //RenderCanvas* canvas = new RenderCanvas(new TextureCopy());
-    RenderCanvas* canvas = new RenderCanvas(new FrameBufferBackend(renderer));
+    RenderCanvas* canvas = new RenderCanvas(new TextureCopy());
+    //RenderCanvas* canvas = new RenderCanvas(new FrameBufferBackend(renderer));
     canvas->SetViewingVolume(camera);
     canvas->SetRenderer(renderer);
     canvas->SetScene(scene);
