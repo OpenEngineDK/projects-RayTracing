@@ -57,28 +57,18 @@ using namespace OpenEngine::Renderers::OpenGL;
 using namespace OpenEngine::Scene;
 using namespace OpenEngine::Utils;
 
-ISceneNode* SetupScene(){
-
-    RenderStateNode* rsNode = new RenderStateNode();
-    rsNode->DisableOption(RenderStateNode::BACKFACE);
-    rsNode->EnableOption(RenderStateNode::LIGHTING);
-    rsNode->EnableOption(RenderStateNode::COLOR_MATERIAL);
-
-    TransformationNode* lightTrans = new TransformationNode();
-    lightTrans->SetPosition(Vector<3, float>(0.0f, 4.0f, 0.0f));
-    rsNode->AddNode(lightTrans);
-
-    PointLightNode* light = new PointLightNode();
-    Vector<4, float> lightColor = Vector<4, float>(255.0f, 235.0f, 205.0f, 255.0f) / 255.0f;
-    light->ambient = lightColor * 0.3;
-    light->diffuse = lightColor * 0.7;
-    light->specular = lightColor * 0.3;
-    lightTrans->AddNode(light);
-
+ISceneNode* CreateCornellBox() {
     MeshPtr box = MeshCreator::CreateCube(10, 1, Vector<3,float>(1.0f, 1.0f, 1.0f), true);
+    float *c = new float[24 * 4];
+    for (unsigned int i = 0; i < 24 * 4; ){
+        c[i++] = 1.0f;
+        c[i++] = 1.0f;
+        c[i++] = 1.0f;
+        c[i++] = 1.0f;
+    }
+    Float4DataBlockPtr colors = Float4DataBlockPtr(new DataBlock<4, float>(24, c));
     Vector<4,float> red(1.0f, 0.0f, 0.0f, 1.0f);
     Vector<4,float> blue(0.0f, 0.0f, 0.8f, 1.0f);
-    IDataBlockPtr colors = box->GetGeometrySet()->GetAttributeList("color");
     colors->SetElement(8, red);
     colors->SetElement(9, red);
     colors->SetElement(10, red);
@@ -87,16 +77,46 @@ ISceneNode* SetupScene(){
     colors->SetElement(13, blue);
     colors->SetElement(14, blue);
     colors->SetElement(15, blue);
-    MeshNode* cornellBox = new MeshNode(box);
-    rsNode->AddNode(cornellBox);
+    
+    GeometrySetPtr boxGeom = GeometrySetPtr(new GeometrySet(box->GetGeometrySet()->GetVertices(),
+                                                            box->GetGeometrySet()->GetNormals(),
+                                                            IDataBlockList(), colors));
 
-    // Dragon
+    box = MeshPtr(new Mesh(box->GetIndices(),
+                           box->GetType(),
+                           boxGeom, box->GetMaterial()));
+    
+    return new MeshNode(box);
+}
 
-    TransformationNode* dragonTrans = new TransformationNode();
-    dragonTrans->SetScale(Vector<3, float>(40, 40, 40));
-    dragonTrans->SetPosition(Vector<3, float>(0, -7, 0));
-    rsNode->AddNode(dragonTrans);
+ISceneNode* CreateSmallBox() {
+    MeshPtr box = MeshCreator::CreateCube(3, 1, Vector<3,float>(1.0f, 1.0f, 1.0f));
+    Quaternion<float> rot(0.0f, -Math::PI/10.0f, 0.0f);
+    Vector<3, float> move(2.0f, -3.5f, 1.0);
+    box = MeshTransformer::Rotate(box, rot);
+    box = MeshTransformer::Translate(box, move);
 
+    float *c = new float[24 * 4];
+    for (unsigned int i = 0; i < 24 * 4; ){
+        c[i++] = 1.0f;
+        c[i++] = 1.0f;
+        c[i++] = 1.0f;
+        c[i++] = 1.0f;
+    }
+    Float4DataBlockPtr colors = Float4DataBlockPtr(new DataBlock<4, float>(24, c));
+    
+    GeometrySetPtr boxGeom = GeometrySetPtr(new GeometrySet(box->GetGeometrySet()->GetVertices(),
+                                                            box->GetGeometrySet()->GetNormals(),
+                                                            IDataBlockList(), colors));
+
+    box = MeshPtr(new Mesh(box->GetIndices(),
+                           box->GetType(),
+                           boxGeom, box->GetMaterial()));
+
+    return new MeshNode(box);
+}
+
+ISceneNode* CreateDragon() {
     IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res4.ply");
     duckRes->Load();
     MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0);
@@ -126,8 +146,44 @@ ISceneNode* SetupScene(){
     }
 
     duckRes->Unload();
+    return dragon;
+}
+
+ISceneNode* SetupScene(){
+
+    RenderStateNode* rsNode = new RenderStateNode();
+    rsNode->DisableOption(RenderStateNode::BACKFACE);
+    rsNode->EnableOption(RenderStateNode::LIGHTING);
+    rsNode->EnableOption(RenderStateNode::COLOR_MATERIAL);
+
+    TransformationNode* lightTrans = new TransformationNode();
+    lightTrans->SetPosition(Vector<3, float>(0.0f, 4.0f, 0.0f));
+    rsNode->AddNode(lightTrans);
+
+    PointLightNode* light = new PointLightNode();
+    Vector<4, float> lightColor = Vector<4, float>(255.0f, 235.0f, 205.0f, 255.0f) / 255.0f;
+    light->ambient = lightColor * 0.3;
+    light->diffuse = lightColor * 0.7;
+    light->specular = lightColor * 0.3;
+    lightTrans->AddNode(light);
+
+    ISceneNode* cornellBox = CreateCornellBox();
+    rsNode->AddNode(cornellBox);
+
+    /*
+    // Dragon
+    TransformationNode* dragonTrans = new TransformationNode();
+    dragonTrans->SetScale(Vector<3, float>(40, 40, 40));
+    dragonTrans->SetPosition(Vector<3, float>(0, -7, 0));
+    rsNode->AddNode(dragonTrans);
+
+    ISceneNode* dragon = CreateDragon();
     dragonTrans->AddNode(dragon);
-    
+    */
+
+    ISceneNode* box = CreateSmallBox();
+    rsNode->AddNode(box);
+        
     return rsNode;
 }
 
@@ -147,6 +203,7 @@ int main(int argc, char** argv) {
     // setup the engine
     Engine* engine = new Engine;
     IEnvironment* env = new SDLEnvironment(800, 600, 32);
+    //IEnvironment* env = new SDLEnvironment(160, 120, 32);
     engine->InitializeEvent().Attach(*env);
     engine->ProcessEvent().Attach(*env);
     engine->DeinitializeEvent().Attach(*env);
