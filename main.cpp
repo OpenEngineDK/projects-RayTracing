@@ -91,10 +91,10 @@ ISceneNode* CreateCornellBox() {
 
 ISceneNode* CreateSmallBox() {
     MeshPtr box = MeshCreator::CreateCube(3, 1, Vector<3,float>(1.0f, 1.0f, 1.0f));
-    Quaternion<float> rot(0.0f, -Math::PI/10.0f, 0.0f);
+    Quaternion<float> rot(0.0f, -Math::PI/4.0f, 0.0f);
     Vector<3, float> move(2.0f, -3.5f, 1.0);
-    box = MeshTransformer::Rotate(box, rot);
-    box = MeshTransformer::Translate(box, move);
+    //box = MeshTransformer::Translate(box, move);
+    //box = MeshTransformer::Rotate(box, rot);
 
     float *c = new float[24 * 4];
     for (unsigned int i = 0; i < 24 * 4; ){
@@ -170,8 +170,16 @@ ISceneNode* SetupScene(){
     ISceneNode* cornellBox = CreateCornellBox();
     rsNode->AddNode(cornellBox);
 
-    /*
+    ISceneNode* box = CreateSmallBox();
+    TransformationNode* smallTrans = new TransformationNode();
+    Quaternion<float> rot(0.0f, -Math::PI/4.0f, 0.0f);
+    smallTrans->SetRotation(rot);
+    smallTrans->Move(2.0f, -3.5f, 1.0);
+    rsNode->AddNode(smallTrans);
+    smallTrans->AddNode(box);
+
     // Dragon
+    /*
     TransformationNode* dragonTrans = new TransformationNode();
     dragonTrans->SetScale(Vector<3, float>(40, 40, 40));
     dragonTrans->SetPosition(Vector<3, float>(0, -7, 0));
@@ -180,9 +188,6 @@ ISceneNode* SetupScene(){
     ISceneNode* dragon = CreateDragon();
     dragonTrans->AddNode(dragon);
     */
-
-    ISceneNode* box = CreateSmallBox();
-    rsNode->AddNode(box);
         
     return rsNode;
 }
