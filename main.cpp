@@ -31,7 +31,6 @@
 #include <Renderers/OpenGL/LightRenderer.h>
 #include <Display/RenderCanvas.h>
 #include <Display/OpenGL/TextureCopy.h>
-#include <Display/OpenGL/FrameBufferBackend.h>
 
 // Generic Handler
 #include <Utils/BetterMoveHandler.h>
@@ -230,7 +229,6 @@ int main(int argc, char** argv) {
     renderer->PreProcessEvent().Attach(*lightRenderer);
 
     RenderCanvas* canvas = new RenderCanvas(new TextureCopy());
-    //RenderCanvas* canvas = new RenderCanvas(new FrameBufferBackend(renderer));
     canvas->SetViewingVolume(camera);
     canvas->SetRenderer(renderer);
     canvas->SetScene(scene);
