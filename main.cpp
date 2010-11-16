@@ -91,17 +91,13 @@ ISceneNode* CreateCornellBox() {
 
 ISceneNode* CreateSmallBox() {
     MeshPtr box = MeshCreator::CreateCube(3, 1, Vector<3,float>(1.0f, 1.0f, 1.0f));
-    Quaternion<float> rot(0.0f, -Math::PI/4.0f, 0.0f);
-    Vector<3, float> move(2.0f, -3.5f, 1.0);
-    //box = MeshTransformer::Translate(box, move);
-    //box = MeshTransformer::Rotate(box, rot);
 
     float *c = new float[24 * 4];
     for (unsigned int i = 0; i < 24 * 4; ){
         c[i++] = 1.0f;
         c[i++] = 1.0f;
         c[i++] = 1.0f;
-        c[i++] = 1.0f;
+        c[i++] = 0.7f;
     }
     Float4DataBlockPtr colors = Float4DataBlockPtr(new DataBlock<4, float>(24, c));
     
@@ -174,12 +170,11 @@ ISceneNode* SetupScene(){
     TransformationNode* smallTrans = new TransformationNode();
     Quaternion<float> rot(0.0f, -Math::PI/4.0f, 0.0f);
     smallTrans->SetRotation(rot);
-    smallTrans->Move(2.0f, -3.5f, 1.0);
+    smallTrans->Move(2.0f, -3.48f, 1.0);
     rsNode->AddNode(smallTrans);
     smallTrans->AddNode(box);
 
     // Dragon
-    /*
     TransformationNode* dragonTrans = new TransformationNode();
     dragonTrans->SetScale(Vector<3, float>(40, 40, 40));
     dragonTrans->SetPosition(Vector<3, float>(0, -7, 0));
@@ -187,8 +182,7 @@ ISceneNode* SetupScene(){
 
     ISceneNode* dragon = CreateDragon();
     dragonTrans->AddNode(dragon);
-    */
-        
+
     return rsNode;
 }
 
@@ -225,6 +219,7 @@ int main(int argc, char** argv) {
     IFrame& frame = env->CreateFrame();
 
     Camera* camera  = new Camera(*(new PerspectiveViewingVolume(1, 4000)));
+    camera->SetPosition(Vector<3, float>(-4.0f, 4.0f, 4.0f));
 
     PhotonRenderingView* renderingview = new PhotonRenderingView();
     renderer->InitializeEvent().Attach(*renderingview);    
