@@ -63,7 +63,7 @@ ISceneNode* CreateCornellBox() {
         c[i++] = 1.0f;
         c[i++] = 1.0f;
         c[i++] = 1.0f;
-        c[i++] = 1.0f;
+        c[i++] = 0.9f;
     }
     Float4DataBlockPtr colors = Float4DataBlockPtr(new DataBlock<4, float>(24, c));
     Vector<4,float> red(1.0f, 0.0f, 0.0f, 1.0f);
@@ -96,7 +96,7 @@ ISceneNode* CreateSmallBox() {
         c[i++] = 1.0f;
         c[i++] = 1.0f;
         c[i++] = 1.0f;
-        c[i++] = 0.7f;
+        c[i++] = 0.5f;
     }
     Float4DataBlockPtr colors = Float4DataBlockPtr(new DataBlock<4, float>(24, c));
     
@@ -113,6 +113,7 @@ ISceneNode* CreateSmallBox() {
 
 ISceneNode* CreateDragon() {
     IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res4.ply");
+    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/data/bun000.ply");
     duckRes->Load();
     MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0);
 
@@ -128,7 +129,7 @@ ISceneNode* CreateDragon() {
             c[i++] = 0.0f;
             c[i++] = 165.0f/255.0f;
             c[i++] = 101.0f/255.0f;
-            c[i++] = 1.0f;
+            c[i++] = 0.7f;
         }
         color = Float4DataBlockPtr(new DataBlock<4, float>(vertices->GetSize(), c));
         dragonGeom = GeometrySetPtr(new GeometrySet(vertices, 
@@ -165,13 +166,22 @@ ISceneNode* SetupScene(){
     ISceneNode* cornellBox = CreateCornellBox();
     rsNode->AddNode(cornellBox);
 
+    /*
     ISceneNode* box = CreateSmallBox();
     TransformationNode* smallTrans = new TransformationNode();
-    Quaternion<float> rot(0.0f, -Math::PI/4.0f, 0.0f);
-    smallTrans->SetRotation(rot);
+    smallTrans->SetRotation(Quaternion<float>(0.0f, -Math::PI/8.0f, 0.0f));
     smallTrans->Move(2.0f, -3.48f, 1.0);
     rsNode->AddNode(smallTrans);
     smallTrans->AddNode(box);
+
+    ISceneNode* bigBox = CreateSmallBox();
+    TransformationNode* bigTrans = new TransformationNode();
+    bigTrans->SetRotation(Quaternion<float>(0.0f, Math::PI/8.0f, 0.0f));
+    bigTrans->Move(-1.5f, -1.98f, -3.0);
+    bigTrans->SetScale(Vector<3, float>(1.0f, 2.0f, 1.0f));
+    rsNode->AddNode(bigTrans);
+    bigTrans->AddNode(bigBox);
+    */
 
     // Dragon
     TransformationNode* dragonTrans = new TransformationNode();
@@ -200,7 +210,8 @@ int main(int argc, char** argv) {
 
     // setup the engine
     Engine* engine = new Engine;
-    IEnvironment* env = new SDLEnvironment(800, 600, 32);
+    //IEnvironment* env = new SDLEnvironment(800, 600, 32);
+    IEnvironment* env = new SDLEnvironment(640, 480, 32);
     //IEnvironment* env = new SDLEnvironment(160, 120, 32);
     engine->InitializeEvent().Attach(*env);
     engine->ProcessEvent().Attach(*env);
@@ -219,6 +230,9 @@ int main(int argc, char** argv) {
 
     Camera* camera  = new Camera(*(new PerspectiveViewingVolume(1, 4000)));
     camera->SetPosition(Vector<3, float>(-4.0f, 4.0f, 4.0f));
+    camera->LookAt(Vector<3, float>(0.0f, -2.0f, 0.0f));
+    //camera->SetPosition(Vector<3, float>(4.0f, -4.0f, 4.0f));
+    //camera->LookAt(Vector<3, float>(0.0f, -8.0f, 0.0f));
 
     PhotonRenderingView* renderingview = new PhotonRenderingView();
     renderer->InitializeEvent().Attach(*renderingview);    
