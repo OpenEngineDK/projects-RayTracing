@@ -5,23 +5,23 @@
 
 % Why global illumination vs local illumination used in most rasterizers
 
-% Why use the GPU? Offloading? Especially when the time complexity for
-% GPU's are worse than for CPU's? The CPU can do a lot of other things
+% Why use the GPU? Offloading. The CPU can do a lot of other things
 % while the GPU crunch away at those KD trees. Om nom nom nom nom....
 
 % Why even use datastructures on the GPU. They work wonders on the CPU
 % but for the GPU they might hinder performance (cite KNN paper and
 % dataparallism example with 31 threads waiting)
 
-% I will first build a brute force raytracer and compare that to a
-% basic raytracer traversing a KD-tree, to blank why datastructures
-% are important even on the GPU.
+% In this thesis a brute force raytracer will first bebuild and
+% compared to a basic raytracer traversing a KD-tree, to blank
+% emphasize the importance of datastructures, even on the GPU.
 
 % importance of efficient datastructures, several datastructures have
 % been used for raytracing (BVH, kd-trees, octrees, bla bla...) Some
 % are good for bla, others blank
 
-% Will focus on KD-trees
+% Will focus on KD-trees and base the implementation on the proposed
+% algorithm in zhou et al.
 
 % Needs to be able to quickly create the data structure aswell for
 % photon mapping with dynamic geometry/lighting.
@@ -39,6 +39,6 @@
 % Still not easily paralisable, requires lots of reduction kernels,
 % which do not utilize the GPU fully. Also individual node splitting
 % costs can leave 31 threads in a warp waiting for the last one to
-% finish. In this paper persistent threads will be used to solve this
+% finish. In this thesis persistent threads will be used to solve this
 % issue.
 

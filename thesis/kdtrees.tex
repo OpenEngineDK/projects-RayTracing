@@ -7,7 +7,7 @@
 
 \section{Motivation}
 
-% Why KD tree
+% Why KD tree compared to other structures
 
 % Has time and time again been arguibly the best datastructure.
 
@@ -40,6 +40,9 @@
   prerequisites are fulfilled for range queries (such as ray traversal
   and kNN queries), nor for unevenly distributed primitives such as
   photons or triangles.}{wald:04:VVH}
+
+% All the brilliance in KD-tree construction comes down to choosing
+% the splitting plane and deciding when to stop.
 
 
 \subsection{Splitting the geometry}
@@ -115,12 +118,17 @@ node
 
 % SAH yields the best trees.
 
+% SAH calculation optimizations include axis round robin and some damn
+% paper I can't remember.
+
 \subsubsection{Splitting or dividing}
 
-% Novel scheme?
+% What to do with the triangles caught in the splitting plane.
 
-% Dvide triangles eg. adjust bounding box instead of splitting the
-% triangles.
+% Normally ppl split.
+
+% Novel scheme? Dvide triangles eg. adjust bounding box instead of
+% splitting the triangles.
 
 % Spliting will almost always produce 3 triangles, whereas divide will
 % always produce only 2.
@@ -128,6 +136,8 @@ node
 % Adjusting area heuristic, computes the largest plane possible in the
 % bounding boxes and compares them. An optimization could be
 % precomputing the plane while gathering geometry.
+
+% In conclussion:
 
 % Profile the time it takes to create the different trees, especially
 % the splitting kernels.
@@ -139,7 +149,7 @@ node
 
 \subsection{Algorithm for creating KD-tree}
 
-% O ( N log N )
+% Argue it can be done in O ( N log N )
 
 
 
@@ -155,6 +165,8 @@ node
 % Handles structures of arrays better than arrays of structures
 % chapter 33 \citebook{GPUGEMS2} and coalescence
 
+\subsection{Upper Tree Nodes}
+
 % At upper tree level nodes exploit data parallelism by parallising
 % the cost computation over triangles. 
 
@@ -165,6 +177,20 @@ node
 % tree levels, as there would be thousands of nodes created at the
 % same time.
 
+\subsubsection{Empty space splitting}
+
+\begin{itemize}
+  \item Store the post split aabb as the child nodes aabb. (uh even
+    upper leafs get an aabb now)
+  \item When reducing the correct aabb, compare it to the old one
+    before overwriting and store splitting sides in a char bitmap and counter var (for cudpp scan).
+  \item When creating children take empty space into account.
+  \item | LEAFS | EMPTY SPACE NODES | PROCESSABLE NODES |
+  \item Ray tracing profit.
+\end{itemize}
+
+\subsection{Lower Tree Nodes}
+
 % At lower tree levels where SAH/VVH isn't computed parallel, perhaps
 % and early out ``good enough'' value/ratio can be given, as done in
 % BSP. Might only increase instructions, branching and still wait for
@@ -172,6 +198,8 @@ node
 % statement but by arithmetic instead?
 
 % Try persistent threads method!
+
+
 
 %% \subsection{Photon Map}
 
@@ -249,79 +277,3 @@ node
 %%               }
 %%   \end{algorithmic}
 %% \end{algorithm}
-
-\subsection{Triangle Map}
-
-\begin{itemize}
-\item
-Indel i segmenter af smallnode max size * 4. Fortæl kernels, der
-arbejder på segmenter, hvor mange tråde de max kan forvente. Så kan
-compileren optimere local memory.
-
-segments [2, 1, 3, 2]
-addrs    [0, 2, 3, 6, 8]
-owners   [0, 0, 1, 1, 0, 0, 1, 0] -> [0, 0, 1, 2, 2, 2, 3, 3]
-
-Beregn trekants info:
-
-Først trekants index for segment i med nodeID = owners[i]:
-
-%% offset = SEGMENT_SIZE * (i - addrs[nodeID])
-%% index[i] = photonInfo[nodeID].x + offset
-%% range[i] = min(SEGMENT_SIZE, photonInfo[nodeID].y - offset);
-
-
-\item
-Reduce the nodes bounding boxes, first pr segment, then do a segmented
-reduction. (Possibly unroll some of the loops)
-
-\item
-Sorter trekanter til deres nye placeringer. SplitSide er et array af
-størrelse activeTris * 2 som i node chunks indeholder hvor mange
-trekanter en trekant bliver splittet i på højre og venstre
-side. Prefix sum giver så positionen for disse trekanter.
-
-Eks
-
-Node 1 og 2
-
-Owner     [1, 1, 1, 1, 2, 2, 2, 2] // Den knude der ejer trekanten.\\
-side      [l, l, r, r, l, l, r, r] // Hvilken side splittet er på.\\
-trekant   [0, 1, 0, 1, 2, 3, 2, 3] // Trekanten der kigges på.\\
-splits    [2, 1, 1, 2, 1, 0, 0, 1] // Hvor mange trekanter på siden splittet resulterer i.\\
-addr      [0, 2, 3, 4, 6, 7, 7, 7, 8] // Start index for de enkelte trekanter og samlede antal trekanter. Beregnet ved prefix sum\\
-
-Så vi har 8 trekanter efter splitsne.
-
-Muligvis lav et rent left til right split. Burde give bedre coalescence.
-
-\item
-Sorter nye child node trekanter ud i et result array og tilpas addr arrayet
-
-Størrelsen på knuden kan ses ud fra addr[index + range] - addr[index]
-for childnodes. Med en small size på 1 vil det ovenstående eksempel give
-
-Node3.child = 3
-Node4.child = 3
-Node5.child = 1
-Node6.child = 1
-
-leaf:      [0, 0, 0, 0, 1, 1, 1, 1] // Er trekanten del af et leaf
-leafSplit: [0, 0, 0, 0, 1, 0, 0, 1] // Splits
-leafAddr:  [0, 0, 0, 0, 0, 1, 1, 1, 2] // Leaf list addr
-addr:      [0, 2, 3, 4, 6, 6, 6, 6, 6] // Nye addrs. addr -= leafAddr.
-
-Så der bliver 6 nye knuder og 2 leaf knuder.
-
-``Færdige'' leaf trekanter bliver nødt til at blive kopieret til et
-andet array, fordi der hele tiden bliver produceret nye trekanter
-(Damn splits)
-
-\item
-Opret child nodes og sortere dem efter leaf/nonLeaf.
-
-\item
-Bøvle med leaf index/range.
-
-\end{itemize}
-
