@@ -1,5 +1,10 @@
 \chapter{Ray Tracing}
 
+\chapterquote{Some argue that in the very long term, rendering may
+  best be solved by some variant of ray tracing, in which huge numbers
+  of rays sample the environment for the eye’s view of each frame. And
+  there will also be colonies on Mars, underwater cities, and personal
+  jet packs.}{Tomas Möller and Eric Haines}
 
 % Motivate!
 
@@ -21,7 +26,11 @@ and \citebook{1230129}.
 
 \section{Acceleration Techniques}
 
+% Brief introduction to several acceleration techniques
+
 % KD restart is the simplest
+
+\subsection{Push Down}
 
 I will not be implementing the push-down approach from
 \citebook{1230129}. While it will most likely improve the generel ray
@@ -30,25 +39,35 @@ rays and can safely be excluded, it will only add an overhead to worst
 case situations, where the uppermost splitting plane is intersected by
 the rays.
 
+\subsection{Packets}
+
 % Packets: 2x2 packets on the CPU for to take advantage of SIMD
 % instructions (Wald), warp size packets on the GPU. While
 % \citebook{1230129} implemented packets, they merely assumed it would
 % yield a speedup and did not provide any results. Aila2009 is against
 % packets as they in practice seem to make it slower.
 
-% short stacks: Implement stacks or perhaps a link to the parent in
-% each node. Would save us the hazzle of updating the stacks, which
-% could be a waste of time.
+\subsection{Short stack}
+
+% Only push usefull 'forward' nodes to the stack.
+
+\subsection{Ropes}
+
+% stackless raytracing using ropes. 
+
+\subsection{Persistent Threads}
 
 % Use persistent threads / own scheduler. Aila2009.
 
-% stackless raytracing using ropes. 
+\subsection{Caching 'hot' nodes}
 
 % wrap node and geometry arrays in textures to utilize cache? Or
 % simply don't care and refere to cached global memory in future
 % GPU's?
 
 \section{Implementation}
+
+\subsection{KD-restart}
 
 % Start with kd restart, simple to get up and running.
 
@@ -82,6 +101,6 @@ the rays.
   \end{algorithmic}
 \end{algorithm}
 
-% Implement short stack and persistent threads.
+\subsection{Short stack}
 
-
+\subsection{Persistent Threads}
