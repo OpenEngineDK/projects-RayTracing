@@ -11,7 +11,7 @@ darcs /projects/PhotonMapping http://openengine.dk/code/projects/PhotonMapping
 darcs-dev /projects/PhotonMapping fh.daimi.au.dk:/users/cgd/code/projects/PhotonMapping
 
 # dist dependencies
-dist /extensions/PhotonMapping/PhotonMapping.dist http://openengine.dk/code/extensions/PhotonMapping/PhotonMapping.dist
+dist /extensions/PhotonMapping/PhotonMapping.dist http://www.openengine.dk/code/extensions/PhotonMapping/PhotonMapping.dist
 dist /extensions/Assimp/Assimp.dist               http://www.openengine.dk/code/extensions/Assimp/Assimp.dist
 
 # required extensions
