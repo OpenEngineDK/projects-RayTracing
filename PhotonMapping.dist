@@ -31,6 +31,7 @@ darcs-dev /extensions/GenericHandlers        fh.daimi.au.dk:/users/cgd/code/exte
 darcs-dev /extensions/MeshUtils        	     fh.daimi.au.dk:/users/cgd/code/extensions/MeshUtils
 
 # windows libraries
+win32 /libraries http://openengine.dk/data/libraries/cairo-win32.zip   
 win32 /libraries http://openengine.dk/data/libraries/boost-win32.zip
 win32 /libraries http://openengine.dk/data/libraries/glew-win32.zip
 win32 /libraries http://openengine.dk/data/libraries/sdl-win32.zip
