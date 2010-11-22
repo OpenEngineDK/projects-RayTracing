@@ -31,7 +31,6 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
   Extensions_OpenGLRenderer
   Extensions_PhotonMapping
   Extensions_GenericHandlers
-  Extensions_CUDPP
   Extensions_AssimpResource
   Extensions_MeshUtils
 )
