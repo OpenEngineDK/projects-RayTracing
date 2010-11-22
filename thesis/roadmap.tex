@@ -1,43 +1,42 @@
 \section*{Road Map}
 
+
+DONE
 \begin{itemize}
 \item Create the KD-tree from points on the GPU
 \item Visualize the KD-tree (as part of debugging), draw frame around
   splitting plane in color corrosponding to splitting axis.
-\item (Possibly) Extend KD-tree to work on triangles (not particularly optimized
-  version, just make it work, no dynamic geometry for now)
-\item raytrace the triangle KD-tree and map photons
-\item visualize photons
-\item Create lighting/caustics from photons
-\item Dynamic photon mapping (just recalculate everything 'cept geometry)
+\item Extend KD-tree to work on triangles
+\item raytrace the triangle KD-tree
+\item Add a balanced tree lower node creator
+\end{itemize}
+
+TODO
+\begin{itemize}
+\item Add empty space splitting
+\item Split PrimInfo into int index and int64 bitmap, (depending on
+  LOWER\_MAX\_SIZE). That way I can raise the max amounts of triangles
+  pr leaf.
+\item Why oh why is my short stack so slow?
+\item Add persistent threads to the ray tracer and SAH kernels
+\item Add triangle split / divide.
 \end{itemize}
 
 If time allows
 
 \begin{itemize}
-\item Optimize raytracing (packets, stack)
-\item Optimize photon mapping, create different photon maps for
-  indirect illumination and caustucs, only send accustic photons
-  toward specular surfaces.
-\item Create the screen space grid data structure and sort photons in
-  it. Needs to be really fast, since it has to be updated every frame
-  (that the camera moves). How to handle final gather with this data
-  structure? Plane rendering as proposed in Bent's phd thesis would
-  work. Raytracing is probably out.
+\item Add shadow rays
+\item Add an oscilating surface with nice refraction!!
+\item Look into SAH approximations
 \end{itemize}
 
 
 
 \subsection*{Trier}
 
-%% Splitte trekanter eller bare beregne ny aabb og areal? Færre splits
-%% betyder mindre træ.
-
 Hurtige SAH beregninger? Wald?
 
 Ray tracing optimeringer de har brugt? Short stack.
-
-Terminering? Hvordan spotter man at ens ray rammer nada?
 
 
 \subsection*{Sangild}

@@ -75,32 +75,80 @@ the rays.
   \caption{KD Restart}
   \label{alg:KDRestart}
   \begin{algorithmic}
-    \ASSIGN{t_{min}}{0}
-    %\ASSIGN{t_{next}}{\infty}
-    \WHILE{$t_{min} \neq \infty$}
-      \ASSIGN{t_{next}}{\infty}
-      \ASSIGN{node}{root}
-      \COMMENTIT{Traverse the tree until a leaf node is reached}
-      \WHILE{$node.info \neq LEAF$}
-        \ASSIGN{k}{node.axis}
-        \COMMENTIT{@TODO: How to handle division by zero?}
-        \ASSIGN{t_{split}}{(node.splitValue - ray.origin[k]) / ray.direction[k]}
-        \ASSIGN{lowerChild}{ray.direction[k] > 0$ ? $node.left$ : $node.right}
-        \ASSIGN{upperChild}{ray.direction[k] > 0$ ? $node.right$ : $node.left}
-        \IF{$t_{min} < t_{split}$}
-          \ASSIGN{node}{lowerChild}
-          \ASSIGN{t_{next}}{min(t_{split}, t_{next})}
-        \ELSE
-          \ASSIGN{node}{upperChild}
-        \ENDIF
-      \ENDWHILE
-      \COMMENTIT{@TODO: Perhaps tSplit can be used instead, with a check for if tSplit < tMin then no go}
-      \ASSIGN{t_{min}}{t_{next}}
-      \COMMENTIT{Test intersection with the leafs primitives}
-    \ENDWHILE
+    \PROCEDURE{KDRestart}
+              {$ray$ : Ray}
+              {$t_{min}$ : Integer}{
+                \ASSIGN{$t_{min}$}{$0$}
+                \WHILE{$t_{min} < \infty$}
+                  \ASSIGN{$t_{next}$}{$\infty$}
+                  \ASSIGN{$node$}{$root$}
+                  \COMMENTIT{Traverse the tree until a leaf node is reached}
+                  \WHILE{$node.info \neq LEAF$}
+                    \ASSIGN{$t_{split}$}{($node.splitValue - ray.origin[node.axis]) / ray.direction[node.axis]$}
+                    \ASSIGN{$lowerChild$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
+                    \ASSIGN{$upperChild$}{$ray.direction[node.axis] > 0$ ? $node.right$ : $node.left$}
+                    \IF{$t_{min} < t_{split}$}
+                      \ASSIGN{$node$}{$lowerChild$}
+                      \ASSIGN{$t_{next}$}{min$(t_{split}, t_{next})$}
+                    \ELSE
+                      \ASSIGN{$node$}{$upperChild$}
+                    \ENDIF
+                  \ENDWHILE
+                  \COMMENTIT{Advance the ray to the next splitting plane.}
+                  \ASSIGN{$t_{min}$}{$t_{next}$}
+                  \COMMENTIT{Test intersection with the leafs primitives}
+                  \FOREACH{$triangle$}{$node.triangles$}
+                    \ASSIGN{$t_{min}$}{min$(t_{min}, $\bf{Intersect}$(triangle, ray))$}
+                  \ENDFOR
+                \ENDWHILE
+                \STATE{\bf{return} $t_{min}$}
+              }
   \end{algorithmic}
 \end{algorithm}
 
 \subsection{Short stack}
+
+\begin{algorithm}
+  \caption{Short stack}
+  \label{alg:ShortStack}
+  \begin{algorithmic}
+    \PROCEDURE{ShortStack}
+              {$ray$ : Ray}
+              {$t_{min}$ : Integer}{
+    \ASSIGN{$t_{min}$}{$0$}
+    \WHILE{$t_{min} < \infty$}
+      \IF{$\color{green}stack.IsEmpty$}
+        \ASSIGN{$node$}{$root$}
+        \ASSIGN{$t_{next}$}{$\infty$}
+      \ELSE
+        \color{green}\ASSIGN{$(node, t_{next})$}{stack.pop}
+      \ENDIF
+      \COMMENTIT{Traverse the tree until a leaf node is reached}
+      \WHILE{$node.info \neq LEAF$}
+        \ASSIGN{$t_{split}$}{($node.splitValue - ray.origin[node.axis]) / ray.direction[node.axis]$}
+        \ASSIGN{$lowerChild$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
+        \ASSIGN{$upperChild$}{$ray.direction[node.axis] > 0$ ? $node.right$ : $node.left$}
+        \IF{$t_{min} < t_{split}$}
+          \ASSIGN{$node$}{$lowerChild$}
+          \IF{$\color{green}t_{split} < t_{next}$}
+            \color{green}\STATE{stack.push($upperChild, t_{next}$)}
+          \ENDIF
+          \ASSIGN{$t_{next}$}{min$(t_{split}, t_{next})$}
+        \ELSE
+          \ASSIGN{$node$}{$upperChild$}
+        \ENDIF
+      \ENDWHILE
+      \COMMENTIT{Advance the ray to the next splitting plane.}
+      \ASSIGN{$t_{min}$}{$t_{next}$}
+      \COMMENTIT{Test intersection with the leafs primitives}
+      \FOREACH{$triangle$}{$node.triangles$}
+        \ASSIGN{$t_{min}$}{min$(t_{min}, $\bf{Intersect}$(triangle, ray))$}
+      \ENDFOR
+    \ENDWHILE
+    \STATE{\bf{return} $t_{min}$}
+              }
+  \end{algorithmic}
+\end{algorithm}
+
 
 \subsection{Persistent Threads}
