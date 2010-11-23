@@ -63,7 +63,7 @@ ISceneNode* CreateCornellBox() {
         c[i++] = 1.0f;
         c[i++] = 1.0f;
         c[i++] = 1.0f;
-        c[i++] = 0.9f;
+        c[i++] = 1.0f;
     }
     Float4DataBlockPtr colors = Float4DataBlockPtr(new DataBlock<4, float>(24, c));
     Vector<4,float> red(1.0f, 0.0f, 0.0f, 1.0f);
@@ -96,7 +96,7 @@ ISceneNode* CreateSmallBox() {
         c[i++] = 1.0f;
         c[i++] = 1.0f;
         c[i++] = 1.0f;
-        c[i++] = 0.5f;
+        c[i++] = 1.0f;
     }
     Float4DataBlockPtr colors = Float4DataBlockPtr(new DataBlock<4, float>(24, c));
     
@@ -112,8 +112,8 @@ ISceneNode* CreateSmallBox() {
 }
 
 ISceneNode* CreateDragon() {
-    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res4.ply");
-    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/data/bun000.ply");
+    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res4.ply");
+    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
     duckRes->Load();
     MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0);
 
@@ -126,10 +126,15 @@ ISceneNode* CreateDragon() {
         IDataBlockPtr vertices = dragonGeom->GetDataBlock("vertex");
         float *c = new float[vertices->GetSize() * 4];
         for (unsigned int i = 0; i < vertices->GetSize() * 4; ){
+            /*
             c[i++] = 0.0f;
             c[i++] = 165.0f/255.0f;
             c[i++] = 101.0f/255.0f;
-            c[i++] = 0.7f;
+            c[i++] = 0.5f;*/
+            c[i++] = 0.667f;
+            c[i++] = 0.49f;
+            c[i++] = 0.361f;
+            c[i++] = 0.5f;
         }
         color = Float4DataBlockPtr(new DataBlock<4, float>(vertices->GetSize(), c));
         dragonGeom = GeometrySetPtr(new GeometrySet(vertices, 
@@ -143,6 +148,16 @@ ISceneNode* CreateDragon() {
 
     duckRes->Unload();
     return dragon;
+}
+
+ISceneNode* CreateSponza() {
+    IModelResourcePtr mdl = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/sponza/Sponza.obj");
+    // It's a damn scene. Needs a visitor to handle the colors
+    mdl->Load();
+
+    mdl->Unload();
+
+    return mdl->GetSceneNode();
 }
 
 ISceneNode* SetupScene(){
@@ -231,8 +246,8 @@ int main(int argc, char** argv) {
     Camera* camera  = new Camera(*(new PerspectiveViewingVolume(1, 4000)));
     camera->SetPosition(Vector<3, float>(-4.0f, 4.0f, 4.0f));
     camera->LookAt(Vector<3, float>(0.0f, -2.0f, 0.0f));
-    //camera->SetPosition(Vector<3, float>(4.0f, -4.0f, 4.0f));
-    //camera->LookAt(Vector<3, float>(0.0f, -8.0f, 0.0f));
+    //camera->SetPosition(Vector<3, float>(-4.0f, 1.0f, 1.0f));
+    //camera->LookAt(Vector<3, float>(0.0f, -2.0f, 0.0f));
 
     PhotonRenderingView* renderingview = new PhotonRenderingView();
     renderer->InitializeEvent().Attach(*renderingview);    

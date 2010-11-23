@@ -45,3 +45,5 @@ win32 /libraries http://openengine.dk/data/libraries/dlls-win32.zip
 # project data
 
 any /projects/PhotonMapping/data/       http://openengine.dk/data/models/stanford-dragon.tar.gz
+any /projects/PhotonMapping/data/       http://openengine.dk/data/models/stanford-bunny.tar.gz
+any /projects/PhotonMapping/data/       http://openengine.dk/data/models/sponza.tar.gz
