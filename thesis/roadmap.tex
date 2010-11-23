@@ -1,24 +1,37 @@
 \section*{Road Map}
 
 
-DONE
 \begin{itemize}
-\item Create the KD-tree from points on the GPU
+\item Create the KD-tree from points on the GPU \checkmark
 \item Visualize the KD-tree (as part of debugging), draw frame around
-  splitting plane in color corrosponding to splitting axis.
-\item Extend KD-tree to work on triangles
-\item raytrace the triangle KD-tree
-\item Add a balanced tree lower node creator
-\end{itemize}
-
-TODO
-\begin{itemize}
-\item switch to indices in upper nodes
+  splitting plane in color corrosponding to splitting axis. \checkmark
+\item Extend KD-tree to work on triangles \checkmark
+\item raytrace the triangle KD-tree \checkmark
+\item Add a balanced tree lower node creator \checkmark
+\item Reduce more than 512 segments \checkmark
 \item Add empty space splitting
+  \begin{itemize}
+    \item Extend CreateUpperChildren with the possibility to use indices \checkmark
+    \item Copy aabb to lower nodes \checkmark
+    \item In reduce, compare the existing aabb with the reduced. \checkmark
+    \item Use emptySpacePlanes to create empty splits and update the
+      indice list used by CreateUpperChildren.
+    \item PROFIT
+  \end{itemize}
 \item Split PrimInfo into int index and int64 bitmap, (depending on
   LOWER\_MAX\_SIZE). That way I can raise the max amounts of triangles
   pr leaf.
-\item Why oh why is my short stack so slow?
+\item Optimize GeometryList
+  \begin{itemize}
+  \item Remove OpenGL and have triangles placed in host memory
+  \item Try that non copy array gøjl from host memory to kernels. Time
+    it.
+  \item Move matrices to constant memory. Does it give a speed up?
+  \end{itemize}
+\item Split ray tracing and coloring into 2 different kernels to save
+  on register use? More global memory acceses, but fewer registers
+  used (bloody incompetent nvcc)
+\item Why oh why is my short stack so slow? It uses local memory
 \item Add persistent threads to the ray tracer and SAH kernels
 \item Add triangle split / divide.
 \end{itemize}
@@ -29,6 +42,7 @@ If time allows
 \item Add shadow rays
 \item Add an oscilating surface with nice refraction!!
 \item Look into SAH approximations
+\item Optimize segmented reduce. (low low priority)
 \end{itemize}
 
 

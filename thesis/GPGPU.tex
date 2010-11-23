@@ -6,7 +6,13 @@
 % In order to create algorithms on the GPU that run faster than their
 % CPU version, we need to understand the gpu.
 
-% It is a wide SIMD/SIMT machine. This means branching hurts. Alot!
+\section{The Architecture of the GPU}
+
+% Grid, blocks, warps and threads. We will only deal with the one
+% dimensional case.
+
+% It is a wide SIMD/SIMT, Single-Instruction / Multiple-Thread,
+% machine. This means branching hurts. Alot!
 
 \quotebook{
   It is important to include the overhead of transferring data to and

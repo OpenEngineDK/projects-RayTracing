@@ -1,8 +1,5 @@
 \chapter{Optimizations}
 
-Use chunks! Creating chunks will save me the trouble of copying the
-size of each node back to the cpu.
-
 Unroll the first and/or last step in FinalBoundingBox. Create a
 seperat kernel that handles bounding box reductions with blocksize 1,
 avoiding special cases when unrolling final
@@ -12,7 +9,3 @@ creation steps, copy block node info into shared memory access first.
 Also when doing pr triangle calculations that require random owner
 node info, the owner nodes are placed succesive and their info can be
 stored in shared memory first.
-
-Remove CUDADataBlock's Extend and place that code into Resize. Then a
-compact method should probably also be written, for cases where the
-array has grown to big. (not really needed in this thesis)
