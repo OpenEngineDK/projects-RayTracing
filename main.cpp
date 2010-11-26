@@ -40,6 +40,8 @@
 #include <Utils/MeshCreator.h>
 #include <Utils/MeshTransformer.h>
 
+#include <Resources/FreeImage.h>
+
 // Photon Mapping stuff
 #include <Renderers/OpenGL/PhotonRenderingView.h>
 
@@ -58,6 +60,7 @@ using namespace OpenEngine::Utils;
 
 ISceneNode* CreateCornellBox() {
     MeshPtr box = MeshCreator::CreateCube(10, 1, Vector<3,float>(1.0f, 1.0f, 1.0f), true);
+
     float *c = new float[24 * 4];
     for (unsigned int i = 0; i < 24 * 4; ){
         c[i++] = 1.0f;
@@ -84,7 +87,7 @@ ISceneNode* CreateCornellBox() {
     box = MeshPtr(new Mesh(box->GetIndices(),
                            box->GetType(),
                            boxGeom, box->GetMaterial()));
-    
+
     return new MeshNode(box);
 }
 
@@ -112,8 +115,8 @@ ISceneNode* CreateSmallBox() {
 }
 
 ISceneNode* CreateDragon() {
-    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res4.ply");
-    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
+    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
+    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
     duckRes->Load();
     MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0);
 
@@ -126,15 +129,17 @@ ISceneNode* CreateDragon() {
         IDataBlockPtr vertices = dragonGeom->GetDataBlock("vertex");
         float *c = new float[vertices->GetSize() * 4];
         for (unsigned int i = 0; i < vertices->GetSize() * 4; ){
-            /*
             c[i++] = 0.0f;
             c[i++] = 165.0f/255.0f;
             c[i++] = 101.0f/255.0f;
-            c[i++] = 0.5f;*/
+            c[i++] = 0.7f;
+
+            /*
             c[i++] = 0.667f;
             c[i++] = 0.49f;
             c[i++] = 0.361f;
-            c[i++] = 0.5f;
+            c[i++] = 1.0f;
+            */
         }
         color = Float4DataBlockPtr(new DataBlock<4, float>(vertices->GetSize(), c));
         dragonGeom = GeometrySetPtr(new GeometrySet(vertices, 
@@ -152,10 +157,10 @@ ISceneNode* CreateDragon() {
 
 ISceneNode* CreateSponza() {
     IModelResourcePtr mdl = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/sponza/Sponza.obj");
-    // It's a damn scene. Needs a visitor to handle the colors
+
     mdl->Load();
 
-    mdl->Unload();
+    //mdl->Unload();
 
     return mdl->GetSceneNode();
 }
@@ -178,7 +183,8 @@ ISceneNode* SetupScene(){
     light->specular = lightColor * 0.3;
     lightTrans->AddNode(light);
 
-    ISceneNode* cornellBox = CreateCornellBox();
+    //ISceneNode* cornellBox = CreateCornellBox();
+    ISceneNode* cornellBox = CreateSponza();
     rsNode->AddNode(cornellBox);
 
     /*
@@ -198,6 +204,7 @@ ISceneNode* SetupScene(){
     bigTrans->AddNode(bigBox);
     */
 
+    /*
     // Dragon
     TransformationNode* dragonTrans = new TransformationNode();
     dragonTrans->SetScale(Vector<3, float>(40, 40, 40));
@@ -206,7 +213,7 @@ ISceneNode* SetupScene(){
 
     ISceneNode* dragon = CreateDragon();
     dragonTrans->AddNode(dragon);
-
+    */
     return rsNode;
 }
 
@@ -225,9 +232,9 @@ int main(int argc, char** argv) {
 
     // setup the engine
     Engine* engine = new Engine;
-    //IEnvironment* env = new SDLEnvironment(800, 600, 32);
+    //IEnvironment* env = new SDLEnvironment(800, 600, 32, FRAME_FULLSCREEN);
     IEnvironment* env = new SDLEnvironment(640, 480, 32);
-    //IEnvironment* env = new SDLEnvironment(160, 120, 32);
+    //IEnvironment* env = new SDLEnvironment(1024, 768, 32);
     engine->InitializeEvent().Attach(*env);
     engine->ProcessEvent().Attach(*env);
     engine->DeinitializeEvent().Attach(*env);
@@ -235,11 +242,12 @@ int main(int argc, char** argv) {
     IRenderer* renderer = new Renderer();
 
     ResourceManager<IModelResource>::AddPlugin(new AssimpPlugin());
+    ResourceManager<ITexture2D>::AddPlugin(new FreeImagePlugin());
 
     ISceneNode* scene = SetupScene();
 
-    DataBlockBinder* bob = new DataBlockBinder(*renderer);
-    bob->Bind(*scene);
+    //DataBlockBinder* bob = new DataBlockBinder(*renderer);
+    //bob->Bind(*scene);
 
     IFrame& frame = env->CreateFrame();
 
