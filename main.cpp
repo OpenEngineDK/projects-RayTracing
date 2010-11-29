@@ -115,8 +115,8 @@ ISceneNode* CreateSmallBox() {
 }
 
 ISceneNode* CreateDragon() {
-    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
-    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
+    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
+    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
     duckRes->Load();
     MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0);
 
@@ -132,7 +132,7 @@ ISceneNode* CreateDragon() {
             c[i++] = 0.0f;
             c[i++] = 165.0f/255.0f;
             c[i++] = 101.0f/255.0f;
-            c[i++] = 0.7f;
+            c[i++] = 0.3f;
 
             /*
             c[i++] = 0.667f;
@@ -183,8 +183,8 @@ ISceneNode* SetupScene(){
     light->specular = lightColor * 0.3;
     lightTrans->AddNode(light);
 
-    //ISceneNode* cornellBox = CreateCornellBox();
-    ISceneNode* cornellBox = CreateSponza();
+    ISceneNode* cornellBox = CreateCornellBox();
+    //ISceneNode* cornellBox = CreateSponza();
     rsNode->AddNode(cornellBox);
 
     /*
@@ -204,7 +204,6 @@ ISceneNode* SetupScene(){
     bigTrans->AddNode(bigBox);
     */
 
-    /*
     // Dragon
     TransformationNode* dragonTrans = new TransformationNode();
     dragonTrans->SetScale(Vector<3, float>(40, 40, 40));
@@ -213,7 +212,7 @@ ISceneNode* SetupScene(){
 
     ISceneNode* dragon = CreateDragon();
     dragonTrans->AddNode(dragon);
-    */
+
     return rsNode;
 }
 
