@@ -47,6 +47,13 @@ the rays.
 % yield a speedup and did not provide any results. Aila2009 is against
 % packets as they in practice seem to make it slower.
 
+% As ray tracing becomes more complex packets also become less
+% effective, as rays will become more chaotic in nature and less
+% likely to fit into packets.
+
+% I will adobt a pretty cheap packet strategy: I will trace my rays in
+% 4x8 packets to increase ray coherence across warps.
+
 \subsection{Short stack}
 
 % Only push usefull 'forward' nodes to the stack.

@@ -3,10 +3,18 @@
 \chapterquote{Hardware: The parts of a computer system that can be
   kicked.}  {Jeff Pesis}
 
+\quotebook{
+  It is important to include the overhead of transferring data to and
+  from the device in determining whether operations should be
+  performed on the host or on the device.
+}{CUDABPG}
+
 % In order to create algorithms on the GPU that run faster than their
 % CPU version, we need to understand the gpu.
 
 \section{The Architecture of the GPU}
+
+\subsection{Thread Model}
 
 % Grid, blocks, warps and threads. We will only deal with the one
 % dimensional case.
@@ -14,17 +22,46 @@
 % It is a wide SIMD/SIMT, Single-Instruction / Multiple-Thread,
 % machine. This means branching hurts. Alot!
 
-\quotebook{
-  It is important to include the overhead of transferring data to and
-  from the device in determining whether operations should be
-  performed on the host or on the device.
-}{CUDABPG}
+
+\subsection{Memory Model}
+
+\subsubsection{Global Memory}
+
+% Slow, coalescene of data types with size 1, 2, 4, 8, and 16 bytes.
+
+% Coalesced memory access, float4 instead of float3
+
+% The alignment requirement can be forced: stuct __align__(8) {
+
+\subsubsection{Registers and Local Memory}
+
+Kernel variables that the compiler will most likely place in local memory are:
+
+\begin{itemize}
+  \item Any array that from the compilers point of view are dynamically indexed.
+  \item Structures or arrays that are to large to fit inside registers.
+  \item Any variable in the kernel, if the kernel has to many
+    variables to place them all in register memory. This is referered
+    to as \textit{register spilling}.
+\end{itemize}
+
+% Combat local memory by using launch bounds
+
+\subsubsection{Shared Memory}
+
+% Faster than global/local
+
+% Used to overcome the limitations of global and local memory.
+
+% Can be used as global cache on never CUDA architectures isntead of
+% textures and shared mem. nice we laike
+
+% Bank conflicts, nothing is ever as good as it seems.
+
+
+
 
 % NVIDIA mentioned 3 optimization points
-
-% Coelesced memory access, float4 instead of float3
-
-% Bank conflicts?
 
 % Structures of arrays vs arrays of structs. Usefull when fx
 % sorting. CUDPP article/forum. Plus cache performance.
@@ -32,6 +69,21 @@
 % Unrolling loops, even when it means more work. Preprocess lower
 % nodes yields nearly a 50% speedup from this.
 
+
+\section{GPGPU primitives}
+
+% Scan and compact
+
+% cite sengupta paper
+
+\quotebook{efficient solutions to parallel problems in which each
+  output requires global knowledge of the inputs.}{Sengupta:2007}
+
+% Useful for scattering data
+
+% Give array example
+
+\section{Optimization Tecniques}
 
 \section{Case Study: Reduction}
 

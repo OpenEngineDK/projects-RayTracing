@@ -2,38 +2,41 @@
 
 
 \begin{itemize}
-\item Create the KD-tree from points on the GPU \checkmark
+\item \color{green}Create the KD-tree from points on the GPU \checkmark
 \item Visualize the KD-tree (as part of debugging), draw frame around
-  splitting plane in color corrosponding to splitting axis. \checkmark
+  splitting plane in color corrosponding to splitting axis. (\checkmark)
 \item Extend KD-tree to work on triangles \checkmark
 \item raytrace the triangle KD-tree \checkmark
 \item Add a balanced tree lower node creator \checkmark
-\item Reduce more than 512 segments \checkmark
+\item Reduce more than 1024 segments \checkmark
 \item Add empty space splitting
   \begin{itemize}
     \item Extend CreateUpperChildren with the possibility to use indices \checkmark
     \item Copy aabb to lower nodes \checkmark
     \item In reduce, compare the existing aabb with the reduced. \checkmark
-    \item Use emptySpacePlanes to create empty splits and update the
-      indice list used by CreateUpperChildren.
+    \item Move the nodes by the amount of emptySplitNodes, create the
+      empty split nodes in front of the nodes and link them with the
+      previous nodes parents.\\ Remember to update segments (used when
+      splitting triangles), node size and activeIndex. \checkmark
+    \item \color{red}Make dynamic empty space threshold. Higher probability of
+      splits at the top, than bottom.
     \item PROFIT
   \end{itemize}
-\item Split PrimInfo into int index and int64 bitmap, (depending on
-  LOWER\_MAX\_SIZE). That way I can raise the max amounts of triangles
-  pr leaf.
 \item Optimize GeometryList
   \begin{itemize}
-  \item Remove OpenGL and have triangles placed in host memory
-  \item Try that non copy array gøjl from host memory to kernels. Time
-    it.
-  \item Move matrices to constant memory. Does it give a speed up?
+  \item Removed OpenGL and use device arrays instead. Oh such clean
+    geometry collection code. \checkmark
   \end{itemize}
-\item Split ray tracing and coloring into 2 different kernels to save
-  on register use? More global memory acceses, but fewer registers
-  used (bloody incompetent nvcc)
-\item Why oh why is my short stack so slow? It uses local memory
+\item Partition the screen into 4x4 ray blocks to improve ray
+  traversel coalescenece. \checkmark
+\color{red}\item Using indices in lower nodes means child creation will be
+  coalesced. Does it mean anything? (Debug malloc\_error, probably
+  cudppCompacts handling of numValid)
 \item Add persistent threads to the ray tracer and SAH kernels
 \item Add triangle split / divide.
+\item Use triangle-box intersection to remove ``impossible to hit''
+  triangles from the lower nodes. Aabb might need to be propagated
+  downwards in order to do this.
 \end{itemize}
 
 If time allows

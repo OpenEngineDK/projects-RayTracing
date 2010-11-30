@@ -43,17 +43,19 @@
 % issue.
 
 % Raytracing structures on the GPU has been mapped more or less 100%
-% from CPU structures.
+% from CPU structures. We need to build them for the GPU instead. That
+% means rethinking some of the algorithms (like add persistent
+% threads.)
 
 % This thesis will explorer different aspects of KD-tree construction,
 % how it affects ray tracing performance and how many resources should
 % be devoted to KD-tree construction.
 
-% During this I will look at the usefulness of data structures on the
-% GPU, given that a binairy data structure is not easy for the GPU to
-% handle and breaks coalescence. A brute force raytracer, that
-% performs intersection with all triangles, will be used to test
-% wether or not data structures on the GPU even makes sense.
+% During this I will look at the usefulness of hierachical traversal
+% on the GPU, given that a binary data structure is not easy for the
+% GPU to handle and breaks coalescence. A brute force raytracer, that
+% performs intersection with all triangles, will be used to motivate
+% the use of a hierachical datatsructure, even on the GPU.
 
 % The thesis will look at an alternative to triangle splitting, namely
 % triangle division, where the triangle is not split by splitting

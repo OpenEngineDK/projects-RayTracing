@@ -123,6 +123,10 @@ node
 
 \subsubsection{Empty Space Splitting}
 
+% Dynamic empty space threshold, favor early out in the top of the tree.
+
+% huge ray tracing performance improvement in testscene (23% so far)
+
 \subsubsection{Splitting or Dividing Geometry}
 
 % What to do with the triangles caught in the splitting plane.
@@ -178,6 +182,14 @@ node
 % Creating the KD-tree in BFS will optimize GPU performance at lower
 % tree levels, as there would be thousands of nodes created at the
 % same time.
+
+% Instead of reducing the sizes of child nodes, I propose a method for
+% calculating them directly. This leads to lots of uncoalesced
+% lookups, so argue if the GPU is able to properly hide these.
+
+% Building the upper nodes mostly consist of moving data around, and
+% not necessarily in a coalesced fashion. This makes it hard to hide
+% the latency and will impact performance.
 
 \subsubsection{Empty space splitting}
 
