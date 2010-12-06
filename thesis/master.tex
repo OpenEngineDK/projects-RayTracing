@@ -11,6 +11,7 @@
 \newcommand{\reffig}[1]{figure \ref{#1}}
 \newcommand{\reflst}[1]{listing \ref{#1}}
 
+% Cite macroes
 \newcommand{\chapterquote}[2]{
   \begin{quote}
     \raggedleft{
@@ -26,6 +27,7 @@
     \raggedleft{\citebook{#2}}
   \end{quote}}
 
+% Algorithm macros
 \newcommand{\PARALLELFOR}[1]{\FOR{\textbf{each} #1 \textbf{in
       parallel}}}
 \newcommand{\FOREACH}[2]{\FOR{\bf{each} #1 \bf{in} #2}}
@@ -41,6 +43,10 @@
   \STATE{#1 $\leftarrow$ #2}
 }
 
+% Math macros
+\newcommand{\vecthree}[3]{
+  \left[\begin{array}{c} #1 \\ #2 \\ #3 \end{array}\right]
+}
 
 \begin{document}
 

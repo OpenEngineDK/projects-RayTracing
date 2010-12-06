@@ -24,6 +24,38 @@ and \citebook{1230129}.
 % precalculation. Should be faster than Möller-Trumbore's method. Lets
 % test it :) Or not :p
 
+\section{Triangle Intersection}
+
+% Consists of 2 parts. Ray/plane intersection which tells us the
+% distance the ray will travel, and ray/triangle tests which tells us
+% if the ray intersected the triangle.
+
+% Explain barycentric coordinates and how they are important for
+% triangle/ray intersection and linearly interpolating the triangle
+% attributes at the vertices.
+
+\subsection{Möller-Trumbore}
+
+% One of the most popular intersection algorithms and featured in
+% Real-Time Rendering.
+
+% Computes both distance and barycentric coords
+
+% Calculates the transformation that transform the triangle into the
+% unit triangle and applies this transformation to the ray.
+
+% Uses the barycentric coordinates to perform the intersection test.
+
+\subsection{Woop}
+
+% Also translates the ray using the unit triangle.
+
+% Does some precalculation, which means we can save calculations and
+% register space when performaing the actual ray tracing.
+
+% Higher occupancy, which in turn will make it easier for the GPU to
+% hide global memory lookup latency.
+
 \section{Acceleration Techniques}
 
 % Brief introduction to several acceleration techniques

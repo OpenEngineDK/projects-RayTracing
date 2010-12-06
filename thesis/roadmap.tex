@@ -27,16 +27,23 @@
   \item Removed OpenGL and use device arrays instead. Oh such clean
     geometry collection code. \checkmark
   \end{itemize}
-\item Partition the screen into 4x4 ray blocks to improve ray
+\item Partition the screen into 8x4 ray blocks to improve ray
   traversel coalescenece. \checkmark
-\color{red}\item Using indices in lower nodes means child creation will be
-  coalesced. Does it mean anything? (Debug malloc\_error, probably
-  cudppCompacts handling of numValid)
-\item Add persistent threads to the ray tracer and SAH kernels
-\item Add triangle split / divide.
-\item Use triangle-box intersection to remove ``impossible to hit''
+\color{red} \item Use triangle-box intersection to remove ``impossible to hit''
   triangles from the lower nodes. Aabb might need to be propagated
   downwards in order to do this.
+\item Add triangle split / divide. Triangle split can possibly gain
+  some performance, by always doing the ``2 triangles'' side first.
+\item Split raytracing and coloring into 2 kernels to save on register
+  usage for at least on of them (hopefully more threads while
+  tracing). Allow a max amount of bounces and let the last ray search
+  for an opaque primitive.
+\item Make colors float instead of char. Removes 4 divisions when coloring.
+\item Use inverse ray dir instead of dir? Replaces a division with
+  multiplication. Will probably do nothing since I'm databound.
+\item Add Persistent Theads to SAH. Extend it with preemtively
+  replacing dead threads every 4 or so cycle.
+\item Add persistent threads to the ray tracer
 \end{itemize}
 
 If time allows
@@ -50,26 +57,18 @@ If time allows
 
 
 
-\subsection*{Trier}
-
-Hurtige SAH beregninger? Wald?
-
-Ray tracing optimeringer de har brugt? Short stack.
-
 
 \subsection*{Sangild}
-
-Smide pointere op som constant vars, hvorfor virker det ikke.
-
-Forskel på cudaArray og ``almindelige'' arrays
-
-Mulighed for at bruge cuda arrays direkte i gl?
 
 Hvordan bruger jeg profileren? (Måske cpvc ved det)
 
 Bank conflicts.
 
-Gemme float og int i samme 4 entry struct, eg. int4.
+====
 
-Er NVidia gået væk fra SIMD instruktioner? Så 4 float er ligeså
-hurtige som float4?
+Occupancy
+
+Primære og sekundære kilder? Both good. Just quote responsibly (page
+number, section, something)
+
+Slå register usage op på runtime
