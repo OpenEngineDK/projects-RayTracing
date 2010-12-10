@@ -17,96 +17,26 @@
 The optimized raytracer will use techniques from \citebook{Aila2009}
 and \citebook{1230129}.
 
-% Generel ray tracing code.
+\section{Brute Force Raytracing}
 
-% Ray triangle intersection, refer to Wald's thesis. Something
-% something about projecting triangles onto planes and doing a lot of
-% precalculation. Should be faster than Möller-Trumbore's method. Lets
-% test it :) Or not :p
+% GPU does bruteforcing well.
 
-\section{Triangle Intersection}
+% Cite paper on kNN done on the GPU.
 
-% Consists of 2 parts. Ray/plane intersection which tells us the
-% distance the ray will travel, and ray/triangle tests which tells us
-% if the ray intersected the triangle.
+% Algorithm
 
-% Explain barycentric coordinates and how they are important for
-% triangle/ray intersection and linearly interpolating the triangle
-% attributes at the vertices.
+% GPU optimazations? Can shared mem work damn it?!?
 
-\subsection{Möller-Trumbore}
+\section{Hierachical Raytracing}
 
-% One of the most popular intersection algorithms and featured in
-% Real-Time Rendering.
+% Brief introduction to several acceleration techniques. BVH, KD, quad/oct trees and BSP.
 
-% Computes both distance and barycentric coords
-
-% Calculates the transformation that transform the triangle into the
-% unit triangle and applies this transformation to the ray.
-
-% Uses the barycentric coordinates to perform the intersection test.
-
-\subsection{Woop}
-
-% Also translates the ray using the unit triangle.
-
-% Does some precalculation, which means we can save calculations and
-% register space when performaing the actual ray tracing.
-
-% Higher occupancy, which in turn will make it easier for the GPU to
-% hide global memory lookup latency.
-
-\section{Acceleration Techniques}
-
-% Brief introduction to several acceleration techniques
-
-% KD restart is the simplest
-
-\subsection{Push Down}
-
-I will not be implementing the push-down approach from
-\citebook{1230129}. While it will most likely improve the generel ray
-tracing case, where some of the geometry will be located behind the
-rays and can safely be excluded, it will only add an overhead to worst
-case situations, where the uppermost splitting plane is intersected by
-the rays.
-
-\subsection{Packets}
-
-% Packets: 2x2 packets on the CPU for to take advantage of SIMD
-% instructions (Wald), warp size packets on the GPU. While
-% \citebook{1230129} implemented packets, they merely assumed it would
-% yield a speedup and did not provide any results. Aila2009 is against
-% packets as they in practice seem to make it slower.
-
-% As ray tracing becomes more complex packets also become less
-% effective, as rays will become more chaotic in nature and less
-% likely to fit into packets.
-
-% I will adobt a pretty cheap packet strategy: I will trace my rays in
-% 4x8 packets to increase ray coherence across warps.
-
-\subsection{Short stack}
-
-% Only push usefull 'forward' nodes to the stack.
-
-\subsection{Ropes}
-
-% stackless raytracing using ropes. 
-
-\subsection{Persistent Threads}
-
-% Use persistent threads / own scheduler. Aila2009.
-
-\subsection{Caching 'hot' nodes}
-
-% wrap node and geometry arrays in textures to utilize cache? Or
-% simply don't care and refere to cached global memory in future
-% GPU's?
-
-\section{Implementation}
+% KD-trees are ze leetzors according to Havran? Another motivation is
+% Zhou's paper on fast KD tree construction.
 
 \subsection{KD-restart}
+
+% KD restart is the simplest and fastest.
 
 % Start with kd restart, simple to get up and running.
 
@@ -145,7 +75,24 @@ the rays.
   \end{algorithmic}
 \end{algorithm}
 
+\subsection{Packets}
+
+% Packets: 2x2 packets on the CPU for to take advantage of SIMD
+% instructions (Wald), warp size packets on the GPU. While
+% \citebook{1230129} implemented packets, they merely assumed it would
+% yield a speedup and did not provide any results. Aila2009 is against
+% packets as they in practice seem to make it slower.
+
+% As ray tracing becomes more complex packets also become less
+% effective, as rays will become more chaotic in nature and less
+% likely to fit into packets.
+
+% I will adobt a pretty cheap packet strategy: I will trace my rays in
+% 4x8 packets to increase ray coherence across warps.
+
 \subsection{Short stack}
+
+% Only push usefull 'forward' nodes to the stack.
 
 \begin{algorithm}
   \caption{Short stack}
@@ -189,9 +136,110 @@ the rays.
   \end{algorithmic}
 \end{algorithm}
 
+\subsection{Push Down}
+
+I will not be implementing the push-down approach from
+\citebook{1230129}. While it will most likely improve the generel ray
+tracing case, where some of the geometry will be located behind the
+rays and can safely be excluded, it will only add an overhead to worst
+case situations, where the uppermost splitting plane is intersected by
+the rays.
+
+\subsection{Ropes}
+
+% stackless raytracing using ropes. 
+% Place in future works?
 
 \subsection{Persistent Threads}
 
+% Use persistent threads / own scheduler. Aila2009.
+
+\subsection{Caching 'hot' nodes}
+
+% wrap node and geometry arrays in textures to utilize cache? Or
+% simply don't care and refere to cached global memory in future
+% GPU's?
+
+% Like persistent threads, this is not an important optimazition
+% longterm, since global memory are being given a cache.
+
+
+
+\section{Triangle Intersection}
+
+% Consists of 2 parts. Ray/plane intersection which tells us the
+% distance the ray will travel, and ray/triangle tests which tells us
+% if the ray intersected the triangle.
+
+% Explain barycentric coordinates and how they are important for
+% triangle/ray intersection and linearly interpolating the triangle
+% attributes at the vertices, such as the normals, colors or texture
+% coordiantes. Convex combination?
+
+For a barycentric coordinate to be inside the triangle it must fulfill
+$0 \le u$, $0 \le v$ and $u+v \le 1$.
+
+\subsection{Möller-Trumbore}
+
+% One of the most popular intersection algorithms and featured in
+% Real-Time Rendering.
+
+The Möller-Trumbore algorithm is one of the most popular algorithms
+for ray/triangle intersection, due probably in no small part to it's
+appearence in chapter 16.8 in \citebook{RTR3}, but also because it is
+one of the fastest ray/triangle intersection algorithms that does not
+rely on extra memory and/or precomputation.
+
+% Computes both distance and barycentric coords
+
+% Calculates the transformation that transform the triangle into the
+% unit triangle and applies this transformation to the ray.
+
+The basic idea of their algorithm is to transform the triangle,
+$T(u,v)$, given by
+
+\begin{displaymath}
+  T(u,v) = (1-u-v)a + ub + vc
+\end{displaymath}
+
+into the unit triangle, $U$, with
+vertices $\vecthreeT{0}{0}{0}$, $\vecthreeT{1}{0}{0}$ and
+$\vecthreeT{0}{1}{0}$. That transformation is then applied to the ray,
+$R(t) = O + tD$, instead, which yields the vector
+$\vecthreeT{t}{u}{v}$, where $t$ is the distance to the plane spanned
+by $T$ and $u$ and $v$ are the barycentric coordinates of the
+intersection point.
+
+% Uses the barycentric coordinates to perform the intersection test.
+
+\subsection{Woop}
+
+% Also translates the ray using the unit triangle.
+
+As was the case with the Möller-Trumbore approach, Woops was also
+interested in transforming the generel ray/triangle intersection
+problem into a ray/unit triangle intersection problem, where the
+solution is trivially calculated.
+
+He observed that to transform the triangle, $T$, into the unit
+triangle, $U$, a rotation matrix, $m$, and translation, $n$, was
+needed.
+
+\begin{displaymath}
+  U_d = m T_d + n
+\end{displaymath}
+
+% Does some precalculation, which means we can save calculations and
+% register space when performaing the actual ray tracing.
+
+% The extra space used by the precalcultations can be mitigated if
+% the vertices are no longer needed.
+
+% Higher occupancy, which in turn will make it easier for the GPU to
+% hide global memory lookup latency. Or not. Still at 32 registers.
+
+
+
 \section{Coloring}
 
-% Everything is paper thing and empty space
+% Everything is paper thin and empty space

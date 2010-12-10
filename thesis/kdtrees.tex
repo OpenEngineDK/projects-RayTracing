@@ -34,7 +34,6 @@
 % side and no triangles in other side. Non balanced tree would leed to
 % early exit.
 
-
 \quotebook{Balancing is optimal only for binary searching, and if all
   nodes have equal access probabilities. Neither of these two
   prerequisites are fulfilled for range queries (such as ray traversal
@@ -45,34 +44,25 @@
 % the splitting plane and deciding when to stop.
 
 
-\subsection{Splitting the geometry}
+\subsection{Choosing the Splitting Plane}
 
 % Infinitely many splitting planes.
 
 % Only interested in those finitely many planes where the resulting
 % left and right voxel changes.
 
-
-% Unlike \citebook{1409079} triangles will not be split in upper tree
-% nodes. Instead two new bounding boxes (maybe triangles) will be
-% created and updated to be inside the child nodes bounds. This is
-% done to avoid creating extra triangles when splitting (1 triangle
-% split often produces 3 triangles), which would result in deeper
-% trees. 
-% But this method requires us to test that an intersection is in fact
-% inside the bb. Do we want that?
-
-
 % Different splitting planes heuristics.
-
 
 % When moving from upper nodes to lower nodes. Calculate a new tight
 % bounding box inside the modified bounding box. Then approximate the
 % new surface area by the reduction in BB volume.
 
 % Instead of reordering geometry on each split (vertices, normals,
-% colors, texcoords, whatnot), we instead simply move and index to the
-% geometric primitive.
+% colors, texcoords, whatnot), we instead simply move an index to the
+% geometric primitive. Also decouples the KD-tree creation from the
+% geometry attributes and shading.
+
+
 
 \subsubsection{Spatial median}
 
@@ -89,8 +79,7 @@
 
 % Perform a check to reduce do empty space clipping and facilitate
 % early out option for the rays. Requires ``magic splitting
-% constants'', which can be very scene specific. (I haven't yet and
-% it's not easy!)
+% constants'', which can be very scene specific.
 
 
 \subsubsection{Surface Area Heuristic}
@@ -121,17 +110,37 @@ node
 % SAH calculation optimizations include axis round robin and some damn
 % paper I can't remember.
 
+% To avoid having to test the infinitely many splitting planes
+% possible, we instead have to choose sensible planes for SAH.
+
+% The sides of the triangles are an obvious choice, however
+% precalculating these leads to incorrectly sorting triangles into
+% nodes that the triangles do not intersect. (Example of a bounding box
+% being inside a node, when the actual triangle is outside)
+
+% A solution is to continuously adjust the bounding box of the split
+% goemetry, creating 'perfect split' condidates.
+
+% Another is to simply remove the offending triangles, reafter refered
+% to as \textit{false primitives}, from the nodes by a triangle/box
+% intersection test during or after creation.
+
+
 \subsubsection{Empty Space Splitting}
 
 % Dynamic empty space threshold, favor early out in the top of the tree.
 
 % huge ray tracing performance improvement in testscene (23% so far)
 
-\subsubsection{Splitting or Dividing Geometry}
+\subsection{Splitting the Geometry}
 
 % What to do with the triangles caught in the splitting plane.
 
+\subsubsection{Splitting Triangles}
+
 % Normally ppl split.
+
+\subsubsection{Dividing Triangles}
 
 % Novel scheme? Dvide triangles eg. adjust bounding box instead of
 % splitting the triangles.
@@ -139,9 +148,31 @@ node
 % Spliting will almost always produce 3 triangles, whereas divide will
 % always produce only 2.
 
-% Adjusting area heuristic, computes the largest plane possible in the
-% bounding boxes and compares them. An optimization could be
-% precomputing the plane while gathering geometry.
+% Adjusting area heuristic: When we no longer split geometry, SAH
+% becomes an even worse approximation. This can be fixed by an
+% adjusting area heuristic, where the diagonal of the geometric
+% primitives original bounding box is compared to the diagonal of the
+% reduced box and the primitives surface area is adjusted accordingly.
+
+
+\subsubsection{Adjusting Bounding Boxes}
+
+% Simpler than splitting.
+
+% Inspired by the small node step in Zhou
+
+% Naturally increases amount of \textit{false primitives} in the tree, but is
+% very cheap.
+
+% Also has an increased change of looping during construction in
+% combination with a small max lower size. Fx fairy forest loops using
+% adjusting bounding box with a max size of 32 primtives in leaf nodes.
+
+% False primitives can then be removed at a later stage at the cost of
+% some extra overhead. Or combine with Divide every n'th step for
+% optimal sweetness.
+
+
 
 % In conclussion:
 
@@ -193,20 +224,10 @@ node
 
 \subsubsection{Empty space splitting}
 
-\begin{itemize}
-  \item Store the post split aabb as the child nodes aabb. (uh even
-    upper leafs get an aabb now)
-  \item When reducing the correct aabb, compare it to the old one
-    before overwriting and store splitting sides in a char bitmap and counter var (for cudpp scan).
-  \item When creating children take empty space into account.
-  \item | LEAFS | EMPTY SPACE NODES | PROCESSABLE NODES |
-  \item Ray tracing profit.
-\end{itemize}
-
 \subsection{Lower Tree Nodes}
 
-% At lower tree levels where SAH/VVH isn't computed parallel, perhaps
-% and early out ``good enough'' value/ratio can be given, as done in
+% At lower tree levels where SAH isn't computed parallel, perhaps and
+% early out ``good enough'' value/ratio can be given, as done in
 % BSP. Might only increase instructions, branching and still wait for
 % the slowest thread. (Try and watch it fail) Perhaps without an if
 % statement but by arithmetic instead?

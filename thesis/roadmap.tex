@@ -29,27 +29,44 @@
   \end{itemize}
 \item Partition the screen into 8x4 ray blocks to improve ray
   traversel coalescenece. \checkmark
-\color{red} \item Use triangle-box intersection to remove ``impossible to hit''
+\item Use triangle-box intersection to remove ``impossible to hit''
   triangles from the lower nodes. Aabb might need to be propagated
   downwards in order to do this.
-\item Add triangle split / divide. Triangle split can possibly gain
-  some performance, by always doing the ``2 triangles'' side first.
-\item Split raytracing and coloring into 2 kernels to save on register
-  usage for at least on of them (hopefully more threads while
-  tracing). Allow a max amount of bounces and let the last ray search
-  for an opaque primitive.
-\item Make colors float instead of char. Removes 4 divisions when coloring.
+\item Create an optimized aabb intersection algorithm that
+optimizes with respect to a triangle and 2 boxes. Doesn't work due to
+the compiler dropping the ball when switches contain huge cases..
+\item Use woop triangle intersection instead while raytracing (Make an
+  enum that can switch). Place the offset in the fourth component of
+  each vector, that way I only need to load 1 float4 pr tHit
+  component. Less register usage! Yielded 20\% increase on dragon2 in
+  cornell box.
+
+\color{red} \item Split raytracing and coloring into 2 kernels to save
+on register usage for at least on of them (hopefully more threads
+while tracing). Allow a max amount of bounces and let the last ray
+search for an opaque primitive.
+\item Make colors float instead of char. Removes 4 divisions when
+  coloring.
 \item Use inverse ray dir instead of dir? Replaces a division with
   multiplication. Will probably do nothing since I'm databound.
-\item Add Persistent Theads to SAH. Extend it with preemtively
-  replacing dead threads every 4 or so cycle.
-\item Add persistent threads to the ray tracer
+\item Apply Cramers Rule to Woop Woop
+\item Instead of moving nodes when doing an empty split, place them
+  empty nodes after index + range and remember to skip them when
+  creating children. (childrenCreated can probably be used for this,
+  and the outermost while loop would work unaltered)
+\item Try dividing triangles by halfsize when doing ray box
+  intersection, could save on registers.
+\item Add triangle split. Triangle split can possibly gain
+  some performance, by always doing the ``2 triangles'' side first.
 \end{itemize}
 
 If time allows
 
 \begin{itemize}
-\item Add shadow rays
+\item Add shadow rays and ambient occlusion.
+\item Add Persistent Theads to SAH. Extend it with preemtively
+  replacing dead threads every 4 or so cycle.
+\item Add persistent threads to the ray tracer
 \item Add an oscilating surface with nice refraction!!
 \item Look into SAH approximations
 \item Optimize segmented reduce. (low low priority)
@@ -60,8 +77,6 @@ If time allows
 
 \subsection*{Sangild}
 
-Hvordan bruger jeg profileren? (Måske cpvc ved det)
-
 Bank conflicts.
 
 ====
@@ -71,4 +86,6 @@ Occupancy
 Primære og sekundære kilder? Both good. Just quote responsibly (page
 number, section, something)
 
-Slå register usage op på runtime
+Slå register usage op på runtime? Can't be done. Hardcode the
+bastards. And fix KernelConf1D when registers are used (something
+about 512bit allocation, unless 2.0 architeture)
