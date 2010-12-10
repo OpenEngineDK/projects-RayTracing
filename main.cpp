@@ -84,7 +84,7 @@ ISceneNode* CreateSmallBox() {
 
 ISceneNode* CreateDragon() {
     IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
-    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res2.ply");
+    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
     duckRes->Load();
     MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0);
 
@@ -100,8 +100,8 @@ ISceneNode* CreateDragon() {
             c[i++] = 0.0f;
             c[i++] = 165.0f/255.0f;
             c[i++] = 101.0f/255.0f;
-            c[i++] = 0.3f;
-
+            c[i++] = 0.5f;
+            
             /*
             c[i++] = 0.667f;
             c[i++] = 0.49f;
@@ -212,7 +212,9 @@ int main(int argc, char** argv) {
     Engine* engine = new Engine;
     //IEnvironment* env = new SDLEnvironment(800, 600, 32);
     IEnvironment* env = new SDLEnvironment(640, 480, 32);
+    //IEnvironment* env = new SDLEnvironment(160, 120, 32, FRAME_FULLSCREEN);
     //IEnvironment* env = new SDLEnvironment(1024, 768, 32, FRAME_FULLSCREEN);
+    //IEnvironment* env = new SDLEnvironment(1440, 900, 32, FRAME_FULLSCREEN);
     engine->InitializeEvent().Attach(*env);
     engine->ProcessEvent().Attach(*env);
     engine->DeinitializeEvent().Attach(*env);
@@ -232,8 +234,8 @@ int main(int argc, char** argv) {
     Camera* camera  = new Camera(*(new PerspectiveViewingVolume(1, 4000)));
     camera->SetPosition(Vector<3, float>(-4.5f, 3.0f, 4.5f));
     camera->LookAt(Vector<3, float>(-0.8f, -1.0f, 0.0f));
-    camera->SetPosition(Vector<3, float>(0.0f, 0.0f, 0.0f));
-    camera->LookAt(Vector<3, float>(-1.0f, 0.0f, 0.0f));
+    //camera->SetPosition(Vector<3, float>(0.0f, 0.0f, 0.0f));
+    //camera->LookAt(Vector<3, float>(-1.0f, 0.0f, 0.0f));
 
     PhotonRenderingView* renderingview = new PhotonRenderingView();
     renderer->InitializeEvent().Attach(*renderingview);    
