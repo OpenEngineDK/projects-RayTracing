@@ -41,15 +41,17 @@ the compiler dropping the ball when switches contain huge cases..
   component. Less register usage! Yielded 20\% increase on dragon2 in
   cornell box.
 
-\color{red} \item Split raytracing and coloring into 2 kernels to save
-on register usage for at least on of them (hopefully more threads
-while tracing). Allow a max amount of bounces and let the last ray
-search for an opaque primitive.
+\color{red} \item Use inverse ray dir instead of dir? Replaces a
+division with multiplication. Will probably do nothing since I'm
+databound.
+\item Split raytracing and coloring into 2 kernels to save on register
+  usage for at least on of them (hopefully more threads while
+  tracing). Allow a max amount of bounces and let the last ray search
+  for an opaque primitive.
 \item Make colors float instead of char. Removes 4 divisions when
   coloring.
-\item Use inverse ray dir instead of dir? Replaces a division with
-  multiplication. Will probably do nothing since I'm databound.
-\item Apply Cramers Rule to Woop Woop
+\item Add a bounding box check before raytracing leafs? Provides an
+  early out option for long rays.
 \item Instead of moving nodes when doing an empty split, place them
   empty nodes after index + range and remember to skip them when
   creating children. (childrenCreated can probably be used for this,
@@ -58,6 +60,9 @@ search for an opaque primitive.
   intersection, could save on registers.
 \item Add triangle split. Triangle split can possibly gain
   some performance, by always doing the ``2 triangles'' side first.
+\item Make indices in primMin and tHit a float\_to\_int gøjler. Saves
+  an actual conversion (and like what, 2ms total, boy you're starting
+  to go overboard here)
 \end{itemize}
 
 If time allows

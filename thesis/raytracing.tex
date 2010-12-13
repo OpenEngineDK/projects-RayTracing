@@ -54,13 +54,11 @@ and \citebook{1230129}.
                   \COMMENTIT{Traverse the tree until a leaf node is reached}
                   \WHILE{$node.info \neq LEAF$}
                     \ASSIGN{$t_{split}$}{($node.splitValue - ray.origin[node.axis]) / ray.direction[node.axis]$}
-                    \ASSIGN{$lowerChild$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
-                    \ASSIGN{$upperChild$}{$ray.direction[node.axis] > 0$ ? $node.right$ : $node.left$}
                     \IF{$t_{min} < t_{split}$}
-                      \ASSIGN{$node$}{$lowerChild$}
+                      \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
                       \ASSIGN{$t_{next}$}{min$(t_{split}, t_{next})$}
                     \ELSE
-                      \ASSIGN{$node$}{$upperChild$}
+                      \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.right$ : $node.left$}
                     \ENDIF
                   \ENDWHILE
                   \COMMENTIT{Advance the ray to the next splitting plane.}
@@ -112,16 +110,14 @@ and \citebook{1230129}.
       \COMMENTIT{Traverse the tree until a leaf node is reached}
       \WHILE{$node.info \neq LEAF$}
         \ASSIGN{$t_{split}$}{($node.splitValue - ray.origin[node.axis]) / ray.direction[node.axis]$}
-        \ASSIGN{$lowerChild$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
-        \ASSIGN{$upperChild$}{$ray.direction[node.axis] > 0$ ? $node.right$ : $node.left$}
         \IF{$t_{min} < t_{split}$}
-          \ASSIGN{$node$}{$lowerChild$}
+          \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
           \IF{$\color{green}t_{split} < t_{next}$}
             \color{green}\STATE{stack.push($upperChild, t_{next}$)}
           \ENDIF
           \ASSIGN{$t_{next}$}{min$(t_{split}, t_{next})$}
         \ELSE
-          \ASSIGN{$node$}{$upperChild$}
+          \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.right$ : $node.left$}
         \ENDIF
       \ENDWHILE
       \COMMENTIT{Advance the ray to the next splitting plane.}
@@ -176,6 +172,7 @@ the rays.
 % attributes at the vertices, such as the normals, colors or texture
 % coordiantes. Convex combination?
 
+% Use the barycentric coordinates to perform the intersection test.
 For a barycentric coordinate to be inside the triangle it must fulfill
 $0 \le u$, $0 \le v$ and $u+v \le 1$.
 
@@ -184,33 +181,60 @@ $0 \le u$, $0 \le v$ and $u+v \le 1$.
 % One of the most popular intersection algorithms and featured in
 % Real-Time Rendering.
 
-The Möller-Trumbore algorithm is one of the most popular algorithms
-for ray/triangle intersection, due probably in no small part to it's
-appearence in chapter 16.8 in \citebook{RTR3}, but also because it is
-one of the fastest ray/triangle intersection algorithms that does not
-rely on extra memory and/or precomputation.
+The Möller-Trumbore algorithm presented in \citebook{MollerTrumbore97}
+is one of the most popular algorithms for ray/triangle intersection,
+due probably in no small part to it's appearence in chapter 16.8 in
+\citebook{RTR3}, but also because it is one of the fastest
+ray/triangle intersection algorithms that does not rely on extra
+memory and/or precomputation.
 
 % Computes both distance and barycentric coords
 
 % Calculates the transformation that transform the triangle into the
 % unit triangle and applies this transformation to the ray.
 
-The basic idea of their algorithm is to transform the triangle,
-$T(u,v)$, given by
+The basic idea of their algorithm is to find the affine transformation
+that when applied to the triangle, $T(u,v)$, given by
 
 \begin{displaymath}
   T(u,v) = (1-u-v)a + ub + vc
 \end{displaymath}
 
-into the unit triangle, $U$, with
-vertices $\vecthreeT{0}{0}{0}$, $\vecthreeT{1}{0}{0}$ and
-$\vecthreeT{0}{1}{0}$. That transformation is then applied to the ray,
-$R(t) = O + tD$, instead, which yields the vector
+transforms it into the unit triangle, $U$, which has vertices
+$\vecthreeT{0}{0}{0}$, $\vecthreeT{1}{0}{0}$ and
+$\vecthreeT{0}{1}{0}$. That affine transformation is then instead
+applied to the ray, $R(t) = o + td$, which yields the vector
 $\vecthreeT{t}{u}{v}$, where $t$ is the distance to the plane spanned
-by $T$ and $u$ and $v$ are the barycentric coordinates of the
+by $T(u,v)$ and $u$ and $v$ are the barycentric coordinates of the
 intersection point.
 
-% Uses the barycentric coordinates to perform the intersection test.
+In short this boils down to solving the linear system of equations
+
+\begin{displaymath}
+  \begin{array}{rl}
+    & R(t) = T(u,v) \\
+    \Updownarrow \\
+    & o + td = (1-u-v)a + ub + vc \\
+  \end{array}
+\end{displaymath}
+
+As can be seen in \citebook{MollerTrumbore97}, by rearranging the
+terms and applying Cramer's Rule, the solution is
+
+\begin{displaymath}
+  \vecthree{t}{u}{v} = \frac{1}{P \cdot e_1} 
+  \vecthree{Q \cdot e_2}{P \cdot T}{Q \cdot D}
+\end{displaymath}
+
+where $e_1 = b - a$, $e_2 = c - a$, $T = o - a$, $P = d \times  e_2$
+and $Q = T \times  e_1$.
+
+\subsubsection{Implementation}
+
+% Due to the GPU's SIMT architecture, providing as many early out
+% possiblities as Möller-Trumbore's implementation caused a branching
+% overhead. The universal sweetspot in all of this thesis raytracers
+% was found to be ...
 
 \subsection{Woop}
 
@@ -234,6 +258,8 @@ needed.
 
 % The extra space used by the precalcultations can be mitigated if
 % the vertices are no longer needed.
+
+\subsubsection{Implementation}
 
 % Higher occupancy, which in turn will make it easier for the GPU to
 % hide global memory lookup latency. Or not. Still at 32 registers.
