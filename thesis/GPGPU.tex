@@ -87,29 +87,49 @@ Kernel variables that the compiler will most likely place in local memory are:
 
 % Give array example
 
-\section{Optimization Tecniques}
+\section{Optimization Techniques}
+
+% Naive implementation
 
 \section{Case Study: Reduction}
 
+\subsection{Switching to shared memory}
 
-\section{Case Study: Segmented Reduction}
+% Does that make any difference on 2.0 archs?
+
+\subsection{Using Registers}
+
+% Storing the thread local result in both smem and register
+
+\subsection{Loop unrolling}
+
+% Unroll the loops.
+
+% Then move the first up to where data is loaded into shared mem
+
+% And move the last reduction down where the final result is written.
+
+
+
+
+%\section{Case Study: Segmented Reduction}
 
 % Alot of reductions and iterative algorithms. It is therefore
 % important to know how to optimize these from a naive implementation.
 
 % Algorithm from bla
 
-\subsection{Naive implementation}
+%\subsection{Naive implementation}
 
-\subsection{Switching to shared memory}
+%\subsection{Switching to shared memory}
 
 
-\subsection{Rewriting slow math operations}
+%\subsection{Rewriting slow math operations}
 
 % Pow is 'expensive' and can be replaced by a simple doubling of the
 % indices.
 
-\subsection{Unrolling the loops}
+%\subsection{Unrolling the loops}
 
 % Can be done with a template parameter. Would still need to check
 % range, but could remove the loop variables. Would need a few speciel
@@ -134,5 +154,3 @@ Kernel variables that the compiler will most likely place in local memory are:
 % loop with that check) However making sure that single block bounding
 % box reductions are never brought to the segmented reducer will
 % ensure at least 2 values exist and one bounds check can be omitted.
-
-\subsection{More? Article form gpu gems 3 has anything of interest?}

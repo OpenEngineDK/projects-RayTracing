@@ -172,6 +172,9 @@ node
 % some extra overhead. Or combine with Divide every n'th step for
 % optimal sweetness.
 
+% With the added leaf intersection in the raytracer, extra triangles
+% in the leaf nodes become even less important and this method starts
+% to shine for dynamic scenes.
 
 
 % In conclussion:
@@ -223,6 +226,17 @@ node
 % the latency and will impact performance.
 
 \subsubsection{Empty space splitting}
+
+% Plugable solution, add the new nodes after the ones in nextlist.
+
+% Propagating aabb's downwards
+
+% A good threshold. Did I make it vary and how did that go?
+
+% Perhaps it can be started in it's own stream? At least the actual
+% empty space splitting should be able to. Could help out at the early
+% tree creation when the GPU is underutilized. Suggest or actually
+% try? Would make it an even cheaper optimization.
 
 \subsection{Lower Tree Nodes}
 

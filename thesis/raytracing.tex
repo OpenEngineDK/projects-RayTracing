@@ -8,16 +8,17 @@
 
 % Motivate!
 
-% We will build a basic raytracer to test the quality of the kD tree.
+% We will build an exhaustive ray tracer to test the quality of the kD
+% tree.
 
-% An optimized raytracer will be used to test wether or not more time
+% An optimized ray tracer will be used to test wether or not more time
 % spend on creating a better kD tree will pay off in final rendering
 % time.
 
-The optimized raytracer will use techniques from \citebook{Aila2009}
+The optimized ray tracer will use techniques from \citebook{Aila2009}
 and \citebook{1230129}.
 
-\section{Brute Force Raytracing}
+\section{Exhaustive Ray Tracing}
 
 % GPU does bruteforcing well.
 
@@ -27,7 +28,7 @@ and \citebook{1230129}.
 
 % GPU optimazations? Can shared mem work damn it?!?
 
-\section{Hierachical Raytracing}
+\section{Hierachical Ray Tracing}
 
 % Brief introduction to several acceleration techniques. BVH, KD, quad/oct trees and BSP.
 
@@ -233,7 +234,7 @@ and $Q = T \times  e_1$.
 
 % Due to the GPU's SIMT architecture, providing as many early out
 % possiblities as Möller-Trumbore's implementation caused a branching
-% overhead. The universal sweetspot in all of this thesis raytracers
+% overhead. The universal sweetspot in all of this thesis ray tracers
 % was found to be ...
 
 \subsection{Woop}

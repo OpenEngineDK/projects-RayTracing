@@ -40,24 +40,21 @@ the compiler dropping the ball when switches contain huge cases..
   each vector, that way I only need to load 1 float4 pr tHit
   component. Less register usage! Yielded 20\% increase on dragon2 in
   cornell box.
-
-\color{red} \item Use inverse ray dir instead of dir? Replaces a
-division with multiplication. Will probably do nothing since I'm
-databound.
-\item Split raytracing and coloring into 2 kernels to save on register
-  usage for at least on of them (hopefully more threads while
-  tracing). Allow a max amount of bounces and let the last ray search
-  for an opaque primitive.
 \item Make colors float instead of char. Removes 4 divisions when
-  coloring.
+  coloring. (And apparently add a data fetching overhead, not worth
+  it)
 \item Add a bounding box check before raytracing leafs? Provides an
-  early out option for long rays.
+  early out option for long rays. Nice speedup. Won't work aswell with
+  small leaf nodes? Inspired by empty space splitting.
+
+\color{red}
 \item Instead of moving nodes when doing an empty split, place them
   empty nodes after index + range and remember to skip them when
-  creating children. (childrenCreated can probably be used for this,
-  and the outermost while loop would work unaltered)
-\item Try dividing triangles by halfsize when doing ray box
-  intersection, could save on registers.
+  creating children. (node size can probably be used for this,
+  and the outermost while loop would work unaltered).
+\item Instead of resizing aabbs, perhaps just use the original size
+  and crop it with the propagated aabb. Then test if splitting and
+  creating new aabbs even adds any speed or if indexing is faster.
 \item Add triangle split. Triangle split can possibly gain
   some performance, by always doing the ``2 triangles'' side first.
 \item Make indices in primMin and tHit a float\_to\_int gøjler. Saves
@@ -68,7 +65,15 @@ databound.
 If time allows
 
 \begin{itemize}
-\item Add shadow rays and ambient occlusion.
+\item Perhaps storing normals in uchar will speedup normal fetching
+  and more importantly save registers (it will!).
+\item Speedup shadow rays and ambient occlusion. Mostly from simpler
+  intersection testing and less register usage.\\ -- OR -- \\ Perhaps
+  let the primary raytracer to it's job (coloring and refraction),
+  then dump the individual colors and primitive indices into arrays
+  (some MAX like 5?), let a different raytracer pickup these values
+  and start tracing shadows. Combine everything in a last kernel for
+  PROFIT.
 \item Add Persistent Theads to SAH. Extend it with preemtively
   replacing dead threads every 4 or so cycle.
 \item Add persistent threads to the ray tracer
