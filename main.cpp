@@ -83,8 +83,8 @@ ISceneNode* CreateSmallBox() {
 }
 
 ISceneNode* CreateDragon() {
-    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
-    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
+    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
+    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper.ply");
     duckRes->Load();
     MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0);
 
@@ -94,23 +94,14 @@ ISceneNode* CreateDragon() {
         *color *= 0.0f;
         *color += Vector<3, float>(0.0f, 165.0f/255.0f, 101.0f/255.0f);
     }else{
-        IDataBlockPtr vertices = dragonGeom->GetDataBlock("vertex");
-        float *c = new float[vertices->GetSize() * 4];
-        for (unsigned int i = 0; i < vertices->GetSize() * 4; ){
-            c[i++] = 0.0f;
-            c[i++] = 165.0f/255.0f;
-            c[i++] = 101.0f/255.0f;
-            c[i++] = 0.5f;
+        color = Float4DataBlockPtr(new DataBlock<4, float>(dragonGeom->GetSize()));
+        Vector<4, float> jadeGreen(0.0f, 0.647, 0.396f, 1.0f);
+        Vector<4, float> bakersChocolate(0.36f, 0.2, 0.09f, 1.0f);
+        Vector<4, float> lightChocolate(0.667f, 0.49f, 0.361f, 1.0f);
+        for (unsigned int i = 0; i < color->GetSize(); ++i)
+            color->SetElement(i, bakersChocolate);
             
-            /*
-            c[i++] = 0.667f;
-            c[i++] = 0.49f;
-            c[i++] = 0.361f;
-            c[i++] = 0.4f;
-            */
-        }
-        color = Float4DataBlockPtr(new DataBlock<4, float>(vertices->GetSize(), c));
-        dragonGeom = GeometrySetPtr(new GeometrySet(vertices, 
+        dragonGeom = GeometrySetPtr(new GeometrySet(dragonGeom->GetDataBlock("vertex"),
                                                     dragonGeom->GetDataBlock("normal"),
                                                     IDataBlockList(), color));
         Mesh* dragonMesh = new Mesh(dragon->GetMesh()->GetIndices(),
@@ -188,7 +179,6 @@ ISceneNode* SetupScene(){
     dragonTrans->SetScale(Vector<3, float>(40, 40, 40));
     dragonTrans->SetPosition(Vector<3, float>(0, -7, 0));
     rsNode->AddNode(dragonTrans);
-
     ISceneNode* dragon = CreateDragon();
     dragonTrans->AddNode(dragon);
 
