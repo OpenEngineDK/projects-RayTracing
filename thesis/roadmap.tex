@@ -1,3 +1,4 @@
+
 \section*{Road Map}
 
 
@@ -46,12 +47,12 @@ the compiler dropping the ball when switches contain huge cases..
 \item Add a bounding box check before raytracing leafs? Provides an
   early out option for long rays. Nice speedup. Won't work aswell with
   small leaf nodes? Inspired by empty space splitting.
-
-\color{red}
 \item Instead of moving nodes when doing an empty split, place them
   empty nodes after index + range and remember to skip them when
-  creating children. (node size can probably be used for this,
-  and the outermost while loop would work unaltered).
+  creating children. (node size can be used for this, and the
+  outermost while loop works unaltered).
+
+\color{red}
 \item Instead of resizing aabbs, perhaps just use the original size
   and crop it with the propagated aabb. Then test if splitting and
   creating new aabbs even adds any speed or if indexing is faster.
@@ -65,6 +66,8 @@ the compiler dropping the ball when switches contain huge cases..
 If time allows
 
 \begin{itemize}
+\item Store empty split nodes in shared mem and then dump it all
+  coallesced after they have been created.
 \item Perhaps storing normals in uchar will speedup normal fetching
   and more importantly save registers (it will!).
 \item Speedup shadow rays and ambient occlusion. Mostly from simpler

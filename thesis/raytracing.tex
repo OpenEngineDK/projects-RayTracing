@@ -15,8 +15,118 @@
 % spend on creating a better kD tree will pay off in final rendering
 % time.
 
+% Optimizations will be added incrementally to the hierarchical ray
+% tracer and implementation details to each specific optimization will
+% therefore be discussed alongside the theory.
+
 The optimized ray tracer will use techniques from \citebook{Aila2009}
 and \citebook{1230129}.
+
+\section{Triangle Intersection}
+
+% Consists of 2 parts. Ray/plane intersection which tells us the
+% distance the ray will travel, and ray/triangle tests which tells us
+% if the ray intersected the triangle.
+
+% Explain barycentric coordinates and how they are important for
+% triangle/ray intersection and linearly interpolating the triangle
+% attributes at the vertices, such as the normals, colors or texture
+% coordiantes. Convex combination?
+
+% Use the barycentric coordinates to perform the intersection test.
+For a barycentric coordinate to be inside the triangle it must fulfill
+$0 \le u$, $0 \le v$ and $u+v \le 1$.
+
+\subsection{Möller-Trumbore}
+
+% One of the most popular intersection algorithms and featured in
+% Real-Time Rendering.
+
+The Möller-Trumbore algorithm presented in \citebook{MollerTrumbore97}
+is one of the most popular algorithms for ray/triangle intersection,
+due probably in no small part to it's appearence in chapter 16.8 in
+\citebook{RTR3}, but also because it is one of the fastest
+ray/triangle intersection algorithms that does not rely on extra
+memory and/or precomputation.
+
+% Computes both distance and barycentric coords
+
+% Calculates the transformation that transform the triangle into the
+% unit triangle and applies this transformation to the ray.
+
+The basic idea of their algorithm is to find the affine transformation
+that when applied to the triangle, $T(u,v)$, given by
+
+\begin{displaymath}
+  T(u,v) = (1-u-v)a + ub + vc
+\end{displaymath}
+
+transforms it into the unit triangle, $U$, which has vertices
+$\vecthreeT{0}{0}{0}$, $\vecthreeT{1}{0}{0}$ and
+$\vecthreeT{0}{1}{0}$. That affine transformation is then instead
+applied to the ray, $R(t) = o + td$, which yields the vector
+$\vecthreeT{t}{u}{v}$, where $t$ is the distance to the plane spanned
+by $T(u,v)$ and $u$ and $v$ are the barycentric coordinates of the
+intersection point.
+
+In short this boils down to solving the linear system of equations
+
+\begin{displaymath}
+  \begin{array}{rl}
+    & R(t) = T(u,v) \\
+    \Updownarrow \\
+    & o + td = (1-u-v)a + ub + vc \\
+  \end{array}
+\end{displaymath}
+
+As can be seen in \citebook{MollerTrumbore97}, by rearranging the
+terms and applying Cramer's Rule, the solution is
+
+\begin{displaymath}
+  \vecthree{t}{u}{v} = \frac{1}{P \cdot e_1} 
+  \vecthree{Q \cdot e_2}{P \cdot T}{Q \cdot D}
+\end{displaymath}
+
+where $e_1 = b - a$, $e_2 = c - a$, $T = o - a$, $P = d \times  e_2$
+and $Q = T \times  e_1$.
+
+\subsubsection{Implementation}
+
+% Due to the GPU's SIMT architecture, providing as many early out
+% possiblities as Möller-Trumbore's implementation caused a branching
+% overhead. The universal sweetspot in all of this thesis ray tracers
+% was found to be ...
+
+\subsection{Woop}
+
+% Also translates the ray using the unit triangle.
+
+As was the case with the Möller-Trumbore approach, Woops was also
+interested in transforming the generel ray/triangle intersection
+problem into a ray/unit triangle intersection problem, where the
+solution is trivially calculated.
+
+He observed that to transform the triangle, $T$, into the unit
+triangle, $U$, a rotation matrix, $m$, and translation, $n$, was
+needed.
+
+\begin{displaymath}
+  U_d = m T_d + n
+\end{displaymath}
+
+% Does some precalculation, which means we can save calculations and
+% register space when performaing the actual ray tracing.
+
+% The extra space used by the precalcultations can be mitigated if
+% the vertices are no longer needed.
+
+\subsubsection{Implementation}
+
+% Higher occupancy, which in turn will make it easier for the GPU to
+% hide global memory lookup latency. Or not. Still at 32 registers.
+
+
+
 
 \section{Exhaustive Ray Tracing}
 
@@ -28,9 +138,10 @@ and \citebook{1230129}.
 
 % GPU optimazations? Can shared mem work damn it?!?
 
-\section{Hierachical Ray Tracing}
+\section{Hierarchical Ray Tracing}
 
-% Brief introduction to several acceleration techniques. BVH, KD, quad/oct trees and BSP.
+% Brief introduction to several acceleration techniques. BVH, KD,
+% quad/oct trees and BSP.
 
 % KD-trees are ze leetzors according to Havran? Another motivation is
 % Zhou's paper on fast KD tree construction.
@@ -159,111 +270,6 @@ the rays.
 
 % Like persistent threads, this is not an important optimazition
 % longterm, since global memory are being given a cache.
-
-
-
-\section{Triangle Intersection}
-
-% Consists of 2 parts. Ray/plane intersection which tells us the
-% distance the ray will travel, and ray/triangle tests which tells us
-% if the ray intersected the triangle.
-
-% Explain barycentric coordinates and how they are important for
-% triangle/ray intersection and linearly interpolating the triangle
-% attributes at the vertices, such as the normals, colors or texture
-% coordiantes. Convex combination?
-
-% Use the barycentric coordinates to perform the intersection test.
-For a barycentric coordinate to be inside the triangle it must fulfill
-$0 \le u$, $0 \le v$ and $u+v \le 1$.
-
-\subsection{Möller-Trumbore}
-
-% One of the most popular intersection algorithms and featured in
-% Real-Time Rendering.
-
-The Möller-Trumbore algorithm presented in \citebook{MollerTrumbore97}
-is one of the most popular algorithms for ray/triangle intersection,
-due probably in no small part to it's appearence in chapter 16.8 in
-\citebook{RTR3}, but also because it is one of the fastest
-ray/triangle intersection algorithms that does not rely on extra
-memory and/or precomputation.
-
-% Computes both distance and barycentric coords
-
-% Calculates the transformation that transform the triangle into the
-% unit triangle and applies this transformation to the ray.
-
-The basic idea of their algorithm is to find the affine transformation
-that when applied to the triangle, $T(u,v)$, given by
-
-\begin{displaymath}
-  T(u,v) = (1-u-v)a + ub + vc
-\end{displaymath}
-
-transforms it into the unit triangle, $U$, which has vertices
-$\vecthreeT{0}{0}{0}$, $\vecthreeT{1}{0}{0}$ and
-$\vecthreeT{0}{1}{0}$. That affine transformation is then instead
-applied to the ray, $R(t) = o + td$, which yields the vector
-$\vecthreeT{t}{u}{v}$, where $t$ is the distance to the plane spanned
-by $T(u,v)$ and $u$ and $v$ are the barycentric coordinates of the
-intersection point.
-
-In short this boils down to solving the linear system of equations
-
-\begin{displaymath}
-  \begin{array}{rl}
-    & R(t) = T(u,v) \\
-    \Updownarrow \\
-    & o + td = (1-u-v)a + ub + vc \\
-  \end{array}
-\end{displaymath}
-
-As can be seen in \citebook{MollerTrumbore97}, by rearranging the
-terms and applying Cramer's Rule, the solution is
-
-\begin{displaymath}
-  \vecthree{t}{u}{v} = \frac{1}{P \cdot e_1} 
-  \vecthree{Q \cdot e_2}{P \cdot T}{Q \cdot D}
-\end{displaymath}
-
-where $e_1 = b - a$, $e_2 = c - a$, $T = o - a$, $P = d \times  e_2$
-and $Q = T \times  e_1$.
-
-\subsubsection{Implementation}
-
-% Due to the GPU's SIMT architecture, providing as many early out
-% possiblities as Möller-Trumbore's implementation caused a branching
-% overhead. The universal sweetspot in all of this thesis ray tracers
-% was found to be ...
-
-\subsection{Woop}
-
-% Also translates the ray using the unit triangle.
-
-As was the case with the Möller-Trumbore approach, Woops was also
-interested in transforming the generel ray/triangle intersection
-problem into a ray/unit triangle intersection problem, where the
-solution is trivially calculated.
-
-He observed that to transform the triangle, $T$, into the unit
-triangle, $U$, a rotation matrix, $m$, and translation, $n$, was
-needed.
-
-\begin{displaymath}
-  U_d = m T_d + n
-\end{displaymath}
-
-% Does some precalculation, which means we can save calculations and
-% register space when performaing the actual ray tracing.
-
-% The extra space used by the precalcultations can be mitigated if
-% the vertices are no longer needed.
-
-\subsubsection{Implementation}
-
-% Higher occupancy, which in turn will make it easier for the GPU to
-% hide global memory lookup latency. Or not. Still at 32 registers.
 
 
 

@@ -21,7 +21,9 @@
 \chapterquote{Focus is a matter of deciding what things you're not
   going to do.}{John Carmack}
 
-% Why global illumination vs local illumination used in most rasterizers
+% Why global illumination vs local illumination used in most
+% rasterizers. Ray tracing can produce more correct images, and it
+% scales $O(N log M)$, whereas rasterizers scale O(NM).
 
 % Why use the GPU? Offloading. The CPU can do a lot of other things
 % while the GPU crunch away at those KD trees. Om nom nom nom nom....
@@ -30,25 +32,30 @@
 % but for the GPU they might hinder performance (cite KNN paper and
 % dataparallism example with 31 threads waiting)
 
-% In this thesis a brute force ray tracer will first bebuild and
-% compared to a basic ray tracer traversing a KD-tree, to blank
-% emphasize the importance of datastructures, even on the GPU.
+% In this thesis I present an exhaustive ray tracer and compared it to
+% a basic non optimized ray tracer traversing a KD-tree, to emphasize
+% the importance of datastructures, even on the GPU.
 
 % importance of efficient datastructures, several datastructures have
-% been used for raytracing (BVH, kd-trees, octrees, bla bla...) Some
+% been used for ray tracing (BVH, kd-trees, octrees, bla bla...) Some
 % are good for bla, others blank
 
-% Will focus on KD-trees and base the implementation on the proposed
-% algorithm in zhou et al.
+% 2 ways to optimize ray tracing with respect to dynamic
+% scenes. Either optimize the ray tracer or optimize the time it takes
+% to build the datastructure. The goal of this thesis is to explorer
+% the compromises made in order to efficiently ray trace dynamic
+% scenes
 
-% Needs to be able to quickly create the data structure aswell for
-% photon mapping with dynamic geometry/lighting.
+
+% Reference the 'good' kd tree double speed up (don't remember where
+% it is) and how it doesn't say anything about the extra time spend on
+% these good tree.
 
 % Needs to exploit the massively parallel architecture of GPGPU's
 % which require oh so many thread
 
-% can be done by parallising evaluating the approximate cost of each
-% node
+% can be done by parallising the evaluation of the approximate cost of
+% each node
 
 \textit{Surface Area Heuristic}, $SAH$, 
 
@@ -57,10 +64,11 @@
 % Still not easily paralisable, requires lots of reduction kernels,
 % which do not utilize the GPU fully. Also individual node splitting
 % costs can leave 31 threads in a warp waiting for the last one to
-% finish. In this thesis persistent threads will be used to solve this
-% issue.
+% finish. 
 
-% Raytracing structures on the GPU has been mapped more or less 100%
+\subsection{Goals}
+
+% Ray tracing structures on the GPU has been mapped more or less 100%
 % from CPU structures. We need to build them for the GPU instead. That
 % means rethinking some of the algorithms (like add persistent
 % threads.)
@@ -73,13 +81,44 @@
 % on the GPU, given that a binary data structure is not easy for the
 % GPU to handle and breaks coalescence. An exhaustive force ray
 % tracer, that performs intersection with all triangles, will be used
-% to motivate the use of a hierachical datatsructure, even on the GPU.
+% to motivate the use of a hierachical datatstructure, even on the GPU.
 
-% The thesis will look at an alternative to triangle splitting, namely
-% triangle division, where the triangle is not split by splitting
-% planes, but divided onto each side, by simply adjusting it's
-% bounding box.
+% The thesis will look at alternatives to triangle splitting, namely
+% \textit{triangle division}, where the triangle is not split by
+% splitting planes, but divided onto each side, by simply adjusting
+% it's bounding box, and \textit{box inclusion}, where the triangles
+% themselves are not tested for inclusion, but their bounding boxes
+% ares.
 
-% Lastly the thesis will try to apply Persistent Threads, as described
-% in 'hat', to accelerate SAH computations in the KD-tree construction
-% phase.
+% The inherent diverging behaviour of each ray makes them hard to
+% parallize efficiently, since data access will be nearly impossible
+% to coallesce. The solution is to have enough active rays to hide the
+% latency, which means each rays register usage must be kept to a
+% minimum.
+
+% In this thesis I will build an optimized ray tracer to compare time
+% spend ray tracing with time spend building the
+% datastructure. Optimizing the ray tracer for this comparison is
+% important, since the optimized implementation is up to 80% faster
+% than then a basic implementation.
+
+% Optimizations to the ray tracer will be inspired by the work done in
+% \citebook{1230129}, but also include the ray/triangle intersection
+% algorithm, an improvement inspired by empty space splitting during
+% kd-tree creation and simply structuring the rays in a manner that
+% favors SIMT execution.
+
+
+
+% Result evaluation
+
+% Ray tracing optimizations will simply be evaluated based time saved
+% during ray tracing. Optimizations will be based on improving the
+% worst case scenarios, ie long rays shooting towards the center of
+% the scene.
+
+% Strategies that optimize the KD-tree will be evaluated based on the
+% time added to the kd-tree creation phase, and the time saved in the
+% ray tracing phase.
+
+

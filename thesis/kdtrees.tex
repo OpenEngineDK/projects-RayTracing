@@ -3,9 +3,16 @@
 \chapterquote{In theory, there is no difference between theory and
   practice. But, in practice, there is.}{Jan L. A. van de Snepscheut}
 
-% About KD-trees
+% About this Chapter. Start by motivation. Then explain how kd-trees
+% are constructed, including different strategies for choosing the
+% spliting plane and doing the actual geometry splitting. Then the
+% chapter will end with a discussion of how to implement the
+% algorithms efficiently on a SIMT architecture.
+
 
 \section{Motivation}
+
+% About KD-trees
 
 % Why KD tree compared to other structures
 
@@ -24,7 +31,7 @@
 
 \section{Building KD-trees}
 
-% Left blanced non pointer vs pointers
+% Left balanced non pointer vs pointers
 
 % Choose pointers as that would lead to less memory consumption and it
 % places all nodes of the same level in a continues block, making it
@@ -52,10 +59,6 @@
 % left and right voxel changes.
 
 % Different splitting planes heuristics.
-
-% When moving from upper nodes to lower nodes. Calculate a new tight
-% bounding box inside the modified bounding box. Then approximate the
-% new surface area by the reduction in BB volume.
 
 % Instead of reordering geometry on each split (vertices, normals,
 % colors, texcoords, whatnot), we instead simply move an index to the
@@ -125,12 +128,19 @@ node
 % to as \textit{false primitives}, from the nodes by a triangle/box
 % intersection test during or after creation.
 
+% When moving from upper nodes to lower nodes. Calculate a new tight
+% bounding box inside the modified bounding box. Then approximate the
+% new surface area by the reduction in BB volume.
+
 
 \subsubsection{Empty Space Splitting}
 
 % Dynamic empty space threshold, favor early out in the top of the tree.
 
-% huge ray tracing performance improvement in testscene (23% so far)
+% huge ray tracing performance improvement in testscene (23% without
+% raytracers doing intersection tests at leaf nodes)
+
+% Implementation is 
 
 \subsection{Splitting the Geometry}
 
