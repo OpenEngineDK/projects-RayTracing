@@ -59,7 +59,7 @@ using namespace OpenEngine::Scene;
 using namespace OpenEngine::Utils;
 
 ISceneNode* CreateCornellBox() {
-    MeshPtr box = MeshCreator::CreateCube(10, 1, Vector<3,float>(1.0f, 1.0f, 1.0f), true);
+    MeshPtr box = MeshCreator::CreateCube(10, 2, Vector<3,float>(1.0f, 1.0f, 1.0f), true);
     
     IDataBlockPtr colors = box->GetGeometrySet()->GetColors();
     Vector<4,float> red(1.0f, 0.0f, 0.0f, 1.0f);
@@ -84,7 +84,7 @@ ISceneNode* CreateSmallBox() {
 
 ISceneNode* CreateDragon() {
     //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
-    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper.ply");
+    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
     duckRes->Load();
     MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0);
 
@@ -157,7 +157,6 @@ ISceneNode* SetupScene(){
     //ISceneNode* cornellBox = CreateSibenik();
     rsNode->AddNode(cornellBox);
 
-    /*
     ISceneNode* box = CreateSmallBox();
     TransformationNode* smallTrans = new TransformationNode();
     smallTrans->SetRotation(Quaternion<float>(0.0f, -Math::PI/8.0f, 0.0f));
@@ -172,7 +171,7 @@ ISceneNode* SetupScene(){
     bigTrans->SetScale(Vector<3, float>(1.0f, 2.0f, 1.0f));
     rsNode->AddNode(bigTrans);
     bigTrans->AddNode(bigBox);
-    */
+    /*
 
     // Dragon
     TransformationNode* dragonTrans = new TransformationNode();
@@ -181,6 +180,7 @@ ISceneNode* SetupScene(){
     rsNode->AddNode(dragonTrans);
     ISceneNode* dragon = CreateDragon();
     dragonTrans->AddNode(dragon);
+    */
 
     return rsNode;
 }
@@ -196,7 +196,7 @@ int main(int argc, char** argv) {
     Logger::AddLogger(new StreamLogger(&std::cout));
 
     // Print usage info.
-    logger.info << "========= Efficient algorithms for Global Illumination =========" << logger.end;
+    logger.info << "========= Efficient Algorithms for Ray Tracing Dynamic Scenes =========" << logger.end;
 
     // setup the engine
     Engine* engine = new Engine;
@@ -225,7 +225,7 @@ int main(int argc, char** argv) {
     camera->SetPosition(Vector<3, float>(-4.5f, 3.0f, 4.5f));
     camera->LookAt(Vector<3, float>(-0.8f, -1.0f, 0.0f));
     //camera->SetPosition(Vector<3, float>(0.0f, 0.0f, 0.0f));
-    //camera->LookAt(Vector<3, float>(-1.0f, 0.0f, 0.0f));
+    //camera->LookAt(Vector<3, float>(-2.5f, -5.0f, -4.5f));
 
     PhotonRenderingView* renderingview = new PhotonRenderingView();
     renderer->InitializeEvent().Attach(*renderingview);    
