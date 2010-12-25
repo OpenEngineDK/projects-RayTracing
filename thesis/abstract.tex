@@ -11,17 +11,39 @@
 
 \section*{Abstract}
 
+This thesis concerns itself with raytracing and doing that efficiently
+on wide SIMT\footnote{single instruction, multiple threads}
+hardware. It is motivated by the ever increasing interest in
+raytracing and global illumination for creating effects in movies, but
+also the increased usage of 2D and 3D ray tracing used in modern
+computer games.
+
+The thesis present a survey of different techniques for creating
+hierarchical ray tracing acceleration structures, specifically
+KD-trees, and how to do this efficiently on the wide SIMT hardware. A
+ray tracer will be used to test the quality of the differently created
+KD-trees. To give a fair comparison the time spend ray tracing
+and time spend creating the tree in a dynamic scene, both
+generel and SIMT specific optimizations have been applied to the ray
+tracer and acceleration structure.
+
+While previous work in the area has focused on creating optimal
+KD-trees, the goal of this thesis is to explorer compromises made
+during tree construction in order to efficiently ray trace dynamic
+scenes.
+
+% Show that to achive raytracing of dynamic scenes, focus should not
+% be on creating 'optimal' trees, but instead on creating good trees
+% fast.
+
+
+
+
+
+
 % Efficiently create KD trees on the GPU and ray trace them.
 
 % KDtree focus will be on optimizations and the tradeoff between
 % spending extra time on the kd-tree instead of ray tracing.
 
-% Previous work in the area has focused on creating optimal KD-trees.
-
-% The goal of this thesis is to explorer the compromises made in order
-% to efficiently ray trace dynamic scenes
-
-% Show that to achive raytracing of dynamic scenes, focus should not
-% be on creating 'optimal' trees, but instead on creating good trees
-% fast.
 
