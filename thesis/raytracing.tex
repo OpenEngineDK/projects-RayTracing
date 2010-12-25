@@ -83,12 +83,12 @@ As can be seen in \citebook{MollerTrumbore97}, by rearranging the
 terms and applying Cramer's Rule, the solution is
 
 \begin{displaymath}
-  \vecthree{t}{u}{v} = \frac{1}{P \cdot e_1} 
-  \vecthree{Q \cdot e_2}{P \cdot T}{Q \cdot D}
+  \vecthree{t}{u}{v} = \frac{1}{P \cdot E_1} 
+  \vecthree{Q \cdot E_2}{P \cdot T}{Q \cdot D}
 \end{displaymath}
 
-where $e_1 = b - a$, $e_2 = c - a$, $T = o - a$, $P = d \times  e_2$
-and $Q = T \times  e_1$.
+where $E_1 = b - a$, $E_2 = c - a$, $T = o - a$, $P = d \times  E_2$
+and $Q = T \times  E_1$.
 
 \subsubsection{Implementation}
 
@@ -106,12 +106,12 @@ interested in transforming the generel ray/triangle intersection
 problem into a ray/unit triangle intersection problem, where the
 solution is trivially calculated.
 
-He observed that to transform the triangle, $T$, into the unit
-triangle, $U$, a rotation matrix, $m$, and translation, $n$, was
-needed.
+He observed that the triangle, $T$, can be transformed into the unit
+triangle, $U$, via an affine transformation, consiting of a rotation
+matrix, $m$, and a translation, $n$.
 
 \begin{displaymath}
-  U_d = m T_d + n
+  U_d = m T_d + n, d \in \{x, y, z\}
 \end{displaymath}
 
 % Does some precalculation, which means we can save calculations and

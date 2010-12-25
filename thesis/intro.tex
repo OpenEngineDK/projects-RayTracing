@@ -21,12 +21,17 @@
 \chapterquote{Focus is a matter of deciding what things you're not
   going to do.}{John Carmack}
 
+% The evergrowing interest in photorealistic rendering and the complexity of the scenes rendered.
+
 % Why global illumination vs local illumination used in most
 % rasterizers. Ray tracing can produce more correct images, and it
 % scales $O(N log M)$, whereas rasterizers scale O(NM).
 
 % Why use the GPU? Offloading. The CPU can do a lot of other things
-% while the GPU crunch away at those KD trees. Om nom nom nom nom....
+% while the GPU crunch away at those KD trees. Om nom nom nom
+% nom.... Games already make heavy use of the CPU for game logics,
+% networking and AI, they need to offload graphics to the another
+% processing unit.
 
 % Why even use datastructures on the GPU. They work wonders on the CPU
 % but for the GPU they might hinder performance (cite KNN paper and
