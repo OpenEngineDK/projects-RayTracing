@@ -21,11 +21,81 @@
 \chapterquote{Focus is a matter of deciding what things you're not
   going to do.}{John Carmack}
 
-% The evergrowing interest in photorealistic rendering and the complexity of the scenes rendered.
+Rendering is the process of converting a description of a scene into
+an image and lies at the heart of computer graphics. 
 
 % Why global illumination vs local illumination used in most
 % rasterizers. Ray tracing can produce more correct images, and it
 % scales $O(N log M)$, whereas rasterizers scale O(NM).
+
+Several techniques exist that allows computers to perform this
+conversion. When real-time rendering is needed, the most commonly used
+technique is \textit{rasterization}, in which vertex attrbiutes of
+geometric shapes are mapped onto a raster\footnote{A flat, 2D grid.}
+and subsequently \textit{shaded}. Due to the popularity of this
+technique in computer games, hardware accelerated rasterizers have
+become quite powerful over the last decade and are now able to process
+millions of geometric primitives pr. second. However, certain aspects
+of rendering are not easily solved by rasterization.
+\textit{Reflection} and \textit{refraction} effects on non-flat
+surfaces are notoriously hard to recreate, due to the divergence of
+individual light rays at these points, and must instead be
+approximated. Reflection by an object is usually approximated by
+\textit{environment mapping}, as can be seen on
+\reffig{fig:cubemap}. The problem with this approch is that the scene
+will have to be rendered an additional 6 times for each frame.
+
+\begin{figure}
+  \centering
+  \includegraphics{Cube_mapped_reflection_example}
+  \caption{An example of environment mapping. The environment is
+    rendered to the sides of the cube and then mapped onto the sphere.
+    The mapping is performed by using the calculated reflection vector
+    as texture coordinates.}
+%TODO image curtesy of http://en.wikipedia.org/wiki/Reflection_mapping
+  \label{fig:cubemap}
+\end{figure}
+
+An alternative to rasterization is presented by \textit{ray casting}
+or \textit{ray tracing}. In ray tracing, each individual pixel is
+shaded by tracing one or more \textit{primary rays} ``cast'' from the
+camera into the world and observing which primitive they
+intersect. Reflection and refraction are easily created by spawning a
+new ray at the intersection point and then tracing it. In contrast to
+rasterization this provides a much more correct result, easily allows
+for multiple \textit{reflection rays} and as we shall see in section
+TODO at a much better lower cost increase pr. frame. Shadows are also
+easily created using ray tracing. Hard edged shadows can be created by
+tracing a \textit{shadow ray} from an intersection point towards a
+lightsource. If the shadow ray intersects another part of the world
+before it reaches the lightsource, then the intersection point must be
+placed in shadow and does not receive any illumination from the
+lightsource. Using advanced lighting algorithms such as \textit{photon
+  mapping}, which incorporates ray tracing for light transportation,
+lighting from reflective surfaces, color bleeding and even correct
+caustics can be simulated.
+
+% TODO reflection image.
+
+Nevertheless, the photorealistic images rendered by ray tracers does
+come at a high computational cost, which is why ray tracing is mostly
+used for offline renderers, for example special effects in movies or
+high quality images.
+
+% Due to increase on computing power, we're getting closer and closer
+% to seeing real time ray tracing and it's lighting in
+% applications. Bla bla rewrite!
+
+% The evergrowing interest in photorealistic rendering and the
+% complexity of the scenes rendered.
+
+But, due to the everincreasing computational power and continued
+research into \textit{global illumination acceleration techniques},
+the physically correct image quality obtainable though ray tracing is
+becoming more and more alluring to designers of real time graphical
+applications, especially if correct reflection or refraction is
+needed.
+
 
 % Why use the GPU? Offloading. The CPU can do a lot of other things
 % while the GPU crunch away at those KD trees. Om nom nom nom
@@ -33,9 +103,34 @@
 % networking and AI, they need to offload graphics to the another
 % processing unit.
 
-% Why even use datastructures on the GPU. They work wonders on the CPU
-% but for the GPU they might hinder performance (cite KNN paper and
-% dataparallism example with 31 threads waiting)
+In this thesis I will be combining the rendering quality of ray
+tracing with the computational power of modern
+\textit{GPGPU}'s\footnote{General Purpose Graphics Processing
+  Units.}. This requires that the algorithms presented exploit the
+massively dataparallel nature of the graphics card, requiring
+thousands of threads for each GPGPU program. This subject will be
+discussed in \refchapter{chp:GPGPU}
+
+There are several good reasons for using GPGPU's for ray tracing. Each
+ray can be traced independently and in parallel with all the other
+rays. Even at a resolution of 512x512, 262144 primary rays are
+generated, resulting in more than enough threads to potentionally
+utilize all of the GPGPU's multiprocessors. In the case of computer
+games, the CPU is already heavily occupied with \textit{game logic},
+\textit{networking}, \textit{AI}\footnote{Artificial Intelligence} and
+more to also handle rendering, in which case offloading to an
+otherwise idle GPGPU only makes sense. Recent advances in GPGPU ray
+tracing have also shown performance comparable to CPU
+implementations\citebook{1230129}\citebook{popov:07:GPURT}, meaning
+the choice of architecture can now be based purely on where most
+performance will be available.
+
+Recent advances in acceleration structure creation have allowed them
+to be created equally fast on the CPU and
+GPGPU\citebook{1409079}. Therefore, as with ray tracing, this thesis
+will focus on a GPGPU implementation, to reduce the workload of the
+CPU. Keeping the entire workload on the graphics card has the added
+benefit of minimizing datatransfers over the bus.
 
 % In this thesis I present an exhaustive ray tracer and compared it to
 % a basic non optimized ray tracer traversing a KD-tree, to emphasize
@@ -51,10 +146,12 @@
 % the compromises made in order to efficiently ray trace dynamic
 % scenes
 
-
 % Reference the 'good' kd tree double speed up (don't remember where
 % it is) and how it doesn't say anything about the extra time spend on
 % these good tree.
+
+\quotebook{With todays's fast ray tracers, the difference between a
+  ``good'' and a naïvely built kd-tree is often a factor of 2 or more.}{wald:06:NlogN}
 
 % Needs to exploit the massively parallel architecture of GPGPU's
 % which require oh so many thread
@@ -72,6 +169,11 @@
 % finish. 
 
 \subsection{Goals}
+
+In this thesis the goal is not to produce images of photorealistic
+quality, or create an interactive ray tracer for dynamic
+scenes \footnote{This goal in itself can trivially be achieved by
+  reducing the complexity of the scene or lowering the resolution.}
 
 % Ray tracing structures on the GPU has been mapped more or less 100%
 % from CPU structures. We need to build them for the GPU instead. That
@@ -127,3 +229,4 @@
 % ray tracing phase.
 
 
+\subsection{Overview}

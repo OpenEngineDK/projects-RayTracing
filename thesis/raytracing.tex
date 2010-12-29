@@ -8,8 +8,11 @@
 
 % Motivate!
 
-% We will build an exhaustive ray tracer to test the quality of the kD
-% tree.
+% Why even use datastructures on the GPU. They work wonders on the CPU
+% but for the GPU they might hinder performance (cite KNN paper and
+% dataparallism example with 31 threads waiting)
+
+% We will build a basic ray tracer to test the quality of the kD tree.
 
 % An optimized ray tracer will be used to test wether or not more time
 % spend on creating a better kD tree will pay off in final rendering
@@ -20,7 +23,7 @@
 % therefore be discussed alongside the theory.
 
 The optimized ray tracer will use techniques from \citebook{Aila2009}
-and \citebook{1230129}.
+and \citebook{1230129} among others.
 
 \section{Triangle Intersection}
 
