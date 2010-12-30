@@ -96,7 +96,7 @@ needed.
 % rasterizers. Ray tracing can produce more correct images, and it
 % scales $O(N log M)$, whereas rasterizers scale O(NM).
 
-TODO time complexity
+TODO time complexity?
 
 % Why use the GPU? Offloading. The CPU can do a lot of other things
 % while the GPU crunch away at those KD trees. Om nom nom nom
@@ -118,8 +118,8 @@ rays. Even at a resolution of 512x512, 262144 primary rays are
 generated, resulting in more than enough threads to potentionally
 utilize all of the GPGPU's multiprocessors. In the case of computer
 games, the CPU is already heavily occupied with \textit{game logic},
-\textit{networking}, \textit{AI}\footnote{Artificial Intelligence} and
-more to also handle rendering, in which case offloading to an
+\textit{networking}, \textit{AI}\footnote{Artificial Intelligence},
+and more to also handle rendering, in which case offloading to an
 otherwise idle GPGPU only makes sense. Recent advances in GPGPU ray
 tracing have also shown performance comparable to CPU
 implementations\citebook{1230129}\citebook{popov:07:GPURT}, meaning
@@ -161,7 +161,7 @@ benefit of minimizing datatransfers over the bus.
 % Still not easily paralisable, requires lots of reduction kernels,
 % which do not utilize the GPU fully. Also individual node splitting
 % costs can leave 31 threads in a warp waiting for the last one to
-% finish. 
+% finish.
 
 \section{Goals}
 
@@ -170,9 +170,10 @@ quality, or create an interactive ray tracer for dynamic
 scenes \footnote{This goal in itself can trivially be achieved by
   reducing the complexity of the scene or lowering the resolution.}
 The goal is to explorer ray tracing acceleration structures,
-specifically the \textit{kd-tree}\footnote{A \textit{binary space partition}
-  tree that is recursively subdivided by splitting the geometry.}, and
-it's impact on ray tracing efficiency for dynamic scenes.
+specifically the \textit{kd-tree}\footnote{A \textit{binary space
+    partition} tree that is recursively subdivided by splitting the
+  geometry.}, and it's impact on ray tracing efficiency for dynamic
+scenes.
 
 There are 3 ways to optimize ray tracing with respect to dynamic
 scenes. Either optimize the ray tracer, the time it takes to build the
@@ -230,3 +231,49 @@ ray tracing phase.
 
 \section{Overview}
 
+The thesis is structured as follows:
+
+% Previous work
+
+First previous work in the area of ray tracing and kd-tree
+construction is presented. Changes in this thesis compared to previous
+work is also outlined in this section.
+
+% Understanding the GPGPU
+
+A section will then introduce the GPGPU architecture. Here I will
+describe \textit{CUDA}'s\footnote{NVIDIA's Compute Unified Device
+  Architecture.} thread and memory model. I will then go on to
+describe new primitives as proposed by Sengupta et
+al.\citebook{Sengupta:2007}, which are helpful for performing
+scattering and compaction on wide SIMT architectures. Finally this
+section will focus on optimization techniques specific to CUDA, which
+will be applied incrementally in a case study of a \textit{reduction}
+example.
+
+% kd-trees
+
+The following section presents kd-trees. The first part of this
+section deals with the general kd-tree construction algorith. Here I
+will present several algorithms for choosing the splitting plane and
+discuss 3 different algorithms for associating triangles with child
+nodes. The second part of the section deals with the actual
+implementation of kd-trees on a SIMT architecture.
+
+% raytracing
+
+After having introduced kd-trees, the next section will deal with the
+algorithms for traversing such trees and ray tracing the scene. Here
+several optimizations to a basic raytracer will also be discussed an
+incrementally added to the ray tracer. First though, an exhaustive ray
+tracer is presented and used to motivate the use of hierarchical data
+structures on the GPGPU. This section also includes a discussion of 2
+triangle intersection algorithms with respect to performance on the
+GPGPU. The section ends with a brief discussion of how colors and
+reflection and refraction are calculated.
+
+% Results
+
+% Conclusion
+
+% Future work
