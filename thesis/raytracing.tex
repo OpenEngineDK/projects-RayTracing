@@ -8,6 +8,12 @@
 
 % Motivate!
 
+
+% Ray tracing structures on the GPU has been mapped more or less 100%
+% from CPU structures. We need to build them for the GPU instead. That
+% means rethinking some of the algorithms (like add persistent
+% threads.)
+
 % Why even use datastructures on the GPU. They work wonders on the CPU
 % but for the GPU they might hinder performance (cite KNN paper and
 % dataparallism example with 31 threads waiting)
@@ -24,6 +30,14 @@
 
 The optimized ray tracer will use techniques from \citebook{Aila2009}
 and \citebook{1230129} among others.
+
+
+The inherent diverging behaviour of each ray makes them hard to
+parallize efficiently on the graphics card, since data access will be
+nearly impossible to coallesce. The solution is to have enough active
+rays to effectively hide data fetching latency. This means that each
+rays register usage must be kept to a minimum.
+
 
 \section{Triangle Intersection}
 
@@ -246,6 +260,12 @@ matrix, $m$, and a translation, $n$.
               }
   \end{algorithmic}
 \end{algorithm}
+
+\subsection{Skipping Leaf Nodes}
+
+% Inspired by empty space splitting.
+
+% Combines BVH and KD tree
 
 \subsection{Push Down}
 
