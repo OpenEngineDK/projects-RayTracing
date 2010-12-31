@@ -94,7 +94,7 @@ needed.
 
 % Why global illumination vs local illumination used in most
 % rasterizers. Ray tracing can produce more correct images, and it
-% scales $O(N log M)$, whereas rasterizers scale O(NM).
+% scales $O(N log M)$, whereas rasterizers scale O(NM) or O(N+M).
 
 TODO time complexity?
 
@@ -169,11 +169,14 @@ In this thesis the goal is not to produce images of photorealistic
 quality, or create an interactive ray tracer for dynamic
 scenes \footnote{This goal in itself can trivially be achieved by
   reducing the complexity of the scene or lowering the resolution.}
-The goal is to explorer ray tracing acceleration structures,
+Instead this thesis will explorer ray tracing acceleration structures,
 specifically the \textit{kd-tree}\footnote{A \textit{binary space
     partition} tree that is recursively subdivided by splitting the
   geometry.}, and it's impact on ray tracing efficiency for dynamic
-scenes.
+scenes. 
+
+Ray tracing of dynamic scenes ... something about why it's interesting
+and that we have to continuously keep the data structure updated.
 
 There are 3 ways to optimize ray tracing with respect to dynamic
 scenes. Either optimize the ray tracer, the time it takes to build the

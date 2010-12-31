@@ -53,14 +53,14 @@ the compiler dropping the ball when switches contain huge cases..
   outermost while loop works unaltered).
 
 \color{red}
+\item Make indices in primMin and tHit a float\_to\_int gøjler. Saves
+  an actual conversion (and like what, 2ms total, boy you're starting
+  to go overboard here)
 \item Instead of resizing aabbs, perhaps just use the original size
   and crop it with the propagated aabb. Then test if splitting and
   creating new aabbs even adds any speed or if indexing is faster.
 \item Add triangle split. Triangle split can possibly gain
   some performance, by always doing the ``2 triangles'' side first.
-\item Make indices in primMin and tHit a float\_to\_int gøjler. Saves
-  an actual conversion (and like what, 2ms total, boy you're starting
-  to go overboard here)
 \item Perhaps node creation can be sped up by adding a shared mem
   block cache and then dumping data coallesced.
 \item Fix KernelConf1D when registers are used (something about 512bit
@@ -72,8 +72,6 @@ If time allows
 \begin{itemize}
 \item Store empty split nodes in shared mem and then dump it all
   coallesced after they have been created.
-\item Perhaps storing normals in uchar will speedup normal fetching
-  and more importantly save registers (it will!).
 \item Speedup shadow rays and ambient occlusion. Mostly from simpler
   intersection testing and less register usage.\\ -- OR -- \\ Perhaps
   let the primary raytracer to it's job (coloring and refraction),
