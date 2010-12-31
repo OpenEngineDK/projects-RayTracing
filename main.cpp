@@ -59,7 +59,7 @@ using namespace OpenEngine::Scene;
 using namespace OpenEngine::Utils;
 
 ISceneNode* CreateCornellBox() {
-    MeshPtr box = MeshCreator::CreateCube(10, 2, Vector<3,float>(1.0f, 1.0f, 1.0f), true);
+    MeshPtr box = MeshCreator::CreateCube(10, 1, Vector<3,float>(1.0f, 1.0f, 1.0f), true);
     
     IDataBlockPtr colors = box->GetGeometrySet()->GetColors();
     Vector<4,float> red(1.0f, 0.0f, 0.0f, 1.0f);
@@ -83,8 +83,8 @@ ISceneNode* CreateSmallBox() {
 }
 
 ISceneNode* CreateDragon() {
-    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
-    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
+    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
+    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
     duckRes->Load();
     MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0);
 
@@ -95,11 +95,11 @@ ISceneNode* CreateDragon() {
         *color += Vector<3, float>(0.0f, 165.0f/255.0f, 101.0f/255.0f);
     }else{
         color = Float4DataBlockPtr(new DataBlock<4, float>(dragonGeom->GetSize()));
-        Vector<4, float> jadeGreen(0.0f, 0.647, 0.396f, 1.0f);
+        Vector<4, float> jadeGreen(0.0f, 0.647, 0.396f, 0.5f);
         Vector<4, float> bakersChocolate(0.36f, 0.2, 0.09f, 1.0f);
         Vector<4, float> lightChocolate(0.667f, 0.49f, 0.361f, 1.0f);
         for (unsigned int i = 0; i < color->GetSize(); ++i)
-            color->SetElement(i, bakersChocolate);
+            color->SetElement(i, jadeGreen);
             
         dragonGeom = GeometrySetPtr(new GeometrySet(dragonGeom->GetDataBlock("vertex"),
                                                     dragonGeom->GetDataBlock("normal"),
@@ -157,6 +157,7 @@ ISceneNode* SetupScene(){
     //ISceneNode* cornellBox = CreateSibenik();
     rsNode->AddNode(cornellBox);
 
+    /*
     ISceneNode* box = CreateSmallBox();
     TransformationNode* smallTrans = new TransformationNode();
     smallTrans->SetRotation(Quaternion<float>(0.0f, -Math::PI/8.0f, 0.0f));
@@ -171,7 +172,7 @@ ISceneNode* SetupScene(){
     bigTrans->SetScale(Vector<3, float>(1.0f, 2.0f, 1.0f));
     rsNode->AddNode(bigTrans);
     bigTrans->AddNode(bigBox);
-    /*
+    */
 
     // Dragon
     TransformationNode* dragonTrans = new TransformationNode();
@@ -180,7 +181,6 @@ ISceneNode* SetupScene(){
     rsNode->AddNode(dragonTrans);
     ISceneNode* dragon = CreateDragon();
     dragonTrans->AddNode(dragon);
-    */
 
     return rsNode;
 }
