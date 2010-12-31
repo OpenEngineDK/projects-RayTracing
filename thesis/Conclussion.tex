@@ -9,6 +9,25 @@
 % related to this and makes using highly optimized splitting plane
 % calculations in the lower nodes useless.
 
+
+% First establish which ray tracer works the best
+
+\begin{tabular}{ r  c  c | c | c | c | c | c | c |}
+%  & Cornell Box & Reflecting Dragon & Sponza & Fairy Forest \\
+  &&& \multicolumn{6}{|c|}{Reflecting Dragon - 32bit} \\
+  \cline{4-9}
+  &&& \multicolumn{3}{|c|}{None} & \multicolumn{3}{|c|}{Empty Space} \\
+  \cline{4-9}
+  &&& Box & Divide & Split & Box & Divide & Split \\
+  \hline
+  \multirow{4}{*}{kd-Restart} & \multirow{2}{*}{Moeller} & Leaf Skipping & \\
+  && All Leafs & \\
+  \cline{2-8}
+  & \multirow{2}{*}{Woop} & Leaf Skipping & \\
+  && All Leafs & \\
+  \hline
+\end{tabular}
+
 \chapter{Conclusion}
 
 \chapterquote{The best thing about a boolean is even if you are wrong,
