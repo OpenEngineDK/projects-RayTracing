@@ -33,7 +33,24 @@ proporties, reflection, refraction or shadow.
 Since then a lot of time and effort has gone into improving the
 performance of ray tracing and several data structures have been
 proposed with this in mind. In 1976 Clark was the first to suggest
-using \textit{bounding volumes} to perform geometry culling. 
+using \textit{bounding volumes} to perform geometry culling and in
+1986 Goldsmith and Salmon extended this idea with an algorithm for
+automatically building \textit{bounding volume hierarchies},
+\textit{BVH}'s, topdown\citebook{Goldsmith:1987}. Fujimoto, Tanaka and
+Iwata introduced the use of \textit{uniform voxel grids} in
+1986\citebook{Fujimoto:1986}. Kaplan introduced the use of kd-trees as
+a spatial partitioning scheme\citebook{Kaplan:1985}.
+
+% Surface Area Heuristic 
+
+The idea of automatically creating hierarchical acceleration
+structures have since been revisited and improved upon countless
+times. One of the most important improvements was the introduction of
+the \textit{surface area heuristic}, \textit{SAH}, generally
+attributed to MacDonald and Booth\citebook{MacDonald:1990}.
+
+
+% GPU acceleration structures
 
 % Previously constructing the KD-tree was most effective on the CPU,
 % optimized and fast for multi core CPU's
@@ -47,11 +64,15 @@ using \textit{bounding volumes} to perform geometry culling.
 \citebook{1572783}
 
 
-% KD-tree work
+
+% KD-tree work and what we've made differently
 
 
 % Recent research has made it possible to construct KD-trees
 % efficiently on GPGPU's
 \citebook{1409079}
 
-% Surface Area Heuristic
+
+
+
+% Traversing the tree and doing it fast
