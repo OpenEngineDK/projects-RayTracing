@@ -16,10 +16,24 @@
 \chapterquote{If you want to make an apple pie from scratch, you must
   first create the universe.}{Carl Sagan}
 
-% Raytracing work
+% Early ray tracing
+
+Arthur Appel is credited as the being the first to describe the basic
+idea of ray casting\citebook{Appel:1968}, using it to solve the hidden
+surface problem and to compute shadows in opaque polygonal scenes to
+enhance the perseption of depth. Whitted extended the idea of ray
+casting into the general recursive ray tracing algorithm still used
+today\citebook{Whitted:1979}. If a ray would hit a surface, it could
+generate any number of new rays depending on the surface's material
+proporties, reflection, refraction or shadow.
 
 
-% Data structures
+% Data structures for acceleration
+
+Since then a lot of time and effort has gone into improving the
+performance of ray tracing and several data structures have been
+proposed with this in mind. In 1976 Clark was the first to suggest
+using \textit{bounding volumes} to perform geometry culling. 
 
 % Previously constructing the KD-tree was most effective on the CPU,
 % optimized and fast for multi core CPU's
@@ -32,6 +46,7 @@
 % or create hybrid GPU/CPU solutions
 \citebook{1572783}
 
+
 % KD-tree work
 
 
@@ -39,7 +54,4 @@
 % efficiently on GPGPU's
 \citebook{1409079}
 
-% Aila has looked at persistent threads to accelerate raytracing. In
-% this thesis I will utilize their idea to accelerate the SAH
-% calculations of individial nodes.
-\citebook{Aila2009}
+% Surface Area Heuristic

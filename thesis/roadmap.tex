@@ -72,6 +72,9 @@ If time allows
 \begin{itemize}
 \item Store empty split nodes in shared mem and then dump it all
   coallesced after they have been created.
+\item Speed up node child creation by using shared mem as
+  cache. Enough threads to fill the GPU could be started and then each
+  work on their continous segment of the nodes
 \item Speedup shadow rays and ambient occlusion. Mostly from simpler
   intersection testing and less register usage.\\ -- OR -- \\ Perhaps
   let the primary raytracer to it's job (coloring and refraction),

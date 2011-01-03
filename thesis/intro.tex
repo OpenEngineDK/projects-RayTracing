@@ -71,7 +71,29 @@ lightsource. Using advanced lighting algorithms such as \textit{photon
 lighting from reflective surfaces, color bleeding and even correct
 caustics can be simulated.
 
-% TODO reflection image.
+TODO reference reflection image.
+\begin{figure}
+  \centering
+
+  \subfloat[A Whiskey Glass rendered by Zhou et al.\citebook{1409079}
+    using ray tracing and photon mapping. The scene includes shadow,
+    reflection and refraction rays, aswell as caustics from light rays
+    passing through the glass and whiskey, as can be seen on table.]{
+    \includegraphics[height=5cm]{WhiskeyGlass}
+    \label{fig:PhotonGlass}
+  }
+
+  \subfloat[A glass of whiskey from a cutscene in StarCraft 2,
+    rendered with OpenGL. A reasonable approximation to refraction can
+    be seen on the glass sides, but the missing caustics leave the
+    table looking flat. This is espically noticeable when the glass is
+    moved.]{ 
+    \includegraphics[height=5cm]{StarcraftGlass}
+    \label{fig:StarCraftGlass}
+  }
+  \label{fig:caustics}
+\end{figure}
+
 
 Nevertheless, the photorealistic images rendered by ray tracers does
 come at a high computational cost, which is why ray tracing is mostly
@@ -132,8 +154,6 @@ GPGPU\citebook{1409079}. Therefore, as with ray tracing, this thesis
 will focus on a GPGPU implementation, to reduce the workload of the
 CPU. Keeping the entire workload on the graphics card has the added
 benefit of minimizing datatransfers over the bus.
-
-
 
 % In this thesis I present an exhaustive ray tracer and compared it to
 % a basic non optimized ray tracer traversing a KD-tree, to emphasize
