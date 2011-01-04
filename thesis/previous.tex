@@ -59,11 +59,24 @@ plane with least cost is chosen as the splitting plane. How exactly
 this list of splitting planes is created in the first place will be
 discussed in \refsection{sec:splittingPlane}.
 
+
 % Havran and kd trees are best?
+
+In his PHD-thesis\citebook{Havran:PhD} from 2000, Havran argued that
+the kd-tree was the best known acceleration structure for ray
+tracing. While a lot of new data structures have since appeared in the
+last decade, the kd-tree is still one of the most widely used
+structures due to it's low memory footprint, fast ray/plane
+intersection and countless research papers devoted to both optimal
+creation and ray tracing of kd-trees. For these same reasons this
+thesis will also choose to focus the kd-tree as acceleration
+structure.
+
+
 
 % GPU acceleration structures
 
-Due to the lack of looping and branching on early programmable
+Because of the lack of looping and branching on early programmable
 graphics hardware, the first all GPU based ray tracers had to make use
 of non hierarchical acceleration structures like
 grids\citebook{844181}. Grid's, however, do not scale aswell as
@@ -132,8 +145,16 @@ needed to calculate their split cost, computations where simply
 parallized over all available nodes.
 
 
-
 % KD-tree work and what we've made differently
 
 The kd-tree construction work done in this thesis is greatly inspired
-by Zhou et al.\citebook{1409079}.
+by Zhou et al.\citebook{1409079}. My approch to upper tree nodes is
+nearly identical to theirs; using median splitting for determining
+where to place the splitting plane and optimizing the tree by maxizing
+empty space. I will however also be focusing on how to handle
+triangles cut by the splitting plane and introduce 2 alternatives to
+the normal splitting approach. In the case of lower nodes I will be
+trying other algorithms than SAH for placing the splitting plane, as
+used by Zhou et al.\citebook{1409079}. I will implement a fast
+algorithm to create balanced subtrees, and test how it performs
+against SAH created trees.
