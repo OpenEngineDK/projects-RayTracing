@@ -86,7 +86,7 @@ TODO reference reflection image.
   \subfloat[A glass of whiskey from a cutscene in StarCraft 2,
     rendered with OpenGL. A reasonable approximation to refraction can
     be seen on the glass sides, but the missing caustics leave the
-    table looking flat. This is espically noticeable when the glass is
+    table looking flat. This is espacially noticeable when the glass is
     moved.]{ 
     \includegraphics[height=5cm]{StarcraftGlass}
     \label{fig:StarCraftGlass}
@@ -163,9 +163,8 @@ benefit of minimizing datatransfers over the bus.
 % been used for ray tracing (BVH, kd-trees, octrees, bla bla...) Some
 % are good for bla, others blank
 
-% Reference the 'good' kd tree double speed up (don't remember where
-% it is) and how it doesn't say anything about the extra time spend on
-% these good tree.
+% Reference the 'good' kd tree double speed up and how it doesn't say
+% anything about the extra time spend on these good tree.
 
 \quotebook{With todays's fast ray tracers, the difference between a
   ``good'' and a naïvely built kd-tree is often a factor of 2 or
@@ -193,9 +192,12 @@ Instead this thesis will explorer ray tracing acceleration structures,
 specifically the \textit{kd-tree}\footnote{A \textit{binary space
     partition} tree that is recursively subdivided by splitting the
   geometry.}, and it's impact on ray tracing efficiency for dynamic
-scenes. 
+scenes.
 
-Ray tracing of dynamic scenes ... something about why it's interesting
+TODO Quick explanation of what a kd-tree is, with figure? Including
+bounding box. Probably move this up into the actual intro.
+
+TODO Ray tracing of dynamic scenes ... something about why it's interesting
 and that we have to continuously keep the data structure updated.
 
 There are 3 ways to optimize ray tracing with respect to dynamic
