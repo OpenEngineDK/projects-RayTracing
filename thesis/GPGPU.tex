@@ -1,7 +1,60 @@
 \chapter{Understanding the GPGPU}\label{chp:GPGPU}
 
 \chapterquote{Hardware: The parts of a computer system that can be
-  kicked.}  {Jeff Pesis}
+  kicked.}{Jeff Pesis}
+
+% Motivate the use of GPUs
+
+Because of the evergrowing demand for new effects and more detail in
+computer games and other 3D graphics applications, GPU's have seen a
+massive increase in power over the last decade, as evidenced by
+\reffig{fig:gflops}. A similar figure comparing the theoretical
+throughput of GPU's and CPU's can be seen in \citebook{CUDAPG}. With
+this in mind it is easy to understand why one would want to perform
+ray tracing entirely on the GPU.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=8cm]{GFLOPS}
+  \caption{A comparison of the development of floating point
+    operations pr. second on GPU's and CPU's. \\The figure is borrowed
+    from Chapter 1 in \citebook{CUDAPG}}
+  \label{fig:gflops}
+\end{figure}
+
+% What is different form CPUs
+
+Utilizing all this power effectively, however, is not straightforward
+and in order to create algorithms on the GPU that run faster than their
+CPU counterparts, we need to understand how the GPU works.
+
+The reason behind the difference in theoretical throughput seen in
+\reffig{fig:gflops}, is that the CPU is designed for handling all
+kinds of problems, with a large cache at it's disposal and efficient
+handling of control flow. The GPU on the other hand is designed for
+high throughput of small, arithmetically intense, \textit{dataparallel
+  programs}\footnote{Each processor performs the same instruction
+  concurrently on multiple data elements.}, which is exactly what is
+required of a graphics card processing thousands of independent
+vertices and performing the same shading on hundreds of thousands of
+color fragments.
+
+Since the graphics card is designed to perform vertex and fragment
+processing independently of their respective neighbouring threads,
+this also means that when programming the graphics card, no
+assumptions can be made about which thread is where in it's
+execution. This presents a problem in cases where the $n$'th thread
+depends on information from all previous $n-1$ threads, fx when
+splitting data or calculating the minimum or maximum values of $N$
+vertices. NVIDIA's CUDA remedies this somewhat by providing
+synchronization commands, but since these will only synchronize a
+subset of the running threads, the overall problem remains the same.
+
+% Why not use GPU/CPU solutions
+
+An obvious solution is ofcourse to perform easily parallisable
+operations on the graphics card and leave the rest for the
+CPU. However, the following quote comes to mind:
 
 \quotebook{
   It is important to include the overhead of transferring data to and
@@ -9,8 +62,18 @@
   performed on the host or on the device.
 }{CUDABPG}
 
-% In order to create algorithms on the GPU that run faster than their
-% CPU version, we need to understand the gpu.
+So once it has decided to use the graphics card, one cannot simply
+transfer data back to the CPU in order to perform some operation and
+then transfer it back the GPU. The overhead would in many cases be too
+large to see any performance increase at all.
+
+Fortunatly Sengupta et al. has come up with a solution to the
+scattering problem, which will be discussed further in
+\refsection{sec:GPUprims}.
+
+% Overview of the chapter
+
+
 
 \section{The Architecture of the GPU}
 
@@ -74,13 +137,13 @@ Kernel variables that the compiler will most likely place in local memory are:
 % nodes yields nearly a 50% speedup from this.
 
 
-\section{Wide SIMT primitives}
+\section{Wide SIMT primitives}\label{sec:GPUprims}
 
 % Scan and compact
 
 % cite sengupta paper
 
-\quotebook{efficient solutions to parallel problems in which each
+\quotebook{...efficient solutions to parallel problems in which each
   output requires global knowledge of the inputs.}{Sengupta:2007}
 
 % Useful for scattering data
