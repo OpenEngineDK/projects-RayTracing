@@ -201,15 +201,44 @@ a section is devoted to each memory space.
 % Slow, coalescene of data types with size 1, 2, 4, 8, and 16 bytes.
 
 Global memory, or \textit{device memory}, is the slowest form of
-memory on CUDA devices.
+memory on CUDA devices. As mentioned above it persists across kernel
+launches and is therefore perfect for storing input data to kernels
+and their results. To avoid making lots of memory transaction to and
+from global memory, a warp will try to coalesce it's threads memory
+access into as few transactions as possible. How well transactions are
+coalesced depends on the \textit{compute capability} of the used
+graphics card, with newer graphics cards being more flexible. Suffice
+it to say here that it is preferable to access memory sequantially,
+ie. the $n$'th thread in a warp accesses the $n$ data element.
 
 % Coalesced memory access, float4 instead of float3
-
 % The alignment requirement can be forced: stuct __align__(8) {
+
+Another restiction on coalescence is that data accessed must be of
+size 1, 2, 4, 8 or 16, otherwise memory transactions will be broken up
+into multiple requests. Due to this it is actually more efficient to
+use the CUDA built-in struct \textit{float4} than \textit{float3}.
+
+% hiding latency
+
+The scheduler can also help with hiding latency from a global memory
+access. If one warp is stalled while waiting for data, another
+resident warp that is ready to execute can be scheduled
+instead. Utilization of the graphics hardware is therefore heavily
+dependent on number of resident warps and maximizing this can be
+important. Especially if memory accesses are scattered, like they will
+be when ray tracing a hierarchical structure.
 
 % Mention textures and cache. The project developed for this thesis
 % will not be using textures, since global memory also has cache as of
 % 2.0 hardware.
+
+Textures also reside in device memory space. Textures are read only
+but provide a fast texture cache, optimized for 2D spatial data
+locality. This makes texture access faster than pure global memory
+access, as a device memory read is only performed on a cache miss. On
+current generation hardware, global memory can use shared memory as a
+cache, so textures will not be used in this project.
 
 \subsubsection{Shared Memory}
 
