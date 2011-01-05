@@ -19,7 +19,7 @@ ray tracing entirely on the GPU.
   \centering
   \includegraphics[width=8cm]{GFLOPS}
   \caption{A comparison of the development of floating point
-    operations pr. second on GPU's and CPU's. \\The figure is borrowed
+    operations per second on GPU's and CPU's. \\The figure is borrowed
     from Chapter 1 in \citebook{CUDAPG}.}
   \label{fig:gflops}
 \end{figure}
@@ -149,7 +149,7 @@ be very beneficial, as will be shown in
 Warps are then organized into 3 dimensional \textit{blocks}. Blocks
 are expected to reside on the same multiprocessor, which provides them
 with a limit as to how many threads they can contain. On current GPU's
-the limit can be up to 1024 threads pr. block. Having threads executed
+the limit can be up to 1024 threads per block. Having threads executed
 on the same multiprocessor comes with a few benefits. It is possible
 to force synchronized execution of entire blocks at specific points in
 the kernels. Threads can then cooperate through fast memory local to
@@ -275,23 +275,55 @@ used as a cache for global memory.
 
 % Register
 
+Registers are part of the threads execution context and the fastest
+kind of memory on the device. Since there is only a fixed amount of
+registers available per multiprocessor, a kernels register usage can
+have a high impact on \textit{occupancy}\footnote{The amount of thread
+  blocks resident on a multiprocessor, relative to the maximum amount
+  possible}, which in turn can have an impack on the schedulers
+ability to hide latency.
+
+% launch bounds
+
+The compiler employs different heuristics to minimize register usage,
+while keeping the kernel running efficiently. Sometimes though,
+programmers may want to use even fewer registers for specific kernels,
+in order to maximize occupancy and global memory latency hiding. To
+this end they can aid the compilers heuristics by providing
+\textit{launch bounds}. In CUDA 2 arguments can be given as launch
+bounds. The first tells the compiler the maximum number of threads per
+block that the kernel will ever be invoked with. The second argument
+tells the compiler how many blocks should be resident on the
+multiprocessor. The compiler can then use this information to derive
+upper bounds for the registers per thread.
+
+% TODO? example
+
 
 
 % Local memory
 
-Kernel variables that the compiler will most likely place in local memory are:
+But the compiler cannot always simply reduce the number of registers
+to fit inside the launch bounds. If 20 register are needed to hold 20
+distinct values, then those values have to be stored somewhere else,
+if the programmer demands that only 16 registers be used. In that case
+the compiler can use \textit{local memory}, which resides in device
+memory and thus has the same high latency and low bandwith as global
+memory.
+
+Kernel variables that the compiler will most likely place in local
+memory are:
 
 \begin{itemize}
-  \item Any array that from the compilers point of view are dynamically indexed.
+  \item Any array that from the compilers point of view are
+    dynamically indexed.
   \item Structures or arrays that are to large to fit inside registers.
   \item Any variable in the kernel, if the kernel has to many
     variables to place them all in register memory. This is referered
     to as \textit{register spilling}.
 \end{itemize}
 
-% Combat local mem by explicitly using shared
-
-% launch bounds
+% local mem isn't all bad.
 
 
 
