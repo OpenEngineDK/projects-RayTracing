@@ -200,6 +200,9 @@ a section is devoted to each memory space.
 
 % Slow, coalescene of data types with size 1, 2, 4, 8, and 16 bytes.
 
+Global memory, or \textit{device memory}, is the slowest form of
+memory on CUDA devices.
+
 % Coalesced memory access, float4 instead of float3
 
 % The alignment requirement can be forced: stuct __align__(8) {
@@ -211,6 +214,8 @@ a section is devoted to each memory space.
 \subsubsection{Shared Memory}
 
 % Faster than global/local
+
+% Allows threads to share data
 
 % Used to overcome the limitations of global and local memory.
 
@@ -236,15 +241,6 @@ Kernel variables that the compiler will most likely place in local memory are:
 
 
 
-% NVIDIA mentioned 3 optimization points
-
-% Structures of arrays vs arrays of structs. Usefull when fx
-% sorting. CUDPP article/forum. Plus cache performance.
-
-% Unrolling loops, even when it means more work. Preprocess lower
-% nodes yields nearly a 50% speedup from this.
-
-
 \section{Wide SIMT primitives}\label{sec:GPUprims}
 
 % Scan and compact
@@ -258,19 +254,34 @@ Kernel variables that the compiler will most likely place in local memory are:
 
 % Give array example
 
-\section{Optimization Techniques}
 
-% Naive implementation
+% NVIDIA mentioned 3 optimization points
 
-\section{Case Study: Reduction}
+% Structures of arrays vs arrays of structs. Usefull when fx
+% sorting. CUDPP article/forum. Plus cache performance.
+
+% Unrolling loops, even when it means more work. Preprocess lower
+% nodes yields nearly a 50% speedup from this.
+
+
+\section{Optimization Techniques: Reduction}
+
+
+\subsection{Naive implementation}
+
+
+\subsection{Coalesced Memory Access}
+
 
 \subsection{Switching to shared memory}
 
 % Does that make any difference on 2.0 archs?
 
+
 \subsection{Using Registers}
 
 % Storing the thread local result in both smem and register
+
 
 \subsection{Loop unrolling}\label{sec:loopUnrolling}
 
