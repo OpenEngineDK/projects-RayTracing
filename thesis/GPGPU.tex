@@ -3,6 +3,8 @@
 \chapterquote{Hardware: The parts of a computer system that can be
   kicked.}{Jeff Pesis}
 
+
+
 % Motivate the use of GPUs
 
 Because of the evergrowing demand for new effects and more detail in
@@ -67,11 +69,22 @@ transfer data back to the CPU in order to perform some operation and
 then transfer it back the GPU. The overhead would in many cases be too
 large to see any performance increase at all.
 
-Fortunatly Sengupta et al. has come up with a solution to the
-scattering problem, which will be discussed further in
-\refsection{sec:GPUprims}.
+%% Fortunatly Sengupta et al. has come up with a solution to the
+%% scattering problem, which will be discussed further in
+%% \refsection{sec:GPUprims}.
+
 
 % Overview of the chapter
+
+Finding effective GPGPU solutions to the above mentioned problems is
+the motivation for this chapter, which is structured as follows.
+First we shall take a look at the how threads and memory is organized
+on the graphics card. Understanding this will be critical in
+developing GPGPU efficient solutions. Then a section will present new
+GPGPU scan primitives, which will help us to perform data scattering
+and reductions on dataparallel hardware. I will then be discussing a
+couple interesting optimization techniques on the GPGPU, while
+applying them to a reduction case study.
 
 
 
