@@ -20,7 +20,7 @@ ray tracing entirely on the GPU.
   \includegraphics[width=8cm]{GFLOPS}
   \caption{A comparison of the development of floating point
     operations pr. second on GPU's and CPU's. \\The figure is borrowed
-    from Chapter 1 in \citebook{CUDAPG}}
+    from Chapter 1 in \citebook{CUDAPG}}.
   \label{fig:gflops}
 \end{figure}
 
@@ -88,12 +88,63 @@ applying them to a reduction case study.
 
 
 
-\section{The Architecture of the GPU}
+\section{The Architecture of the GPGPU}
+
+To understand the architecture of the GPGPU, we must first understand the
+relationship and layout of threads and then the different kinds of
+memory available to threads.
 
 \subsection{Thread Model}
 
 % Grid, blocks, warps and threads. We will only deal with the one
 % dimensional case.
+
+The graphics card is able to handle execution of more than a million
+threads sequentially. Simply considering a graphics application
+running at a 1440x900 resolution should convince anyone of this. While
+above I have argued that all of these threads are executed
+independently of each other, NVIDIA's CUDA architecture does place
+these threads in a hierarchy, which provides programmers with some
+control over thread execution.
+
+At the lowest level threads are scheduled and executed completely
+parallel in small groups called \textit{warps}\footnote{The term
+  originates from weaving, the first parallel thread
+  technology.\citebook{CUDAPG}}, usually with a warpsize of 32. While
+threads in a warp have their own instruction counter and register
+state, and therefore logically can branch independently of
+neighbouring threads, a warp can only execute one specific instruction
+at a time. The following example should help clarify this.
+
+\begin{algorithmic}
+  \IF{threadID < 16}
+    \ASSIGN{$x$}{$threadID$}
+  \ELSE
+    \ASSIGN{$x$}{$32 - threadID$}
+  \ENDIF
+\end{algorithmic}
+
+The first 16 threads in the warp will evaluate to true and thus
+perform the assignment $x \leftarrow threadID$, while the next 16
+threads will evaluate to false and execute the alternate statement $x
+\leftarrow 32 - threadID$. Since the warp can only perform one
+distinct instruction at a time, it will have to first execute $x
+\leftarrow threadID$, leaving the last 16 threads idle. It next
+executes the else branch, meaning the first 16 threads are left
+idling. While this example shows how branching can hurt performance,
+when all threads in a warp do not take the same execution path,
+knowning that all threads in the warp always are synchronized can also
+be very beneficial, as will be shown in
+\refsection{sec:loopUnrolling}.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=8cm]{ThreadLayout}
+  \caption{A figure of CUDA's thread layout.\\ The figure is borrowed
+    from Chapter 2 in \citebook{CUDAPG}}.
+  \label{fig:gflops}
+\end{figure}
+
 
 % It is a wide SIMD/SIMT, Single-Instruction / Multiple-Thread,
 % machine. This means branching hurts. Alot!
@@ -177,7 +228,7 @@ Kernel variables that the compiler will most likely place in local memory are:
 
 % Storing the thread local result in both smem and register
 
-\subsection{Loop unrolling}
+\subsection{Loop unrolling}\label{sec:loopUnrolling}
 
 % Unroll the loops.
 
