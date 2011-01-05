@@ -219,6 +219,9 @@ size 1, 2, 4, 8 or 16, otherwise memory transactions will be broken up
 into multiple requests. Due to this it is actually more efficient to
 use the CUDA built-in struct \textit{float4} than \textit{float3}.
 
+Requirements for coalescence on hardware of a specific compute
+capability is described in Appendix G of \citebook{CUDAPG}.
+
 % hiding latency
 
 The scheduler can also help with hiding latency from a global memory
@@ -243,17 +246,38 @@ cache, so textures will not be used in this project.
 \subsubsection{Shared Memory}
 
 % Faster than global/local
-
 % Allows threads to share data
 
-% Used to overcome the limitations of global and local memory.
+Shared memory resides on the multiprocessors and is much faster than
+global memory. It is shared by threads across their block, which
+allows them to share data.
+
+% Used to overcome the limitations of global memory.
+
+A normal usecase for shared memory is local caching of global data
+shared across multiple threads. In this case the kernel first loads
+data into shared memory, then performs a block-wide synchronization if
+necessary and proceeds to operate on the data in shared memory. When
+the kernel has finished it's computations, the data is then dumped
+back to global memory.
 
 % Can be used as global cache on never CUDA architectures isntead of
 % textures and shared mem. nice we laike
 
-% Bank conflicts, nothing is ever as good as it seems.
+As mentioned above, on newer architecture multiprocessor memory can be
+used as a cache for global memory.
+
+% TODO? Bank conflicts, nothing is ever as good as it seems.
+
+
 
 \subsubsection{Registers and Local Memory}
+
+% Register
+
+
+
+% Local memory
 
 Kernel variables that the compiler will most likely place in local memory are:
 
@@ -265,7 +289,9 @@ Kernel variables that the compiler will most likely place in local memory are:
     to as \textit{register spilling}.
 \end{itemize}
 
-% Combat local memory by using launch bounds
+% Combat local mem by explicitly using shared
+
+% launch bounds
 
 
 
