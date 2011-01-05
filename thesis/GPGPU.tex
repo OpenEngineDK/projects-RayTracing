@@ -20,7 +20,7 @@ ray tracing entirely on the GPU.
   \includegraphics[width=8cm]{GFLOPS}
   \caption{A comparison of the development of floating point
     operations pr. second on GPU's and CPU's. \\The figure is borrowed
-    from Chapter 1 in \citebook{CUDAPG}}.
+    from Chapter 1 in \citebook{CUDAPG}.}
   \label{fig:gflops}
 \end{figure}
 
@@ -152,13 +152,13 @@ with a limit as to how many threads they can contain. On current GPU's
 the limit can be up to 1024 threads pr. block. Having threads executed
 on the same multiprocessor comes with a few benefits. It is possible
 to force synchronized execution of entire blocks at specific points in
-the kernels. Threads can then use fast block local memory to cooperate
-and share data. Threads can lookup their \textit{thread index} inside
-a block through the 3 dimensional \textit{threadIdx} CUDA built-in
-variable. Being able to lookup a threads id is important for working
-with data. In the one dimensional case the $n$'th thread will usually
-process the $n$'th data element. Without the thread index this would
-not be possible.
+the kernels. Threads can then cooperate through fast memory local to
+the multiprocessor and use it to share data. Threads can lookup their
+\textit{thread index} inside a block through the 3 dimensional
+\textit{threadIdx} CUDA built-in variable. Being able to lookup a
+threads id is important for working with data. In the one dimensional
+case the $n$'th thread will usually process the $n$'th data
+element. Without the thread index this would not be possible.
 
 % grid
 
@@ -176,14 +176,25 @@ calculated as $id \leftarrow blockDim.x * blockIdx.x + threadIdx.x$.
   \centering
   \includegraphics[width=8cm]{ThreadLayout}
   \caption{A figure of CUDA's thread hierarchy.\\ The figure is borrowed
-    from Chapter 2 in \citebook{CUDAPG}}.
+    from Chapter 2 in \citebook{CUDAPG}.}
   \label{fig:threadLayout}
 \end{figure}
 
 
 
 
-\subsection{Memory Model}
+\subsection{The Memory Model}
+
+With the thread hierarchy explained, the different memory spaces made
+available through CUDA can be described.  
+
+CUDA provides the programmer with 3 overall types of memory:
+\textit{global memory}, which can be accessed by any thread at any
+time and persist across kernel launches, \textit{shared memory}, which
+is shared across all threads in a block and persists as long as a
+block is active, and finally \textit{registers}, which are local to
+each thread and only exists as long as it's thread. In the following
+a section is devoted to each memory space.
 
 \subsubsection{Global Memory}
 
@@ -196,6 +207,17 @@ calculated as $id \leftarrow blockDim.x * blockIdx.x + threadIdx.x$.
 % Mention textures and cache. The project developed for this thesis
 % will not be using textures, since global memory also has cache as of
 % 2.0 hardware.
+
+\subsubsection{Shared Memory}
+
+% Faster than global/local
+
+% Used to overcome the limitations of global and local memory.
+
+% Can be used as global cache on never CUDA architectures isntead of
+% textures and shared mem. nice we laike
+
+% Bank conflicts, nothing is ever as good as it seems.
 
 \subsubsection{Registers and Local Memory}
 
@@ -210,17 +232,6 @@ Kernel variables that the compiler will most likely place in local memory are:
 \end{itemize}
 
 % Combat local memory by using launch bounds
-
-\subsubsection{Shared Memory}
-
-% Faster than global/local
-
-% Used to overcome the limitations of global and local memory.
-
-% Can be used as global cache on never CUDA architectures isntead of
-% textures and shared mem. nice we laike
-
-% Bank conflicts, nothing is ever as good as it seems.
 
 
 
