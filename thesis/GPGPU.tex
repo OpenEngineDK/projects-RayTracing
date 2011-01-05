@@ -36,10 +36,10 @@ kinds of problems, with a large cache at it's disposal and efficient
 handling of control flow. The GPU on the other hand is designed for
 high throughput of small, arithmetically intense, \textit{dataparallel
   programs}\footnote{Each processor performs the same instruction
-  concurrently on multiple data elements.}, which is exactly what is
-required of a graphics card processing thousands of independent
-vertices and performing the same shading on hundreds of thousands of
-color fragments.
+  concurrently on multiple data elements.} called \textit{kernels},
+which is exactly what is required of a graphics card processing
+thousands of independent vertices and performing the same shading on
+hundreds of thousands of color fragments.
 
 Since the graphics card is designed to perform vertex and fragment
 processing independently of their respective neighbouring threads,
@@ -94,7 +94,7 @@ To understand the architecture of the GPGPU, we must first understand the
 relationship and layout of threads and then the different kinds of
 memory available to threads.
 
-\subsection{Thread Model}
+\subsection{The Thread Hierarchy}
 
 % Grid, blocks, warps and threads. We will only deal with the one
 % dimensional case.
@@ -106,6 +106,8 @@ above I have argued that all of these threads are executed
 independently of each other, NVIDIA's CUDA architecture does place
 these threads in a hierarchy, which provides programmers with some
 control over thread execution.
+
+% warps
 
 At the lowest level threads are scheduled and executed completely
 parallel in small groups called \textit{warps}\footnote{The term
@@ -124,6 +126,9 @@ at a time. The following example should help clarify this.
   \ENDIF
 \end{algorithmic}
 
+% It is a wide SIMD/SIMT, Single-Instruction / Multiple-Thread,
+% machine. This means branching hurts. Alot!
+
 The first 16 threads in the warp will evaluate to true and thus
 perform the assignment $x \leftarrow threadID$, while the next 16
 threads will evaluate to false and execute the alternate statement $x
@@ -137,17 +142,45 @@ knowning that all threads in the warp always are synchronized can also
 be very beneficial, as will be shown in
 \refsection{sec:loopUnrolling}.
 
+% TODO explain any/all/ballot?
+
+% blocks
+
+Warps are then organized into 3 dimensional \textit{blocks}. Blocks
+are expected to reside on the same multiprocessor, which provides them
+with a limit as to how many threads they can contain. On current GPU's
+the limit can be up to 1024 threads pr. block. Having threads executed
+on the same multiprocessor comes with a few benefits. It is possible
+to force synchronized execution of entire blocks at specific points in
+the kernels. Threads can then use fast block local memory to cooperate
+and share data. Threads can lookup their \textit{thread index} inside
+a block through the 3 dimensional \textit{threadIdx} CUDA built-in
+variable. Being able to lookup a threads id is important for working
+with data. In the one dimensional case the $n$'th thread will usually
+process the $n$'th data element. Without the thread index this would
+not be possible.
+
+% grid
+
+Blocks are themselves arranged into the uppermost part of the thread
+hierarchy, a 2 dimensional \textit{grid}. The amount of data being
+processed usually defines how large the grid will be. Just like a
+thread can access it's index og id, it can also lookup it's block
+index inside the grid through the built-in \textit{blockDim}. A 2
+dimensional thread hierarchy can be seen on
+\reffig{fig:threadLayout}. The kernels in this thesis will usually
+process the data as 1D linear array, so a threads global id can be
+calculated as $id \leftarrow blockDim.x * blockIdx.x + threadIdx.x$.
+
 \begin{figure}
   \centering
   \includegraphics[width=8cm]{ThreadLayout}
-  \caption{A figure of CUDA's thread layout.\\ The figure is borrowed
+  \caption{A figure of CUDA's thread hierarchy.\\ The figure is borrowed
     from Chapter 2 in \citebook{CUDAPG}}.
-  \label{fig:gflops}
+  \label{fig:threadLayout}
 \end{figure}
 
 
-% It is a wide SIMD/SIMT, Single-Instruction / Multiple-Thread,
-% machine. This means branching hurts. Alot!
 
 
 \subsection{Memory Model}
