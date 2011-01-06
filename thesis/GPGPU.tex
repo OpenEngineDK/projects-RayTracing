@@ -350,10 +350,12 @@ scan is then a new array with values $[0, a_0, a_0 \oplus a_1, a_0
   \oplus a_1 \oplus a_2, ...]$. For prefix-sum the operator is + and
 the identity element is 0.
 
-\begin{tabular}{r r r r r r r r r}
-  in: & 3 & 1 & 7 & 0 & 4 & 1 & 6 & 3 \\
-  out: & 0 & 3 & 4 & 11 & 11 & 14 & 16 & 22 \\
-\end{tabular}
+\begin{displaymath}
+  \begin{array}{r r r r r r r r r}
+    in: & 3 & 1 & 7 & 0 & 4 & 1 & 6 & 3 \\
+    out: & 0 & 3 & 4 & 11 & 11 & 14 & 16 & 22 \\
+  \end{array}
+\end{displaymath}
 
 Calculating the prefix-sum for $n$ elements on the CPU is trivial and
 can naively be done in $O(n)$ time. A naive implementation in the GPU
@@ -407,9 +409,75 @@ each iteration of the reduce and down-sweep kernels.
 
 % Useful for splitting data
 
-Now the question is: \textit{why is this useful?}
+Now the question is: \textit{why is this useful?}. The answer is that
+the prefix-sum is vital to splitting data arrays on the GPU. Imagine
+an array of triangles that have been split by a splitting plane and
+must now be sorted into a new array, with all triangles in front of
+the plane sorted to the left and the triangles behind it sorted to the
+left. 
 
-% TODO? Give array example
+\begin{displaymath}
+  \begin{array} {r r r r r r r}
+    triangles: & [t_0 & t_1 & t_2 & t_3 & t_4 & t_5]\\
+    side: & [r & l & r & l & l & r]\\
+  \end{array}
+  \Rightarrow
+  \begin{array} {r r r r r r r}
+    &[t_1 & t_3 & t_4 & t_0 & t_2 & t_5]\\
+    &[l & l & l & r & r & r]\\
+  \end{array}
+\end{displaymath}
+
+This needs to be done every time a tree node is split into 2 child
+nodes, so being able to do this efficiently on the GPGPU is imperative
+to creating kd-trees efficiently.
+
+Obviously the individual threads in a split kernel will have no idea
+where to move the triangle, since that depends on all previous
+threads. But by first computing the prefix-sum of the side array,
+while adopting the convention that $r = 0$ and $l = 1$, splitting the
+triangles become quite easy. Taking the example above the prefix-sum
+becomes
+
+\begin{displaymath}
+  \begin{array} {r r r r r r r}
+    prefix\text{-}sum: & [0 & 0 & 1 & 1 & 2 & 3]
+  \end{array}
+\end{displaymath}
+
+and the total number of triangles moved left, $nf$, can be found by
+adding the last element in prefix-sum with the last element in sides,
+which yields $nf = 3 + 0 = 3$.
+
+The observant reader will have noticed that the prefix-sum actually
+calculates the addresses where the triangles on the left side should
+be moved to. All that remains is then to calculate the addresses of
+the triangles moved right. This is done using $right = threadId -
+prefix + nf$.
+
+\begin{displaymath}
+  \begin{array} {r r r r r r r}
+    right: & [4 & 5 & 5 & 6 & 6 & 6]
+  \end{array}
+\end{displaymath}
+
+The address that a thread should move it's triangle to is then simply
+$address = side == l ? prefix : right$ and becomes
+
+
+\begin{displaymath}
+  \begin{array} {r r r r r r r}
+    address: & [4 & 0 & 5 & 1 & 2 & 6]
+  \end{array}
+\end{displaymath}
+
+which will divide the triangles into their respective sides, just like
+we wanted.
+
+% TODO? the data keeps it's relation to other elements, which is good
+% for coalescence.
+
+
 
 
 
@@ -424,6 +492,10 @@ Now the question is: \textit{why is this useful?}
 
 \section{Optimization Techniques: Reduction}
 
+% Motivation
+
+% Reduction was important in the previous step and will be again for
+% median splitting
 
 \subsection{Naive implementation}
 
