@@ -280,7 +280,7 @@ kind of memory on the device. Since there is only a fixed amount of
 registers available per multiprocessor, a kernels register usage can
 have a high impact on \textit{occupancy}\footnote{The amount of thread
   blocks resident on a multiprocessor, relative to the maximum amount
-  possible}, which in turn can have an impack on the schedulers
+  possible.}, which in turn can have an impack on the schedulers
 ability to hide latency.
 
 % launch bounds
@@ -309,7 +309,10 @@ distinct values, then those values have to be stored somewhere else,
 if the programmer demands that only 16 registers be used. In that case
 the compiler can use \textit{local memory}, which resides in device
 memory and thus has the same high latency and low bandwith as global
-memory.
+memory. Forcing a few registers into local memory to gain occupancy
+can be beneficial though, and since all threads will access local
+memory at the same time, there is a high probability that local memory
+access can be coalesced.
 
 Kernel variables that the compiler will most likely place in local
 memory are:
@@ -323,12 +326,9 @@ memory are:
     to as \textit{register spilling}.
 \end{itemize}
 
-% local mem isn't all bad.
 
 
-
-
-\section{Wide SIMT primitives}\label{sec:GPUprims}
+\section{The Scan Primitive}\label{sec:GPUprims}
 
 % Scan and compact
 
