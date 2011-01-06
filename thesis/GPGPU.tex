@@ -330,16 +330,87 @@ memory are:
 
 \section{The Scan Primitive}\label{sec:GPUprims}
 
-% Scan and compact
+% Motivate
 
-% cite sengupta paper
+As explained above it can be quite hard to perform reductions and
+scattering operations on dataparallel hardware. In this section I will
+outline a solution to this problem presented by Sengupta et
+al\citebook{Sengupta:2007} and give an example of why this primitive
+is important when constructing spatial data structures.
 
-\quotebook{...efficient solutions to parallel problems in which each
-  output requires global knowledge of the inputs.}{Sengupta:2007}
+% Prefix sum
 
-% Useful for scattering data
+The reason for reductions being hard, is that each thread requires
+knowledge derived from all threads preceding it. An example taken from
+\citebook{Sengupta:2007} is the calculation of a \textit{prefix-sum},
+which is a special case of \textit{exclusive scan}. Exclusive scan
+takes as input a data array, $[a_0, a_1, a_2, ...]$, and a binary
+operator, $\oplus$, with an identity element. The result of exclusive
+scan is then a new array with values $[0, a_0, a_0 \oplus a_1, a_0
+  \oplus a_1 \oplus a_2, ...]$. For prefix-sum the operator is + and
+the identity element is 0.
 
-% Give array example
+\begin{tabular}{r r r r r r r r r}
+  in: & 3 & 1 & 7 & 0 & 4 & 1 & 6 & 3 \\
+  out: & 0 & 3 & 4 & 11 & 11 & 14 & 16 & 22 \\
+\end{tabular}
+
+Calculating the prefix-sum for $n$ elements on the CPU is trivial and
+can naively be done in $O(n)$ time. A naive implementation in the GPU
+however would require each thread to sum up every previous value on
+it's own, yielding a time complexity of $O(n^2)$. Instead a
+dataparallel algorithm has to be devised that allows threads
+cooperatively solve the problem and doing that as efficiently as the
+CPU, ie in $O(n)$ time.
+
+
+% Algorithm
+
+Sengupta et al.\citebook{Sengupta:2007}'s work-efficient prefix-sum
+requires to passes over the data, one called \textit{reduce} and
+another called \textit{down-sweep}. The algorithm is depicted on
+\reffig{fig:segScan}. The figure shows scan being applied to an array
+containing 8 elements. Cells with the same colors represent threads
+belonging to the same block. The arrows show how data is moved, one
+arrow entering a cell represents a copy, while 2 arraws entering
+represents the application of $\oplus$ to the data. In the reduce
+phase \reffig{fig:segScan} shows how each block's threads are first
+responsible for cooperating on reducing their own values. The result
+of this reduction is then passed as input to a new reduction kernel,
+yielding the final reduced value.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=4cm]{SegmentedScan}
+  \caption{An example of multi-block segmented scan
+    communication. Cells with the same shading belong to the same
+    block. \\The figure is borrowed from \citebook{Sengupta:2007}.}
+  \label{fig:segScan}
+\end{figure}
+
+During down-sweep the data is pumped back out into the array, reusing
+the reduced values calculated in the previous phase. The result of
+this is an array containing the result of a scan application. It can
+be quite instructive in dataparallel programming to go through the
+algorithm.
+
+For specific details and further implementation optimizations see
+Sengupta et al.\citebook{Sengupta:2007}.
+
+
+% time complexity
+
+For $n$ elements the time complexity of the parallel scan is $2 * O(n
++ n/2 + n/4 + ... + 1) = O(n)$, since the workload is cut in half for
+each iteration of the reduce and down-sweep kernels.
+
+
+% Useful for splitting data
+
+Now the question is: \textit{why is this useful?}
+
+% TODO? Give array example
+
 
 
 % NVIDIA mentioned 3 optimization points
@@ -360,7 +431,7 @@ memory are:
 \subsection{Coalesced Memory Access}
 
 
-\subsection{Switching to shared memory}
+\subsection{Working from Shared Memory}
 
 % Does that make any difference on 2.0 archs?
 
