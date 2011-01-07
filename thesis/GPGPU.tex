@@ -497,7 +497,33 @@ we wanted.
 % Reduction was important in the previous step and will be again for
 % median splitting
 
+% Works on individual blocks, must be run twice if input is too large
+% for one block to handle.
+
 \subsection{Naive implementation}
+
+\begin{algorithm}
+  \caption{Naive reduction}
+  \label{alg:KDRestart}
+  \begin{algorithmic}
+    \PROCEDURE{Reduce0}
+              {$values$ : Number List; $id$ : Integer; $elements$ : Integer}
+              {$result$ : Number}
+              {\ASSIGN{$offset$}{$elements / 2$}
+                \WHILE{$offset > 1$}
+                  \IF{id < offset}
+                  %\ASSIGN{$values[id]$}{min$(t_{min}, $\bf{Intersect}$(triangle, ray))$}
+                  \ASSIGN{$values[id]$}{\MIN{$values[id]$}{$values[id + offset]$}}
+                  \ENDIF
+                  \ASSIGN{$offset$}{$offset / 2$}
+                  \SYNC
+                \ENDWHILE
+                \IF{id = 0}
+                  \ASSIGN{$result$}{$values[0]$}
+                \ENDIF
+              }
+  \end{algorithmic}
+\end{algorithm}
 
 
 \subsection{Coalesced Memory Access}
@@ -517,31 +543,12 @@ we wanted.
 
 % Unroll the loops.
 
+% Only works if the number of reductions are known beforehand (or if
+% we pad the input)
+
 % Then move the first up to where data is loaded into shared mem
 
 % And move the last reduction down where the final result is written.
-
-
-
-
-%\section{Case Study: Segmented Reduction}
-
-% Alot of reductions and iterative algorithms. It is therefore
-% important to know how to optimize these from a naive implementation.
-
-% Algorithm from bla
-
-%\subsection{Naive implementation}
-
-%\subsection{Switching to shared memory}
-
-
-%\subsection{Rewriting slow math operations}
-
-% Pow is 'expensive' and can be replaced by a simple doubling of the
-% indices.
-
-%\subsection{Unrolling the loops}
 
 % Can be done with a template parameter. Would still need to check
 % range, but could remove the loop variables. Would need a few speciel
@@ -566,3 +573,7 @@ we wanted.
 % loop with that check) However making sure that single block bounding
 % box reductions are never brought to the segmented reducer will
 % ensure at least 2 values exist and one bounds check can be omitted.
+
+
+% No damn example as it's too big
+
