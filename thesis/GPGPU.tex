@@ -492,18 +492,37 @@ we wanted.
 
 \section{Optimization Techniques: Reduction}
 
-% Motivation
+% Motivation: Reduction was important in the previous step and will be
+% again for median splitting
 
-% Reduction was important in the previous step and will be again for
-% median splitting
+In the previous section we saw that it is important to be able to
+perform reductions efficiently on the GPU. Calculating the prefix-sum
+however isn't the only part of the kd-tree creator where reductions
+are needed. It is also useful for calculating the bounding boxes of
+kd-nodes, used when performing median splits.
+
+In this section I will present a naive reduction algorithm and
+incrementally apply optimizations to it. The algorithm will use the
+binary operator min to find the smallest value from it's input list,
+but can be generalized to any reduction. The naive algorithm will have
+an efficient time complexity of $O(n)$, which is the best we can hope
+for. Instead of improving this time complexity the following
+optimizations will instead focus on making better use of the GPU by
+hiding latency, using faster memory where available and reduce the
+number of calculations made.
 
 % Works on individual blocks, must be run twice if input is too large
 % for one block to handle.
 
-% Algorithms assumes that the length of the input list is a power of
-% 2. If that is not the case then either the data could be
-% preprocessed or the kernel itself can pad the data with the identity
-% element.
+The reduction algorithm will reduce values correctly for individual
+blocks. If the input list is too large to be efficiently reduced by
+one block, then the algorithm can be run recursively on it's own
+output, until a single result is found.
+
+The algorithm assumes that the length of the input list is a power of
+2. If that is not the case then either the data could be preprocessed
+or the kernel itself can pad the data with the binary operators
+identity element, in our case $\infty$.
 
 \subsection{Naive implementation}
 
