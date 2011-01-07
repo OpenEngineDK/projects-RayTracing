@@ -10,6 +10,7 @@
 \newcommand{\refchapter}[1]{Chapter \ref{#1}}
 \newcommand{\refsection}[1]{Section \ref{#1}}
 \newcommand{\reflst}[1]{listing \ref{#1}}
+\newcommand{\refalg}[1]{Algorithm \ref{#1}}
 
 % Cite macroes
 \newcommand{\chapterquote}[2]{
@@ -39,11 +40,13 @@
     #4 \\
     \hspace*{-1em}\textbf{end}}}
 \newcommand{\SYNC}{\STATE{\textbf{synchronize}}}
-\newcommand{\MIN}[2]{\textbf{min}$($ #1 , #2 $)$}
-\newcommand{\VAR}[1]{$#1$}
 \newcommand{\ASSIGN}[2]{
   \STATE{#1 $\leftarrow$ #2}
 }
+\newcommand{\VAR}[1]{$#1$}
+\newcommand{\DECLARE}[2]{\STATE{#1 : #2}}
+\newcommand{\MIN}[2]{\textbf{min}$($ #1 , #2 $)$}
+\newcommand{\MOD}{\textbf{mod }}
 
 % Math macros
 \newcommand{\vecthree}[3]{

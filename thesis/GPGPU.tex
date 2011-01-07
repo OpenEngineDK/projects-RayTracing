@@ -500,25 +500,59 @@ we wanted.
 % Works on individual blocks, must be run twice if input is too large
 % for one block to handle.
 
+% Algorithms assumes that the length of the input list is a power of
+% 2. If that is not the case then either the data could be
+% preprocessed or the kernel itself can pad the data with the identity
+% element.
+
 \subsection{Naive implementation}
+
+interleaved access pattern
+
+\refalg{alg:naiveReduct}
 
 \begin{algorithm}
   \caption{Naive reduction}
-  \label{alg:KDRestart}
+  \label{alg:naiveReduct}
   \begin{algorithmic}
     \PROCEDURE{Reduce0}
               {$values$ : Number List; $id$ : Integer; $elements$ : Integer}
               {$result$ : Number}
+              {\ASSIGN{$offset$}{$1$}
+                \WHILE{$offset < elements$}
+                  \IF{$id$ \MOD  $offset = 0$}
+                  \ASSIGN{$values[id]$}{\MIN{$values[id]$}{$values[id + offset]$}}
+                  \ENDIF
+                  \ASSIGN{$offset$}{$offset * 2$}
+                  \SYNC
+                \ENDWHILE
+                \IF{$id = 0$}
+                  \ASSIGN{$result$}{$values[0]$}
+                \ENDIF
+              }
+  \end{algorithmic}
+\end{algorithm}
+
+%TODO interleaved access pattern figure
+
+\subsection{Coalesced Memory Access}
+
+\begin{algorithm}
+  \caption{Coalesced reduction}
+  \label{alg:coalescedReduct}
+  \begin{algorithmic}
+    \PROCEDURE{Reduce1}
+              {$values$ : Number List; $id$ : Integer; $elements$ : Integer}
+              {$result$ : Number}
               {\ASSIGN{$offset$}{$elements / 2$}
                 \WHILE{$offset > 1$}
-                  \IF{id < offset}
-                  %\ASSIGN{$values[id]$}{min$(t_{min}, $\bf{Intersect}$(triangle, ray))$}
+                  \IF{$id < offset$}
                   \ASSIGN{$values[id]$}{\MIN{$values[id]$}{$values[id + offset]$}}
                   \ENDIF
                   \ASSIGN{$offset$}{$offset / 2$}
                   \SYNC
                 \ENDWHILE
-                \IF{id = 0}
+                \IF{$id = 0$}
                   \ASSIGN{$result$}{$values[0]$}
                 \ENDIF
               }
@@ -526,17 +560,67 @@ we wanted.
 \end{algorithm}
 
 
-\subsection{Coalesced Memory Access}
-
-
 \subsection{Working from Shared Memory}
 
 % Does that make any difference on 2.0 archs?
+
+\begin{algorithm}
+  \caption{Shared memory reduction}
+  \label{alg:sharedReduct}
+  \begin{algorithmic}
+    \PROCEDURE{Reduce2}
+              {$values$ : Number List; $id$ : Integer; $elements$ : Integer}
+              {$result$ : Number}
+              {\DECLARE{$sValues$}{\textbf{shared} Number List}
+                \ASSIGN{$sValues[id]$}{$values[id]$}
+                \SYNC
+                \ASSIGN{$offset$}{$elements / 2$}
+                \WHILE{$offset > 1$}
+                  \IF{$id < offset$}
+                  \ASSIGN{$values[id]$}{\MIN{$values[id]$}{$values[id + offset]$}}
+                  \ENDIF
+                  \ASSIGN{$offset$}{$offset / 2$}
+                  \SYNC
+                \ENDWHILE
+                \IF{$id = 0$}
+                  \ASSIGN{$result$}{$values[0]$}
+                \ENDIF
+              }
+  \end{algorithmic}
+\end{algorithm}
+
 
 
 \subsection{Using Registers}
 
 % Storing the thread local result in both smem and register
+
+\begin{algorithm}
+  \caption{Register reduction}
+  \label{alg:registerReduct}
+  \begin{algorithmic}
+    \PROCEDURE{Reduce3}
+              {$values$ : Number List; $id$ : Integer; $elements$ : Integer}
+              {$result$ : Number}
+              {\DECLARE{$sValues$}{\textbf{shared} Number List}
+                \ASSIGN{$rValue \leftarrow sValues[id]$}{$values[id]$}
+                \SYNC
+                \ASSIGN{$offset$}{$elements / 2$}
+                \WHILE{$offset > 1$}
+                  \IF{$id < offset$}
+                  \ASSIGN{$rValue \leftarrow values[id]$}{\MIN{$rValue$}{$values[id + offset]$}}
+                  \ENDIF
+                  \ASSIGN{$offset$}{$offset / 2$}
+                  \SYNC
+                \ENDWHILE
+                \IF{$id = 0$}
+                  \ASSIGN{$result$}{$rValue$}
+                \ENDIF
+              }
+  \end{algorithmic}
+\end{algorithm}
+
+
 
 
 \subsection{Loop unrolling}\label{sec:loopUnrolling}
