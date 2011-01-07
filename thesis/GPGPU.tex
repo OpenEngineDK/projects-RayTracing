@@ -526,9 +526,14 @@ identity element, in our case $\infty$.
 
 \subsection{Naive implementation}
 
-interleaved access pattern
-
-\refalg{alg:naiveReduct}
+The naive algorithm, presented in \refalg{alg:naiveReduct}, is a
+straight forward implementation of the interleaved access pattern
+shown in \reffig{fig:segScan}. The algorithm uses the modulo operator
+to distinguish which threads are done and which should continue to
+perform reductions. All intermittent values are written back into
+global memory, to allow other threads to access the reduced values
+when needed. When the block has finished the reduction, the result
+is returned by the first thread.
 
 \begin{algorithm}
   \caption{Naive reduction}
@@ -552,9 +557,24 @@ interleaved access pattern
   \end{algorithmic}
 \end{algorithm}
 
-%TODO interleaved access pattern figure
-
 \subsection{Coalesced Memory Access}
+
+Ofcourse there are several inefficiencies to correct in
+\refalg{alg:naiveReduct}. To start with we will focus on global memory
+access and update it to allow the warp to perform memory accesses
+coalesced. Since we're interested in a global reduction it won't
+matter in which order values are compared. This allows the interleaved
+access pattern to be exchanged with a sequential pattern, which will
+allow the warp to perform coalesced memory access.
+
+%% Also better warp utilization as most threads are active and we get
+%% rid of the slow mod operator.
+
+Two pleasent side effects of this change, as shown in
+\refalg{alg:coalescedReduct} is that the slow modulo operator has
+disappeared and warp utilization has dramatically increased, since the
+first $offset$ threads in a block are now live, compared to every
+$offset$'th thread in the previous implementation.
 
 \begin{algorithm}
   \caption{Coalesced reduction}
@@ -578,10 +598,21 @@ interleaved access pattern
   \end{algorithmic}
 \end{algorithm}
 
+% TODO? Figure of sequential access
+
 
 \subsection{Working from Shared Memory}
 
-% Does that make any difference on 2.0 archs?
+Even with coalesced memory acces, continuosly accessing global memory
+is still quite slow. To remedy this the implementation in
+\refalg{alg:sharedReduct} first copies the data into shared memory
+before performing any reductions. As can be seen the threads are
+working together to perform the copy. Instead of all threads having to
+copy the entire data, each thread only fills the $id$'th cell in the
+shared list and leaves the other cells to be filled by the other
+threads. The subsequent synchronization ensures that all the data has
+been copied before proceding with the reduction. Since the threads are
+still accessing data sequentially, this change preserves coalescence.
 
 \begin{algorithm}
   \caption{Shared memory reduction}
@@ -596,23 +627,29 @@ interleaved access pattern
                 \ASSIGN{$offset$}{$elements / 2$}
                 \WHILE{$offset > 1$}
                   \IF{$id < offset$}
-                  \ASSIGN{$values[id]$}{\MIN{$values[id]$}{$values[id + offset]$}}
+                  \ASSIGN{$sValues[id]$}{\MIN{$sValues[id]$}{$sValues[id + offset]$}}
                   \ENDIF
                   \ASSIGN{$offset$}{$offset / 2$}
                   \SYNC
                 \ENDWHILE
                 \IF{$id = 0$}
-                  \ASSIGN{$result$}{$values[0]$}
+                  \ASSIGN{$result$}{$sValues[0]$}
                 \ENDIF
               }
   \end{algorithmic}
 \end{algorithm}
 
-
-
 \subsection{Using Registers}
 
-% Storing the thread local result in both smem and register
+Shared memory is quite fast, but registers are even faster. Inspecting
+the statement \MIN{$values[id]$}{$values[id + offset]$}, we can see
+that the $id$'th thread will always acces the value stored in
+$sValues[id]$ and is the only thread writting to that cell. This
+provides us with the possibility to use a register to store this value
+in instead. We just have to remember to also store the reduced value
+in shared memory, in case another thread needs to use it in the next
+iteration. The resulting changes can be seen in
+\refalg{alg:registerReduct}.
 
 \begin{algorithm}
   \caption{Register reduction}
@@ -627,7 +664,7 @@ interleaved access pattern
                 \ASSIGN{$offset$}{$elements / 2$}
                 \WHILE{$offset > 1$}
                   \IF{$id < offset$}
-                  \ASSIGN{$rValue \leftarrow values[id]$}{\MIN{$rValue$}{$values[id + offset]$}}
+                  \ASSIGN{$rValue \leftarrow sValues[id]$}{\MIN{$rValue$}{$sValues[id + offset]$}}
                   \ENDIF
                   \ASSIGN{$offset$}{$offset / 2$}
                   \SYNC
@@ -641,42 +678,64 @@ interleaved access pattern
 
 
 
-
 \subsection{Loop unrolling}\label{sec:loopUnrolling}
 
-% Unroll the loops.
+% Unroll the loops: Only works if the number of reductions are known
+% beforehand (or if we pad the input)
 
-% Only works if the number of reductions are known beforehand (or if
-% we pad the input)
+The final optimization that we will apply to the reduction algorithm
+is loop unrolling. As stated above we assume that we know beforehand
+how many elements will need to be reduced by the blocks. We now extend
+this assumption with the condition that all blocks reduce the same
+number of elements. Again this can be accomplished quite easily by
+padding the input values when copying them to shared memory. There are
+several reason as to why loop unrolling can increase
+performance. Firstly looping requires indirection and even though most
+of the threads in our warps will loop the same amount of times, the
+warps still incur an overhead by having to perform the
+indirection. Secondly unrolling removes the overhead of updating the
+$offset$ variable, which is a quite significant portion of the work
+performed by the kernel when the loop body is as small as
+ours. Thirdly we can take advantage of warp synchronization and remove
+explicit synchronization invocations when offset becomes less than the
+warpsize.
 
-% Then move the first up to where data is loaded into shared mem
+% Then move the first up to where data is loaded into shared mem. And
+% move the last reduction down where the final result is written.
 
-% And move the last reduction down where the final result is written.
+After having unrolled the loop, it is now also possible to move thread
+0's last reduction, \MIN{$rValue$}{$sValues[1]$}, down to where the
+  result is output. We are also able to inline the first reduction
+  where the data is copied from global memory to shared memory,
+  reducing the shared memory requirements by
+  half. \refalg{alg:unrollReduct} shows the inlining of the first and
+  final reduction. Unrolling the loop is quite straightforward, but
+  takes a lot of space and have therefore been omitted here. 
 
-% Can be done with a template parameter. Would still need to check
-% range, but could remove the loop variables. Would need a few speciel
-% cases for small kernelsizes (1 - 4 threads).
+% Left as an exercise to the reader :)
 
-% Pros
-
-% Shared memory is almost halved
-
-% Only needs half the threads
-
-% No dummy variables
-
-% Cons
-
-% Unrolling yields more instructions for executions that would only
-% loop once. However since that only account for the last couple of
-% nodes, it is more than made up for by all the previous
-% nodes. Version 2 could be used for executions with 2 or less threads.
-
-% Unrolling must also adds a check for out of bounds (or replaces the
-% loop with that check) However making sure that single block bounding
-% box reductions are never brought to the segmented reducer will
-% ensure at least 2 values exist and one bounds check can be omitted.
-
-
-% No damn example as it's too big
-
+\begin{algorithm}
+  \caption{Unrolling reduction loops}
+  \label{alg:unrollReduct}
+  \begin{algorithmic}
+    \PROCEDURE{Reduce4}
+              {$values$ : Number List; $id$ : Integer; $elements$ : Integer}
+              {$result$ : Number}
+              {\ASSIGN{$offset$}{$elements / 2$}
+                \DECLARE{$sValues$}{\textbf{shared} Number List}
+                \ASSIGN{$rValue \leftarrow sValues[id]$}{\MIN{$values[id]$}{$values[id + offset]$}}
+                \SYNC
+                \ASSIGN{$offset$}{$offset / 2$}
+                \WHILE{$offset > 2$}
+                  \IF{$id < offset$}
+                  \ASSIGN{$rValue \leftarrow sValues[id]$}{\MIN{$rValue$}{$sValues[id + offset]$}}
+                  \ENDIF
+                  \ASSIGN{$offset$}{$offset / 2$}
+                  \SYNC
+                \ENDWHILE
+                \IF{$id = 0$}
+                  \ASSIGN{$result$}{\MIN{$rValue$}{$sValues[1]$}}
+                \ENDIF
+              }
+  \end{algorithmic}
+\end{algorithm}
