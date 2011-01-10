@@ -103,7 +103,7 @@ used for \textit{offline rendering}, for example for special effects in
 movies or high quality images.
 
 % Due to increase on computing power, we're getting closer and closer
-% to seeing real time ray tracing and it's lighting in
+% to seeing real-time ray tracing and it's lighting in
 % applications. Bla bla rewrite!
 
 % The evergrowing interest in photorealistic rendering and the
@@ -112,7 +112,7 @@ movies or high quality images.
 But, due to the everincreasing computational power and continued
 research into \textit{global illumination acceleration techniques},
 the physically correct image quality obtainable though ray tracing is
-becoming more and more alluring to designers of real time graphical
+becoming more and more alluring to designers of real-time graphical
 applications, especially if correct reflection or refraction is
 needed.
 
@@ -262,17 +262,17 @@ The thesis is structured as follows:
 
 % Previous work
 
-First previous work in the area of ray tracing and kd-tree
-construction is presented. This includes a brief history of when ray
-tracing was introduced, aswell as key points in time for different
-acceleration structures. The last part of this section will focus on
-kd-trees and ray tracing on graphics hardware. Changes in this thesis
-compared to previous work in the area is also outlined in this
-section.
+In the next sectoin previous work in the area of ray tracing and
+kd-tree construction is presented. This includes a brief history of
+when ray tracing was introduced, aswell as key points in time for
+different acceleration structures. The last part of this section will
+focus on kd-trees and ray tracing on graphics hardware. Changes in
+this thesis compared to previous work in the area is also outlined in
+this section.
 
 % Understanding the GPGPU
 
-A section will then introduce the GPGPU architecture. Here I will
+A chapter will then introduce the GPGPU architecture. Here I will
 describe \textit{CUDA}'s\footnote{NVIDIA's Compute Unified Device
   Architecture.} thread and memory model. I will then go on to
 describe new primitives as proposed by Sengupta et
@@ -284,16 +284,16 @@ example.
 
 % kd-trees
 
-The following section presents kd-trees. The first part of this
-section deals with the general kd-tree construction algorith. Here I
-will present several algorithms for choosing the splitting plane and
-discuss 3 different algorithms for associating triangles with child
-nodes. The second part of the section deals with the actual
-implementation of kd-trees on a SIMT architecture.
+\refchapter{chp:kdTrees} is then devoted to discussing kd-trees. The
+first part of this section deals with the general kd-tree construction
+algorith. Here I will present several algorithms for choosing the
+splitting plane and discuss 3 different algorithms for associating
+triangles with child nodes. The second part of the section deals with
+the actual implementation of kd-trees on a SIMT architecture.
 
 % raytracing
 
-After having introduced kd-trees, the next section will deal with the
+Having introduced kd-trees, the next chapter will deal with the
 algorithms for traversing such trees and ray tracing the scene. Here
 several optimizations to a basic raytracer will also be discussed an
 incrementally added to the ray tracer. First though, an exhaustive ray

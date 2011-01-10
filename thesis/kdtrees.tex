@@ -1,7 +1,105 @@
-\chapter{KD-Trees}
+\chapter{KD-Trees}\label{chp:kdTrees}
 
 \chapterquote{In theory, there is no difference between theory and
   practice. But, in practice, there is.}{Jan L. A. van de Snepscheut}
+
+
+% About KD-trees
+
+Before we in \refchapter{chp:rayTracing} discuss how the rays will
+traverse the hierarchical acceleration structure, we must first
+examine their structure.
+
+% Why KD tree compared to other structures
+
+As explained earlier in this thesis, I will be using kd-trees to
+accelerate ray tracing. This choice is based on several factors. 
+
+% Cheap intersection / distance to tests. Havran p. 51
+
+One of them is the ease with which the signed distance from a ray to a
+kd-trees axis aligned splitting plane can be computed. The splitting
+plane can be described by an axis, $d \in \{x, y, z\}$, and it's
+position along that axis, $N_d$. The signed distance from any ray,
+$R(t) = O + tD$, to the splitting plane is then simply calculated as
+
+\begin{displaymath}
+  t = \frac{N_d - O_d}{D_d}
+\end{displaymath}
+
+%% One of the reasons that the kd-tree, with it's axis aligned
+%% splitting planes, is faster to traverse than a general
+%% \textit{binary space partition} tree, \textit{BSP} tree, with
+%% arbitrarily oriented splitting planes.
+
+For comparison a generel \textit{binary space partition} tree,
+\textit{BSP} tree, with arbitrarily oriented splitting planes, given
+by $ax + by + cz + d = 0$ has a much more complex distance function.
+
+\begin{displaymath}
+  t = \frac{a O_x + b O_y + c O_z + d}{a D_x + b D_y + c D_z}
+\end{displaymath}
+
+It becomes even more complex when bounding volumes are used. An axis
+aligned bounding box can be described by 2 points, $V_{min}$ and
+$V_{max}$. Calculating the signed distance to any rays entry and exit
+point is then
+
+\begin{displaymath}
+  \begin{array}{l}
+    t_{near,d} = min((V_{min,d} - O_d) / D_d, (V_{max,d} - O_d) / D_d)\\
+    t_{entry} = max(t_{near,x}, t_{near,y}, t_{near,z})
+  \end{array}
+\end{displaymath}
+
+The distance from the ray origin to all of the bounding box sides are
+calculated, then the minimum along each axis is chosen and the maximum
+of these values are the distance to the entry point. The distance to
+the exit point is calculated similarly.
+
+\begin{displaymath}
+  \begin{array}{l}
+    t_{far,d} = max((V_{min,d} - O_d) / D_d, (V_{max,d} - O_d) / D_d)\\
+    t_{entry} = min(t_{far,x}, t_{far,y}, t_{far,z})
+  \end{array}
+\end{displaymath}
+
+
+If the rays exit distance lies closer than the entry distance, then
+the ray did not intersect the bounding volume, an example of this is
+given on \reffig{fig:rayBoxIntersection}.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=5cm]{RayBoxIntersection}
+  \caption{Ray/Box intersection.}
+%TODO image curtesy of http://www.baylee-online.net/Projects/Raytracing/RT4
+  \label{fig:rayBoxIntersection}
+\end{figure}
+
+Clearly kd-trees provide the simplest distance calculations of the
+above given examples.
+
+% Example of kd-tree flexibility over octree (important in sparse
+% scenes / empty space partitioning)
+
+Binary trees, such as kd- and bsp trees, are also more flexible than
+quadtress or octrees. An example can be seen on \reffig{TODO}. This
+flexibility can be extremely important when accelerating sparse
+scenes.
+
+% Vlastimil Havran did an extensive study of available spatial
+% subdivision schemes (including regular grids, nested grids, octrees
+% and kd-trees) and concludes in his phd thesis that kd-trees are
+% better than the other schemes in most cases.
+
+Finally, in his phd dissertation, Vlastimil Havran did an extensive
+study of spatial data structures, including grids, octress and
+kd-trees, and found that the kd-tree performed the best in most cases.
+
+Given all of the above and with the recent paper by \zhou, in which
+kd-trees are constructed in real-time on graphics hardware, it is easy
+to see why the choice fell on kd-trees as the acceleration structure.
 
 % About this Chapter. Start by motivation. Then explain how kd-trees
 % are constructed, including different strategies for choosing the
@@ -9,25 +107,14 @@
 % chapter will end with a discussion of how to implement the
 % algorithms efficiently on a SIMT architecture.
 
-
-% \section{Motivation}
-
-% About KD-trees
-
-% Why KD tree compared to other structures
-
-% Has time and time again been arguibly the best datastructure.
-
-% Vlastimil Havran did an extensive study of available spatial
-% subdivision schemes (including regular grids, nested grids, octrees
-% and kd-trees) and concludes in his thesis that the kd-tree beats the
-% other schemes in most cases. 
-
-% Example of kd-tree flexibility over octree (important in sparse
-% scenes / empty space partitioning)
-
-% Cheap intersection / distance to tests. Havran p. 65
-
+In the rest of this chapter, we will first examine how kd-trees are
+built. In particular we will be studying different algorithms for
+choosing the splitting plane candidate and how to handle geometry
+intersecting the splitting plane. The latter part of this chapter
+deals with converting a sequential kd-tree construction algorithm into
+a dataparallel algorithm. Focus is split between upper tree nodes and
+lower tree nodes, once the number of geometric primitives per node
+goes below a certain threshold.
 
 \section{Building KD-trees}
 
@@ -47,8 +134,14 @@
   and kNN queries), nor for unevenly distributed primitives such as
   photons or triangles.}{wald:04:VVH}
 
+
+% \subsection{Algorithm for creating KD-tree}
+
 % All the brilliance in KD-tree construction comes down to choosing
 % the splitting plane and deciding when to stop.
+
+% Argue it can be done in O ( N log N )
+
 
 
 \subsection{Choosing the Splitting Plane}\label{sec:splittingPlane}
@@ -204,10 +297,6 @@ themselves are not tested for inclusion, but their bounding boxes are.
 
 % Tree traversal time.
 
-
-\subsection{Algorithm for creating KD-tree}
-
-% Argue it can be done in O ( N log N )
 
 
 

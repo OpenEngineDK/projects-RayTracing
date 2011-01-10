@@ -1,4 +1,4 @@
-\chapter{Ray Tracing}
+\chapter{Ray Tracing}\label{chp:rayTracing}
 
 \chapterquote{Some argue that in the very long term, rendering may
   best be solved by some variant of ray tracing, in which huge numbers
@@ -81,7 +81,7 @@ that when applied to the triangle, $T(u,v)$, given by
 transforms it into the unit triangle, $U$, which has vertices
 $\vecthreeT{0}{0}{0}$, $\vecthreeT{1}{0}{0}$ and
 $\vecthreeT{0}{1}{0}$. That affine transformation is then instead
-applied to the ray, $R(t) = o + td$, which yields the vector
+applied to the ray, $R(t) = O + tD$, which yields the vector
 $\vecthreeT{t}{u}{v}$, where $t$ is the distance to the plane spanned
 by $T(u,v)$ and $u$ and $v$ are the barycentric coordinates of the
 intersection point.
@@ -92,7 +92,7 @@ In short this boils down to solving the linear system of equations
   \begin{array}{rl}
     & R(t) = T(u,v) \\
     \Updownarrow \\
-    & o + td = (1-u-v)a + ub + vc \\
+    & O + tD = (1-u-v)a + ub + vc \\
   \end{array}
 \end{displaymath}
 
@@ -104,7 +104,7 @@ terms and applying Cramer's Rule, the solution is
   \vecthree{Q \cdot E_2}{P \cdot T}{Q \cdot D}
 \end{displaymath}
 
-where $E_1 = b - a$, $E_2 = c - a$, $T = o - a$, $P = d \times  E_2$
+where $E_1 = b - a$, $E_2 = c - a$, $T = O - a$, $P = D \times  E_2$
 and $Q = T \times  E_1$.
 
 \subsubsection{Implementation}
