@@ -118,6 +118,30 @@ goes below a certain threshold.
 
 \section{Building KD-trees}
 
+\begin{algorithm}
+  \caption{Recursive kd-tree constructor}
+  \label{alg:unrollReduct}
+  \begin{algorithmic}
+    \PROCEDURE{ConstructKDTree}
+              {$T$ : Triangle List; $voxel$ : AABB}
+              {$node$ : KDNode}
+              {\IF{IsLeaf($T, voxel$)}
+                  \ASSIGN{$node$}{Leaf(T)}
+                \ELSE
+                  \COMMENTIT{Determining the splitting plane will be
+                    discussed in \refsection{sec:splittingPlane}}
+                  \ASSIGN{$plane$}{DeterminePlane($T, voxel$)}
+                  \ASSIGN{$(voxel_L, voxel_R)$}{Split($voxel, p$)}
+                  \COMMENTIT{How to associate geometry with a voxel will be the topic of  \refsection{sec:splittingGeom}}
+                  \ASSIGN{$T_L$}{AssociateGeometry($T, voxel_L$)}
+                  \ASSIGN{$T_R$}{AssociateGeometry($T, voxel_R$)}
+                  \ASSIGN{$node$}{Node($plane$, ConstructKDTree($T_L, voxel_L$), ConstructKDTree($T_R, voxel_R$))}
+                \ENDIF}
+  \end{algorithmic}
+\end{algorithm}
+
+
+
 % Left balanced non pointer vs pointers
 
 % Choose pointers as that would lead to less memory consumption and it
@@ -235,7 +259,7 @@ node
 
 % Implementation is 
 
-\subsection{Splitting the Geometry}
+\subsection{Splitting the Geometry}\label{sec:splittingGeom}
 
 This section will look at alternatives to triangle splitting, namely
 \textit{triangle division}, where the triangle is not split by
