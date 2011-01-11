@@ -92,8 +92,8 @@ when accelerating sparse scenes.
       \draw (0,0) -- (6,0) -- (6,4) -- (0,4) -- (0,0);
       
       % TRIS
-      \draw (0,4) -- (3, 3) -- (1.5,1) -- (0,4);
-      \draw (6,1) -- (4, 2) -- (4,0) -- (6,1);
+      \drawTri{0,4}{3,3}{1.5,1}
+      \drawTri{6,1}{4, 2}{4,0}
       
       % splits
       \draw[color=green] (3,0) -- (3,4);
@@ -110,8 +110,8 @@ when accelerating sparse scenes.
       \draw (0,0) -- (6,0) -- (6,4) -- (0,4) -- (0,0);
       
       % TRIS
-      \draw (0,4) -- (3, 3) -- (1.5,1) -- (0,4);
-      \draw (6,1) -- (4, 2) -- (4,0) -- (6,1);
+      \drawTri{0,4}{3,3}{1.5,1}
+      \drawTri{6,1}{4, 2}{4,0}
       
       % splits
       \draw[color=red] (3,0) -- (3,4);
@@ -125,26 +125,6 @@ when accelerating sparse scenes.
     intersecting any geometry.}
   \label{fig:binQuadSplit}
 \end{figure}
-
-
-%% \begin{figure}
-%%   \subfloat[binary]{
-%%     \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
-%%       \draw (0,0) -- coordinate (x axis mid) (6,0);
-%%     \end{tikzpicture}
-%%     \caption{binary.}
-%%     \label{fig:binarySplit}
-%%   }
-
-%%   %% \subfloat[quad]{
-%%   %%   \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
-%%   %%   \end{tikzpicture}
-%%   %%   \label{fig:quadSplit}
-%%   %% }
-
-%%   \caption{A comparison of binary trees and quad trees.}
-%%   \label{fig:binaryVsQuad}
-%% \end{figure}
 
 % Vlastimil Havran did an extensive study of available spatial
 % subdivision schemes (including regular grids, nested grids, octrees
@@ -210,6 +190,8 @@ be determined and the bounding box is divided by $plane$, producing a
 new left and right axis aligned bounding box. Triangles are then
 distributed to each new bounding box by some decision algorithm and a
 new node is created that will contain references to it's 2 children.
+
+TODO bounding box needs to be recomputed
 
 % Left balanced non pointer vs pointers
 
@@ -307,10 +289,10 @@ kd-trees upper nodes, as is described in \refsection{sec:upperNodes}.
     \draw (0,0) -- (6,0) -- (6,4) -- (0,4) -- (0,0);
 
     % Tris
-    \draw (0,0) -- (2,4) -- (4,0) -- (0,0);
-    \draw (5,4) -- (5.5,4) -- (5,3) -- (5,4);
-    \draw (5,2.5) -- (5.5,2.5) -- (5.5,3.5) -- (5,2.5);
-    \draw (5,2) -- (6,2) -- (5.5,0.5) -- (5,2);
+    \drawTri{0,0}{2,4}{4,0}
+    \drawTri{5,4}{5.5,4}{5,3}
+    \drawTri{5,2.5}{5.5,2.5}{5.5,3.5}
+    \drawTri{5,2}{6,2}{5.5,0.5}
 
     % Split
     \draw[color=red] (3,0) -- (3,4);
@@ -329,10 +311,11 @@ kd-trees upper nodes, as is described in \refsection{sec:upperNodes}.
 % SAH assumptions can be seen in Wald07
 
 A far better splitting plane position can be obtained by applying the
-\textit{surface area heuristic}, \textit{SAH}.
-
-% Globlly optimal is infeasable for complex scenes and instead a local
-% greedy approximation is used.
+\textit{surface area heuristic}, \textit{SAH}. Instead of only
+considering the bounding volume surrounding the geometry, SAH
+considers the entire geometry of a node. In essence SAH computes the
+\textit{expected cost} of traversing a node, $N$, with child nodes $L$
+and $R$.
 
 \begin{displaymath}
   SAH(N \rightarrow \{L, R\}) = C_N + \frac{C_L A_L}{A_N} +
@@ -341,21 +324,38 @@ A far better splitting plane position can be obtained by applying the
 
 where $C_N$ is the cost of traversing the node itself and is
 independent of the splitting plane, $C_L$ is the cost of traversing
-the left child nodeand $C_R$ is the cost of traversing the right child
-node
+the left child node and $C_R$ is the cost of traversing the right
+child node. $A_n$ is the summed surface area of all primitives in node
+$n$. Choosing the best splitting plane is then simply using SAH to
+calculate the individual cost of all available splitting planes and
+then choosing the one with lowest cost. Since the above cost
+evaluation does not take rays into account, SAH assumes that rays are
+uniformly distributed, infinite lines.
 
-% SAH assumes that each split results in 2 leaf nodes, which is
-% practically always wrong at high level nodes, therefore
-% \citebook{1409079} suggests splitting along the spatial median of the
-% nodes longest axis. To do this a preprocess pass is required to
-% compute tight AABB's for each triangle.
+SAH can also automatically determine when to stop splitting. Assuming
+that the cost of a leaf is given as $C_{leaf} = |T| * C_i$, where
+$|T|$ is the number of triangles and $C_i$ is the cost of intersecting
+a triangle. SAH's termination criteria is then $C_{leaf} < C_N$.
 
-% SAH yields the best trees.
+% Globlly optimal is infeasable for complex scenes and instead a local
+% greedy approximation is used.
+
+Calculating a globally optimal solution is infeasable, except for
+trivially simple scenes. A \textit{local greedy approximation} is used
+instead, where it is assumed that the created child nodes are
+leafs.
+
+Inspite of all the assumptions made by SAH, which in practice do not
+hold, it is still considered one of the best heuristics and produces
+trees of the highest quality.
 
 % SAH calculation optimizations include axis round robin and some damn
 % paper I can't remember.
 
+
 \paragraph{Splitting Planes}
+
+
 
 % To avoid having to test the infinitely many splitting planes
 % possible, we instead have to choose sensible planes for SAH.
@@ -379,12 +379,58 @@ node
 % to as \textit{false primitives}, from the nodes by a triangle/box
 % intersection test during or after creation.
 
-% When moving from upper nodes to lower nodes. Calculate a new tight
-% bounding box inside the modified bounding box. Then approximate the
-% new surface area by the reduction in BB volume.
-
 
 \subsubsection{Empty Space Splitting}
+
+An effective optimization to kd-trees is \textit{empty space
+  maximization} or empty space splitting. The idea behind the
+optimization is to cut away large empty parts of the scene, by placing
+empty leaf nodes in the upper parts of the tree. This will provide the
+rays with an early out option, skipping a large portion of the
+geometry. An example can be seen in \reffig{fig:emptySpaceExample},
+where the gray shaded node has been created as an empty space node,
+allowing the ray to skip over the triangles above.
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+
+    % AABB
+    \draw (0,0) -- (10,0) -- (10,8) -- (0,8) -- (0,0);
+
+    % Tris
+    \drawTri{9,0}{10,2}{6,3}
+    \drawTri{7,8}{7,4}{9,4}
+
+    \drawTri{0,8}{0,6}{2,8}
+    \drawTri{1,7}{0,6}{2,6}
+    \drawTri{1,7}{3,6}{3,8}
+    \drawTri{5,7}{3,6}{3,8}
+    \drawTri{5,7}{3,6}{6,6}
+
+    % Splits
+    \draw[color=green] (6,0) -- (6,8);
+    \draw[color=green] (0,6) -- (6,6);
+
+    % Empty space
+    \draw[ball color=gray, color=green, shading=ball,gray] (0,0) -- (0,6) -- (6,6) -- (6,0) -- (0,0);
+
+    % Ray
+    \drawRay{0,0}{6,4}
+
+  \end{tikzpicture}
+  \caption{An example of empty space splitting. The grey ball shaded
+    area represents an empty node and allows the ray to leap across it
+     and skip intersection tests with the 5 triangles above.}
+  \label{fig:emptySpaceExample}
+\end{figure}
+
+
+Unfortunatly how large a percentage of a node that should be empty
+before empty sapce splitting can cut it away is highly scene specific,
+making this optimization less usefull in the general case. Like \zhou
+I have found that it performing an empty space split is optimal when a
+bounding box is more than 25\% empty along one of the axes.
 
 % Dynamic empty space threshold, favor early out in the top of the tree.
 
@@ -475,6 +521,12 @@ themselves are not tested for inclusion, but their bounding boxes are.
 % At upper tree level nodes exploit data parallelism by parallising
 % the cost computation over triangles. 
 
+% SAH assumes that each split results in 2 leaf nodes, which is
+% practically always wrong at high level nodes, therefore
+% \citebook{1409079} suggests splitting along the spatial median of the
+% nodes longest axis. To do this a preprocess pass is required to
+% compute tight AABB's for each triangle.
+
 % Use spatiel median splitting for upper nodes. Way faster than SAH
 % calculations.
 
@@ -507,13 +559,16 @@ themselves are not tested for inclusion, but their bounding boxes are.
 
 \subsection{Lower Tree Nodes}
 
-% At lower tree levels where SAH isn't computed parallel, perhaps and
-% early out ``good enough'' value/ratio can be given, as done in
-% BSP. Might only increase instructions, branching and still wait for
-% the slowest thread. (Try and watch it fail) Perhaps without an if
-% statement but by arithmetic instead?
+\subsubsection{SAH Tree}
 
-% Try persistent threads method!
+\subsubsection{Balanced Tree}
+
+\subsubsection{No Tree}
+
+% When moving from upper nodes to lower nodes. Calculate a new tight
+% bounding box inside the modified bounding box. Then approximate the
+% new surface area by the reduction in BB volume.
+
 
 
 

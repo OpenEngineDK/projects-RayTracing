@@ -58,6 +58,14 @@
   \left[#1, #2, #3 \right]^T
 }
 
+%Tikz macroes
+\newcommand{\drawTri}[3]{
+  \draw[fill=lightgray] (#1) -- (#2) -- (#3) -- (#1);
+}
+\newcommand{\drawRay}[2]{
+    \draw[line width=2pt, dashed, ->] (#1) -- (#2);
+}
+
 \begin{document}
 
 \begin{titlepage}

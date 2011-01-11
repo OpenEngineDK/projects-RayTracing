@@ -87,6 +87,11 @@ If time allows
 \item Add persistent threads to the ray tracer
 \item Add an oscilating surface with nice refraction!!
 \item Look into SAH approximations
+\item At lower tree levels where SAH isn't computed parallel, perhaps
+  and early out ``good enough'' value/ratio can be given, as done in
+  BSP. Might only increase instructions, branching and still wait for
+  the slowest thread. (Try and watch it fail) Perhaps without an if
+  statement but by arithmetic instead?
 \item Optimize segmented reduce. (low low priority)
 \end{itemize}
 
