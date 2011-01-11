@@ -298,7 +298,7 @@ inside the bounding box. On \reffig{crapMedian} an example is given
 where the node is split in a non-intuitive way. Spatial median
 splitting does, however, make up for its suboptimal splitting planes
 by being quite fast, and I will therefore use it for creating my
-kd-trees upper nodes, as is described in \section{sec:upperNodes}.
+kd-trees upper nodes, as is described in \refsection{sec:upperNodes}.
 
 \begin{figure}
   \centering
@@ -327,6 +327,9 @@ kd-trees upper nodes, as is described in \section{sec:upperNodes}.
 \subsubsection{Surface Area Heuristic}
 
 % SAH assumptions can be seen in Wald07
+
+A far better splitting plane position can be obtained by applying the
+\textit{surface area heuristic}, \textit{SAH}.
 
 % Globlly optimal is infeasable for complex scenes and instead a local
 % greedy approximation is used.
