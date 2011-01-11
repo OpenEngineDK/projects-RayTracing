@@ -79,16 +79,79 @@ above given examples.
 % scenes / empty space partitioning)
 
 Binary trees, such as kd- and bsp trees, are also more flexible than
-quadtress or octrees. An example can be seen on \reffig{TODO}. This
-flexibility can be extremely important when accelerating sparse
-scenes.
+quadtress or octrees. An example can be seen on
+\reffig{fig:binQuadSplit}. This flexibility can be extremely important
+when accelerating sparse scenes.
+
+\begin{figure}
+  \centering
+  \subfloat[Possible binary splits.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+      
+      % AABB
+      \draw (0,0) -- (6,0) -- (6,4) -- (0,4) -- (0,0);
+      
+      % TRIS
+      \draw (0,4) -- (3, 3) -- (1.5,1) -- (0,4);
+      \draw (6,1) -- (4, 2) -- (4,0) -- (6,1);
+      
+      % splits
+      \draw[color=green] (3,0) -- (3,4);
+      \draw[color=green] (0,1) -- (3,1);
+      \draw[color=green] (3,2) -- (6,2);
+      
+    \end{tikzpicture}
+    \label{fig:binarySplit}
+  }
+  \subfloat[Possible quadternary splits.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+      
+      % AABB
+      \draw (0,0) -- (6,0) -- (6,4) -- (0,4) -- (0,0);
+      
+      % TRIS
+      \draw (0,4) -- (3, 3) -- (1.5,1) -- (0,4);
+      \draw (6,1) -- (4, 2) -- (4,0) -- (6,1);
+      
+      % splits
+      \draw[color=red] (3,0) -- (3,4);
+      \draw[color=red] (0,1) -- (6,1);
+      
+    \end{tikzpicture}
+    \label{fig:quadternarySplit}
+  }
+  \caption{A comparisson of binary and quadternary splitting. Notice
+    that the binary splitting planes can be placed without
+    intersecting any geometry.}
+  \label{fig:binQuadSplit}
+\end{figure}
+
+
+%% \begin{figure}
+%%   \subfloat[binary]{
+%%     \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+%%       \draw (0,0) -- coordinate (x axis mid) (6,0);
+%%     \end{tikzpicture}
+%%     \caption{binary.}
+%%     \label{fig:binarySplit}
+%%   }
+
+%%   %% \subfloat[quad]{
+%%   %%   \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+%%   %%   \end{tikzpicture}
+%%   %%   \label{fig:quadSplit}
+%%   %% }
+
+%%   \caption{A comparison of binary trees and quad trees.}
+%%   \label{fig:binaryVsQuad}
+%% \end{figure}
 
 % Vlastimil Havran did an extensive study of available spatial
 % subdivision schemes (including regular grids, nested grids, octrees
 % and kd-trees) and concludes in his phd thesis that kd-trees are
 % better than the other schemes in most cases.
 
-Finally, in his phd dissertation, Vlastimil Havran did an extensive
+Finally, in his phd. dissertation, Vlastimil Havran did an extensive
 study of spatial data structures, including grids, octress and
 kd-trees, and found that the kd-tree performed the best in most cases.
 
