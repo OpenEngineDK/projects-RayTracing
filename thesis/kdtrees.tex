@@ -27,11 +27,6 @@ $R(t) = O + tD$, to the splitting plane is then simply calculated as
   t = \frac{N_d - O_d}{D_d}
 \end{displaymath}
 
-%% One of the reasons that the kd-tree, with it's axis aligned
-%% splitting planes, is faster to traverse than a general
-%% \textit{binary space partition} tree, \textit{BSP} tree, with
-%% arbitrarily oriented splitting planes.
-
 For comparison a generel \textit{binary space partition} tree,
 \textit{BSP} tree, with arbitrarily oriented splitting planes, given
 by $ax + by + cz + d = 0$ has a much more complex distance function.
@@ -118,9 +113,13 @@ goes below a certain threshold.
 
 \section{Building KD-trees}
 
+A kd-tree is a binary tree that recursively subdivides geometry into
+smaller tree nodes. \refalg{alg:kdTreeCreator} describes a generel
+recursive kd-tree construction scheme.
+
 \begin{algorithm}
   \caption{Recursive kd-tree constructor}
-  \label{alg:unrollReduct}
+  \label{alg:kdTreeCreator}
   \begin{algorithmic}
     \PROCEDURE{ConstructKDTree}
               {$T$ : Triangle List; $voxel$ : AABB}
@@ -128,8 +127,7 @@ goes below a certain threshold.
               {\IF{IsLeaf($T, voxel$)}
                   \ASSIGN{$node$}{Leaf(T)}
                 \ELSE
-                  \COMMENTIT{Determining the splitting plane will be
-                    discussed in \refsection{sec:splittingPlane}}
+                  \COMMENTIT{Determining the splitting plane will be discussed in \refsection{sec:splittingPlane}}
                   \ASSIGN{$plane$}{DeterminePlane($T, voxel$)}
                   \ASSIGN{$(voxel_L, voxel_R)$}{Split($voxel, p$)}
                   \COMMENTIT{How to associate geometry with a voxel will be the topic of  \refsection{sec:splittingGeom}}
@@ -140,17 +138,31 @@ goes below a certain threshold.
   \end{algorithmic}
 \end{algorithm}
 
-
+ConstructKDTree takes as arguments a list of triangles and an axis
+aligned bounding box defining the volume of the node. The algorithm
+then checks if the triangles and bounding box satisfy the requirements
+of beeing a leaf node. If so, then a leaf is produced and the
+recursion terminates. If not then a splitting plane, $plane$, needs to
+be determined and the bounding box is divided by $plane$, producing a
+new left and right axis aligned bounding box. Triangles are then
+distributed to each new bounding box by some decision algorithm and a
+new node is created that will contain references to it's 2 children.
 
 % Left balanced non pointer vs pointers
 
-% Choose pointers as that would lead to less memory consumption and it
-% places all nodes of the same level in a continues block, making it
-% easier to work with them.
+In generel there are 2 ways a node can reference its child nodes. The
+first is \textit{balanced trees}, where children of a node can be
+addressed implicitly without the use of pointers. The reason for this
+is that nodes at teh same tree level are placed sequantially in
+memory. The left and right child of node $n$ can then be indexed using
+$2n+1$ and $2n+2$. The parent of a node is indexed with $\lceil n/2
+\rceil - 1$.
 
 % Balanced trees suck, example of partition with high density in one
-% side and no triangles in other side. Non balanced tree would leed to
-% early exit.
+% side and no triangles in other side. 
+
+Wald et al.\citebook{wald:04:VVH} has the following to say about
+balanced trees.
 
 \quotebook{Balancing is optimal only for binary searching, and if all
   nodes have equal access probabilities. Neither of these two
@@ -158,49 +170,72 @@ goes below a certain threshold.
   and kNN queries), nor for unevenly distributed primitives such as
   photons or triangles.}{wald:04:VVH}
 
+% Choose pointers as that would lead to less memory consumption and it
+% places all nodes of the same level in a continues block, making it
+% easier to work with them.
 
-% \subsection{Algorithm for creating KD-tree}
+To avoid balanced trees we can instead use pointers to reference the
+children. This allows for more flexibility when creating the tree.
+Unfortunatly it also means storing more data per node and in the case
+of slow memory access it could cause a memory latency
+bottleneck. However, in a survay of different techniques such as this,
+the added flexibility can be a benefit and in
+\refsection{sec:gpuEmptySpace} we shall see how this flexibility can
+be used to add empty space splitting, something that could not have
+been done as unobtrusive had the tree been balanced.
 
-% All the brilliance in KD-tree construction comes down to choosing
-% the splitting plane and deciding when to stop.
-
-% Argue it can be done in O ( N log N )
 
 
 
 \subsection{Choosing the Splitting Plane}\label{sec:splittingPlane}
 
-% Infinitely many splitting planes.
+% All the brilliance in KD-tree construction comes down to choosing
+% the splitting plane and deciding when to stop.
 
-% Only interested in those finitely many planes where the resulting
-% left and right voxel changes.
+Looking again at \refalg{alg:kdTreeCreator}, we can see that all the
+brilliance in constructing a high quality kd-tree is knowing where to
+place the splitting plane and when to end the recursion and create a
+leaf.
 
 % Different splitting planes heuristics.
 
-% Instead of reordering geometry on each split (vertices, normals,
-% colors, texcoords, whatnot), we instead simply move an index to the
-% geometric primitive. Also decouples the KD-tree creation from the
-% geometry attributes and shading.
-
+In the following section 2 algorithms that solves this problem is
+presented and then extended with empty space splitting.
 
 
 \subsubsection{Spatial median}
 
 % Split at the spatial median.
 
-% Refered to as the naive implementation in Wald07.
-
-% Easy to understand, easy to implement and nice for getting things
-% off the ground.
-
 % Axis to split along can be choosen in a round robin fashion or the
 % largest axis can be choosen. (Which initially minimises the surface
 % of the children)
 
-% Perform a check to reduce do empty space clipping and facilitate
-% early out option for the rays. Requires ``magic splitting
-% constants'', which can be very scene specific.
+A quite simple method of choosing the splitting plane is to place it
+at the spatial median of the nodes bounding box. There are 2 ways to
+choose which dimensional spatial median to use. A \textit{round robin}
+fashion can be used, where the dimensions are cycled every iteration;
+ie. when creating the first node the plane will lie perpendicular to
+the x-axis, the children will then be split along the y-axis, in the
+next iteration the plane will split along the z-axis and so
+on. Another way of choosing the dimension is to split along the nodes
+bounding box' largest axis. This can be more costly than the round
+robin approach, since the entire bounding box will have to be
+calculated each iteration, but it will also produce the best results.
 
+The termination requirement for spatial median splitting is equally
+simple as choosing the splitting plane. If the number of triangles per
+node falls below a certain threshold, iteration stops.
+
+% Refered to as the naive implementation in Wald07.
+
+This method is refered to as naïve in \citebook{wald:06:NlogN} and
+rightly so. Not much thought is put into the distribution of geometry
+inside the bounding box. On \reffig{TODO} an example is given where
+the node is split in a non-intuitive way. Spatial median splitting
+does, however, make up for its suboptimal splitting planes by being
+quite fast, and I will therefore use it for creating my kd-trees upper
+nodes, as is described in \section{sec:upperNodes}.
 
 \subsubsection{Surface Area Heuristic}
 
@@ -230,8 +265,17 @@ node
 % SAH calculation optimizations include axis round robin and some damn
 % paper I can't remember.
 
+\paragraph{Splitting Planes}
+
 % To avoid having to test the infinitely many splitting planes
 % possible, we instead have to choose sensible planes for SAH.
+
+% Infinitely many splitting planes.
+
+% Discuss perfect splits?
+
+% Only interested in those finitely many planes where the resulting
+% left and right voxel changes.
 
 % The sides of the triangles are an obvious choice, however
 % precalculating these leads to incorrectly sorting triangles into
@@ -336,7 +380,7 @@ themselves are not tested for inclusion, but their bounding boxes are.
 % Handles structures of arrays better than arrays of structures
 % chapter 33 \citebook{GPUGEMS2} and coalescence
 
-\subsection{Upper Tree Nodes}
+\subsection{Upper Tree Nodes}\label{sec:upperNodes}
 
 % At upper tree level nodes exploit data parallelism by parallising
 % the cost computation over triangles. 
@@ -356,7 +400,9 @@ themselves are not tested for inclusion, but their bounding boxes are.
 % not necessarily in a coalesced fashion. This makes it hard to hide
 % the latency and will impact performance.
 
-\subsubsection{Empty space splitting}
+% Argue it can be done in O ( N log N )
+
+\subsubsection{Empty space splitting}\label{sec:gpuEmptySpace}
 
 % Plugable solution, add the new nodes after the ones in nextlist.
 
