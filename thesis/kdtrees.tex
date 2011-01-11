@@ -294,11 +294,35 @@ node falls below a certain threshold, iteration stops.
 
 This method is refered to as naïve in \citebook{wald:06:NlogN} and
 rightly so. Not much thought is put into the distribution of geometry
-inside the bounding box. On \reffig{TODO} an example is given where
-the node is split in a non-intuitive way. Spatial median splitting
-does, however, make up for its suboptimal splitting planes by being
-quite fast, and I will therefore use it for creating my kd-trees upper
-nodes, as is described in \section{sec:upperNodes}.
+inside the bounding box. On \reffig{crapMedian} an example is given
+where the node is split in a non-intuitive way. Spatial median
+splitting does, however, make up for its suboptimal splitting planes
+by being quite fast, and I will therefore use it for creating my
+kd-trees upper nodes, as is described in \section{sec:upperNodes}.
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+    % AABB
+    \draw (0,0) -- (6,0) -- (6,4) -- (0,4) -- (0,0);
+
+    % Tris
+    \draw (0,0) -- (2,4) -- (4,0) -- (0,0);
+    \draw (5,4) -- (5.5,4) -- (5,3) -- (5,4);
+    \draw (5,2.5) -- (5.5,2.5) -- (5.5,3.5) -- (5,2.5);
+    \draw (5,2) -- (6,2) -- (5.5,0.5) -- (5,2);
+
+    % Split
+    \draw[color=red] (3,0) -- (3,4);
+    \draw[color=green] (5,0) -- (5,4);
+
+  \end{tikzpicture}
+  \caption{An example of how median splitting produces poor
+    splits. The red line is a median split. The green line is a more
+    optimal splitting plane, since it divides the large triangle from
+    the small.}
+  \label{fig:crapMedian}
+\end{figure}
 
 \subsubsection{Surface Area Heuristic}
 
