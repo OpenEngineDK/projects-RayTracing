@@ -500,7 +500,7 @@ bounding box is more than 25\% empty along one of the axes.
 
 % Implementation is 
 
-\subsection{Splitting the Geometry}\label{sec:splittingGeom}
+\subsection{Splitting Schemes}\label{sec:splittingGeom}
 
 This section will look at alternatives to triangle splitting, namely
 \textit{triangle division}, where the triangle is not split by
@@ -518,9 +518,6 @@ themselves are not tested for inclusion, but their bounding boxes are.
 
 \subsubsection{Dividing Triangles}
 
-% Novel scheme? Dvide triangles eg. adjust bounding box instead of
-% splitting the triangles.
-
 % Spliting will almost always produce 3 triangles, whereas divide will
 % always produce only 2.
 
@@ -531,7 +528,7 @@ themselves are not tested for inclusion, but their bounding boxes are.
 % reduced box and the primitives surface area is adjusted accordingly.
 
 
-\subsubsection{Adjusting Bounding Boxes}
+\subsubsection{Box Inclusion}
 
 % Simpler than splitting.
 
@@ -553,14 +550,6 @@ themselves are not tested for inclusion, but their bounding boxes are.
 % to shine for dynamic scenes.
 
 
-% In conclussion:
-
-% Profile the time it takes to create the different trees, especially
-% the splitting kernels.
-
-% Compare amount of nodes.
-
-% Tree traversal time.
 
 
 
@@ -569,8 +558,8 @@ themselves are not tested for inclusion, but their bounding boxes are.
 
 % Needs to exploit the dataparallel nature of GPGPU's
 
-% A GPGPU requires (more than) 10^3~10^4 threads for optimal
-% performance. To hide latency from texture fetches? cite NVIDIA?
+% A GPGPU needs as many of its multiprocessors occupied as possibly
+% for optimal performance.
 
 % Use GPU for computations and let CPU handle minor book keeping.
 
@@ -588,16 +577,94 @@ themselves are not tested for inclusion, but their bounding boxes are.
 % nodes longest axis. To do this a preprocess pass is required to
 % compute tight AABB's for each triangle.
 
-% Use spatiel median splitting for upper nodes. Way faster than SAH
-% calculations.
-
 % Creating the KD-tree in BFS will optimize GPU performance at lower
 % tree levels, as there would be thousands of nodes created at the
 % same time.
 
-% Instead of reducing the sizes of child nodes, I propose a method for
-% calculating them directly. This leads to lots of uncoalesced
-% lookups, so argue if the GPU is able to properly hide these.
+\begin{algorithm}
+  \caption{KD-Tree upper node creator}
+  \label{alg:kdUpperNodeCreator}
+  \begin{algorithmic}
+    \PROCEDURE{CreateUpperNodes}
+               {\VAR{activeList}:list \textit{\color{gray}//list of kd-nodes not processed yet}}
+               {\VAR{leafList,nextList}:list}{
+
+                 \COMMENTIT{First split all triangles into segments.}
+                 \DECLARE{$segmentList$}{list}
+                 \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
+                   \STATE{Split all triangles contained in node $i$
+                     into fixed sized segments and those in
+                     $segmentList$.}
+                 \ENDFOR
+                 \STATE{}
+                 \COMMENTIT{Then compute each triangles bounding box
+                   using reduction as described in
+                   \refsection{sec:reduce}.}
+                 \PARALLELFOR{segment \VAR{s} \textbf{in} segmentList}
+                   \STATE{Reduce the individual segments.}
+                 \ENDFOR
+                 \STATE{Using segmented reduction as described in
+                   \zhou, reduce each nodes bounding box. Perform 
+                   median splitting on the nodes.}
+
+                 \STATE{}
+                 \COMMENTIT{Perform empty space splitting.}
+                 \STATE{...}
+                 \STATE{}
+
+                 \COMMENTIT{Compute the addresses to move the triangles to.}
+                 \DECLARE{$splitSide, splitAddr$}{list}
+                 \PARALLELFOR{segment \VAR{s} \textbf{in} segmentList}
+                   \ASSIGN{$triangles$}{$s$.triangles}
+                   \PARALLELFOR{triangle \VAR{t} \textbf{in} triangles}
+                   \STATE{Associate each triangle to its owner nodes
+                     children, with respect the owner node's splitting
+                     plane. Store the information in $splitSide$.}
+                   \ENDFOR
+                 \ENDFOR
+                 \STATE{Using Scan compute the prefix-sum of
+                   $splitSide$ and store it in $splitAddr$.}
+
+                 \STATE{}
+
+                 \COMMENTIT{Split the triangles.}
+                 \PARALLELFOR{segment \VAR{s} \textbf{in} segmentList}
+                   \ASSIGN{$triangles$}{$s$.triangles}
+                   \PARALLELFOR{triangle \VAR{t} \textbf{in} triangles}
+                     \STATE{Split the triangles to have triangles
+                       associated with the same node placed
+                       sequentially. Triangles belonging to leaf nodes
+                       are stored in their own list.}
+                   \ENDFOR
+                 \ENDFOR
+
+                 \STATE{}
+
+                 \COMMENTIT{Split nodes.}
+                 \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
+                   \STATE{Split the nodes into child
+                     nodes. $splitSide$ and $splitAddr$ is used to
+                     directly calculate the child nodes triangle index
+                     and range.}
+                   \IF{$node.child$.size < $minimumSize$}
+                     \STATE{$leafList$.Add($node.child$)}
+                   \ELSE
+                     \STATE{$nextList$.Add($node.child$)}
+                   \ENDIF
+                 \ENDFOR
+  }
+  \end{algorithmic}
+\end{algorithm}
+
+% Go over the algorithm
+
+Instead of reducing the sizes of child nodes, as done in \zhou I
+propose a method for calculating them directly. This leads to lots
+of uncoalesced lookups, so argue if the GPU is able to properly hide
+these.
+
+
+
 
 % Building the upper nodes mostly consist of moving data around, and
 % not necessarily in a coalesced fashion. This makes it hard to hide
@@ -605,18 +672,62 @@ themselves are not tested for inclusion, but their bounding boxes are.
 
 % Argue it can be done in O ( N log N )
 
+
+
 \subsubsection{Empty space splitting}\label{sec:gpuEmptySpace}
 
 % Plugable solution, add the new nodes after the ones in nextlist.
 
-% Propagating aabb's downwards
-
 % A good threshold. Did I make it vary and how did that go?
 
-% Perhaps it can be started in it's own stream? At least the actual
-% empty space splitting should be able to. Could help out at the early
-% tree creation when the GPU is underutilized. Suggest or actually
-% try? Would make it an even cheaper optimization.
+\begin{algorithm}
+  \caption{}
+  \label{alg:emptySpaceSplitting}
+  \begin{algorithmic}
+    \PROCEDURE{CreateUpperNodes}
+               {\VAR{activeList}:list \textit{\color{gray}//list of kd-nodes not processed yet}}
+               {\VAR{leafList,nextList}:list}{
+
+                 \COMMENTIT{First split all triangles into segments.}
+                 \STATE{...}
+                 \COMMENTIT{Then compute each triangles bounding box
+                   using reduction as described in
+                   \refsection{sec:reduce}.}
+                 \STATE{...}
+
+                 \STATE{}
+                 \COMMENTIT{Perform empty space splitting.}
+                 \DECLARE{$emptySplits, emptyAddr$}{list}
+                 \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
+                 \ASSIGN{$emptySplits[i]$}{$0$}
+                   \FOREACH{side $s$}{$i$}
+                     \IF{$i$ has more than $C_e$ empty space on side $s$}
+                       \ASSIGN{$emptySplits[i]$}{$emptySplits[i] + 1$}
+                     \ENDIF
+                   \ENDFOR
+                 \ENDFOR
+                 \ASSIGN{$emptyAddr$}{\textbf{Prefix-Sum}($emptySplits$)}
+                 \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
+                   \STATE{Cut of empty space and place new nodes
+                     sequentially at addresses specified in
+                     $emptyAddr$.}
+                 \ENDFOR
+
+                 \COMMENTIT{Compute the addresses to move the triangles to.}
+                 \STATE{...}
+                 \COMMENTIT{Split the triangles.}
+                 \STATE{...}
+
+                 \COMMENTIT{Split nodes.}
+                 \STATE{...}
+  }
+  \end{algorithmic}
+\end{algorithm}
+
+% Explain
+
+% Propagating aabb's downwards
+
 
 \subsection{Lower Tree Nodes}
 

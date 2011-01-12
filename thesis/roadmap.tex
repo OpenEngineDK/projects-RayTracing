@@ -92,6 +92,11 @@ If time allows
   BSP. Might only increase instructions, branching and still wait for
   the slowest thread. (Try and watch it fail) Perhaps without an if
   statement but by arithmetic instead?
+\item Perhaps empty space splitting can be started in it's own stream?
+  At least the actual empty space splitting should be able to. Could
+  help out at the early tree creation when the GPU is
+  underutilized. Suggest or actually try? Would make it an even
+  cheaper optimization.
 \item Optimize segmented reduce. (low low priority)
 \end{itemize}
 

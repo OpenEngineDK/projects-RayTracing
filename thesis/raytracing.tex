@@ -194,7 +194,7 @@ matrix, $m$, and a translation, $n$.
                   \ASSIGN{$t_{min}$}{$t_{next}$}
                   \COMMENTIT{Test intersection with the leafs primitives}
                   \FOREACH{$triangle$}{$node.triangles$}
-                    \ASSIGN{$t_{min}$}{min$(t_{min}, $\bf{Intersect}$(triangle, ray))$}
+                    \ASSIGN{$t_{min}$}{\MIN{$(t_{min}}{$\textbf{Intersect}$(triangle, ray))$}}
                   \ENDFOR
                 \ENDWHILE
                 \STATE{\bf{return} $t_{min}$}
