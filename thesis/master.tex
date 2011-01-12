@@ -62,8 +62,14 @@
 \newcommand{\drawTri}[3]{
   \draw[fill=lightgray] (#1) -- (#2) -- (#3) -- (#1);
 }
+\newcommand{\drawAabb}[4]{
+    \draw[dashed] (#1) -- (#2) -- (#3) -- (#4) -- (#1);
+}
 \newcommand{\drawRay}[2]{
     \draw[line width=2pt, dashed, ->] (#1) -- (#2);
+}
+\newcommand{\drawNode}[4]{
+    \draw (#1) -- (#2) -- (#3) -- (#4) -- (#1);
 }
 
 \begin{document}
