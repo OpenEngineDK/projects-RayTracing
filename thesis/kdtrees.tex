@@ -742,7 +742,7 @@ these.
   \caption{Calculate SAH cost}
   \label{alg:calcSAHCost}
   \begin{algorithmic}
-    \PROCEDURE{CalcSAHCost}
+    \PROCEDURE{ComputeSAHCost}
               {$activeList$ : list}
               {$splittingPlaneList, leafList$ : list}{
                 \COMMENTIT{Calculate SAH for each split candidate and
@@ -757,8 +757,8 @@ these.
                     \ASSIGN{$A_R$}{summed surface area of $bmp_R$}
                     \ASSIGN{$weightedArea$}{$C_L * A_L + C_R * A_R$}
                   \ENDFOR
-                  \ASSIGN{$splittingPlaneList[i]$}{Split candidate with minimal weighted area}
-                  \ASSIGN{$SAH$}{$weightedArea / i.summedArea + C_N$}
+                  \ASSIGN{$splittingPlaneList[i] \leftarrow p$}{Split candidate with minimal weighted area}
+                  \ASSIGN{$SAH$}{$p.weightedArea / i.summedArea + C_N$}
                   \ASSIGN{$leafList[i]$}{$SAH > C_{leaf}$}
                 \ENDFOR
               }
@@ -777,6 +777,39 @@ these.
 
 \subsubsection{Balanced Tree}
 
+\begin{algorithm}
+  \caption{Calculate balanced split}
+  \label{alg:calcSAHCost}
+  \begin{algorithmic}
+    \PROCEDURE{ComputeBalancedSplit}
+              {$activeList$ : list}
+              {$splittingPlaneList, leafList$ : list}{
+                \COMMENTIT{Compute the relation between left and right
+                  triangles for each split candidate and return the
+                  candidate with best relation and presumably lowest
+                  subtrees.}
+                \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
+                  \ASSIGN{$p$}{$noSplitCandidate$}
+                  \FOREACH{split candidate $s$}{$i.splitCandidates$}
+                    \ASSIGN{$bmp_L$}{$i.triangles \cap s.left$}
+                    \ASSIGN{$C_L$}{$\parallel bmp_L \parallel$}
+                    \ASSIGN{$bmp_R$}{$i.triangles \cap s.right$}
+                    \ASSIGN{$C_R$}{$\parallel bmp_R \parallel$}
+                    \ASSIGN{$largestSubtree$}{\MAX{$C_L$}{$C_R$}}
+                    \ASSIGN{$relation$}{\MIN{$C_L$}{$C_R$} / $largestSubtree$}
+                    \IF{$largestSubtree < p.largestSubtree$ \textbf{or} \\
+                      $(largestSubtree = p.largestSubtree$ \textbf{and} $relation < p.relation)$}
+                      \ASSIGN{$p$}{$s$}
+                    \ENDIF
+                  \ENDFOR
+                  \ASSIGN{$splittingPlaneList[i]$}{$p$}
+                  \ASSIGN{$leafList[i]$}{$p.largestSubtree > max_{tris}$}
+                \ENDFOR
+              }
+  \end{algorithmic}
+\end{algorithm}
+
+% Explain
 
 \subsubsection{No Tree}
 
