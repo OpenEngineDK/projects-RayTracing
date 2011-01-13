@@ -284,10 +284,17 @@ memory one vector at a time. Compared to the Möller-Trumbore approach
 this saves X registers and yields a sizeable performance increase, as
 can be seen in \reffig{TODO result section figure}.
 
+% early out
+
 % The extra space used by the precalcultations can be mitigated if
 % the vertices are no longer needed.
 
+% Finally
 
+The extra space required for precalculating $m$ and $n$ can be
+mitigated if the triangles vertex positions are overwritten by
+$m$. This is only possible however, if the vertices are not used
+elsewhere.
 
 
 \section{Exhaustive Ray Tracing}
@@ -301,6 +308,22 @@ can be seen in \reffig{TODO result section figure}.
 % Why even use datastructures on the GPU. They work wonders on the CPU
 % but for the GPU they might hinder performance (cite KNN paper and
 % dataparallism example with 31 threads waiting)
+
+
+\begin{algorithm}
+  \caption{Exhaustive ray tracer}
+  \label{alg:exhaustive}
+  \begin{algorithmic}
+    \PROCEDURE{Exhaustive}
+              {$ray$ : Ray, $T$, Triangle List}
+              {$t_{min}$ : Integer}{
+                \ASSIGN{$t_{min}$}{$\infty$}
+                \FOREACH{$triangle$}{$T$}
+                  \ASSIGN{$t_{min}$}{\MIN{$(t_{min}}{$\textbf{Intersect}$(triangle, ray))$}}
+                \ENDFOR
+              }
+  \end{algorithmic}
+\end{algorithm}
 
 
 \section{Hierarchical Ray Tracing}
