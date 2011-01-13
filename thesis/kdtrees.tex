@@ -765,91 +765,19 @@ these.
   \end{algorithmic}
 \end{algorithm}
 
+% Explain
 
-\subsubsection{Balanced Tree}
-
-\subsubsection{No Tree}
+% Run prefix sum on leafList and use the result as addresses for the
+% children.
 
 % When moving from upper nodes to lower nodes. Calculate a new tight
 % bounding box inside the modified bounding box. Then approximate the
 % new surface area by the reduction in BB volume.
 
 
+\subsubsection{Balanced Tree}
 
 
-%% \subsection{Photon Map}
-
-%% \begin{algorithm}
-%%   \caption{Photon KD-Tree upper node handling}
-%%   \label{alg:PhotonUpperNode}
-%%   \begin{algorithmic}
-%%     \PROCEDURE{CreateUpperPhotonNodes}
-%%               {\VAR{activeList}:list \textit{list of kd-nodes not processed yet}}
-%%               {\VAR{lowerList,nextList}:list}{
-%%       \STATE{Check size of upper nodes arrays and allocate more if needed.}
-
-%%       \COMMENTIT{Compute bounding box of all active nodes.}
-%%       \PARALLELFOR{active node}
-%%       \STATE{Compute the bounding box off all it's photons.}
-%%       \ENDFOR
-
-%%       \PARALLELFOR{active node}
-%%       \STATE{Insert split position, axis and child index}
-%%       \ENDFOR
-
-%%       \COMMENTIT{Split photons along axis and store the split index in
-%%         the child node}
-%%       \FOR{active node}
-%%       \STATE{Split the photons in the node \textbf{in parallel}} % Using scan primitives from Sengupta
-%%       \ENDFOR
-
-%%       \PARALLELFOR{new node}
-%%       \STATE{Split into nextnodes and lowernodes.}
-%%       \STATE{Setup links from parents to childrens new position.}
-%%       \ENDFOR
-
-%%       \COMMENTIT{CPU bookkeeping}
-%%       \COMMENTIT{Perhaps this can be done in a kernel aswell, no need
-%%         to do more on the cpu then absolutely necessary.}
-%%       \STATE{Copy small child nodes to lowerList}
-%%     }
-%%   \end{algorithmic}
-%% \end{algorithm}
+\subsubsection{No Tree}
 
 
-%% \begin{algorithm}
-%%   \caption{Lower node handling of the photon kd-tree}
-%%   \label{alg:PhotonLowerNode}
-%%   \begin{algorithmic}
-%%     \PROCEDURE{CreateLowerPhotonNodes}
-%%               {\VAR{activeList}:list}
-%%               {\VAR{nextList}:list}{
-%%                 \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
-%%                 \COMMENTIT{Determine optimal splitting plane}
-                
-%%                 \ASSIGN{\VAR{root}}{\VAR{i.smallRoot}}
-%%                 \ASSIGN{\VAR{VVH_0}}{$\|$ \VAR{i.photonBitmap} $\|$}
-%%                 \ASSIGN{$VVH$}{$\infty$}
-%%                 \STATE{$splitCandidate$}
-
-%%                 \FOR{\textbf{each} splitplane \VAR{s} where s.triangle $\in$ i.photonBitmap}
-%%                   \ASSIGN{\VAR{C_L}}{$\| i.triangleSet \cap s.left \|$}
-%%                   \ASSIGN{\VAR{C_R}}{$\| i.triangleSet \cap s.right \|$}
-%%                   \COMMENTIT{Can't precompute the max and min in splitplane, since triangles change}
-%%                   \ASSIGN{$V_L$}{$\sum^k s.max.k - s.min.k + 2 * R$}
-%%                   \ASSIGN{$V_L$}{$\sum^k s.max.k - s.min.k + 2 * R$}
-%%                   \ASSIGN{$VVH_s$}{$C_L * V_L + C_R * V_R$}
-%%                   \IF{$VVH_S < VVH_S$}
-%%                     \ASSIGN{$VVH$}{$VVH_S$}
-%%                     \ASSIGN{$splitCandidate$}{$s$}
-%%                   \ENDIF
-%%                 \ENDFOR
-
-%%                 \COMMENTIT{Split to new nodes (Perhaps move this to
-%%                   another kernel after doing a scan to determine where
-%%                   to place new nodes? Hmm?}
-
-%%                 \ENDFOR
-%%               }
-%%   \end{algorithmic}
-%% \end{algorithm}

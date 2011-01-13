@@ -1,3 +1,10 @@
+% Ray tracing structures on the GPU has been mapped more or less 100%
+% from CPU structures. We need to build them for the GPU instead. That
+% means rethinking some of the algorithms (like add persistent
+% threads.)
+
+
+
 \chapter{Ray Tracing}\label{chp:rayTracing}
 
 \chapterquote{Some argue that in the very long term, rendering may
@@ -8,29 +15,38 @@
 
 % Motivate!
 
-
-% Ray tracing structures on the GPU has been mapped more or less 100%
-% from CPU structures. We need to build them for the GPU instead. That
-% means rethinking some of the algorithms (like add persistent
-% threads.)
-
-% Why even use datastructures on the GPU. They work wonders on the CPU
-% but for the GPU they might hinder performance (cite KNN paper and
-% dataparallism example with 31 threads waiting)
-
-% We will build a basic ray tracer to test the quality of the kD tree.
-
 % An optimized ray tracer will be used to test wether or not more time
 % spend on creating a better kD tree will pay off in final rendering
 % time.
 
-% Optimizations will be added incrementally to the hierarchical ray
-% tracer and implementation details to each specific optimization will
-% therefore be discussed alongside the theory.
+In this chapter we will look at the actual ray tracing and how to
+implement it efficiently on the graphics hardware. The result of this
+chapter is an optimized ray tracer, that will be used to test the
+quality of the kd-tree and wether or not more time spend on creating a
+better kD tree will pay off in final rendering time. The chapter is
+divided into 4 parts.
 
-The optimized ray tracer will use techniques from \citebook{Aila2009}
-and \citebook{1230129} among others.
+Before we discuss the different approaches to ray tracing, we will
+first investigate 2 different ray/triangle intersection algorithms and
+discuss them with respect to the graphics cards memory hierarchy and
+maximizing occupancy.
 
+We will then motivate the use of acceleration structures on the GPU,
+by comparing them to an exhaustive ray tracer, where each ray is
+tested against all triangles.
+
+Next I present the hierarchical ray tracer and cover how it traverses
+the kd-tree created in the previous section. Optimizations will be
+added incrementally to the ray tracer and implementation details to
+each specific optimization will therefore be discussed alongside the
+theory. The optimized ray tracer will use techniques from
+\citebook{Aila2009} and \citebook{1230129} along with an optimization
+inspired by empty space splitting.
+
+Finally I will briefly discuss shading and how reflection and
+refraction is calculated.
+
+\section{Ray/Triangle Intersection}
 
 The inherent diverging behaviour of each ray makes them hard to
 parallize efficiently on the graphics card, since data access will be
@@ -38,12 +54,41 @@ nearly impossible to coallesce. The solution is to have enough active
 rays to effectively hide data fetching latency. This means that each
 rays register usage must be kept to a minimum.
 
-
-\section{Ray/Triangle Intersection}
+Deciding which ray/triangle intersection method to use when ray
+tracing can both lower register usage and give a significant
+performance boost.
 
 % Consists of 2 parts. Ray/plane intersection which tells us the
 % distance the ray will travel, and ray/triangle tests which tells us
 % if the ray intersected the triangle.
+
+Ray/triangle intersection can be broken down into 2 parts: A
+\textit{ray/plane intersection} test, which computes the signed
+distance a ray will have to travel to intersect the plane spanned by a
+triangle, and a \textit{triangle inclusion} test, which tells us if
+the intersection point was located inside the triangle. The
+intersection inclussion test is usually performed by calculating the
+intersection points \textit{barycentric coordinates} within the
+triangle.
+
+Every point on a triangle, $T$, with vertices $a$, $b$ and $c$ can be
+described as 
+
+
+\begin{displaymath}
+  T(u,v) = (1-u-v)a + ub + vc
+\end{displaymath}
+ 
+where $(u, v)$ are the barycentric coordinates. For a barycentric
+coordinate to be inside $T$ it must fulfill $0 \le u$, $0 \le v$ and
+$u+v \le 1$.
+
+Barycentric coordinates are also important for linearly interpolating
+vertex attributes, such as normals or colors, across a triangles
+surface.
+
+
+
 
 % Explain barycentric coordinates and how they are important for
 % triangle/ray intersection and linearly interpolating the triangle
@@ -51,8 +96,6 @@ rays register usage must be kept to a minimum.
 % coordiantes. Convex combination?
 
 % Use the barycentric coordinates to perform the intersection test.
-For a barycentric coordinate to be inside the triangle it must fulfill
-$0 \le u$, $0 \le v$ and $u+v \le 1$.
 
 \subsection{Möller-Trumbore}
 
@@ -153,7 +196,10 @@ matrix, $m$, and a translation, $n$.
 
 % Algorithm
 
-% GPU optimazations? Can shared mem work damn it?!?
+% Why even use datastructures on the GPU. They work wonders on the CPU
+% but for the GPU they might hinder performance (cite KNN paper and
+% dataparallism example with 31 threads waiting)
+
 
 \section{Hierarchical Ray Tracing}
 
