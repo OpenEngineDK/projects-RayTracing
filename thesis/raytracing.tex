@@ -74,7 +74,6 @@ triangle.
 Every point on a triangle, $T$, with vertices $a$, $b$ and $c$ can be
 described as 
 
-
 \begin{displaymath}
   T(u,v) = (1-u-v)a + ub + vc
 \end{displaymath}
@@ -87,15 +86,9 @@ Barycentric coordinates are also important for linearly interpolating
 vertex attributes, such as normals or colors, across a triangles
 surface.
 
-
-
-
-% Explain barycentric coordinates and how they are important for
-% triangle/ray intersection and linearly interpolating the triangle
-% attributes at the vertices, such as the normals, colors or texture
-% coordiantes. Convex combination?
-
-% Use the barycentric coordinates to perform the intersection test.
+The following 2 ray/triangle intersection methods will both compute
+the signed distance and barycentric coordinates for later use when
+shading.
 
 \subsection{Möller-Trumbore}
 
@@ -107,29 +100,23 @@ is one of the most popular algorithms for ray/triangle intersection,
 due probably in no small part to it's appearence in chapter 16.8 in
 \citebook{RTR3}, but also because it is one of the fastest
 ray/triangle intersection algorithms that does not rely on extra
-memory and/or precomputation.
-
-% Computes both distance and barycentric coords
+memory and/or precomputations. 
 
 % Calculates the transformation that transform the triangle into the
 % unit triangle and applies this transformation to the ray.
 
 The basic idea of their algorithm is to find the affine transformation
-that when applied to the triangle, $T(u,v)$, given by
-
-\begin{displaymath}
-  T(u,v) = (1-u-v)a + ub + vc
-\end{displaymath}
-
-transforms it into the unit triangle, $U$, which has vertices
-$\vecthreeT{0}{0}{0}$, $\vecthreeT{1}{0}{0}$ and
-$\vecthreeT{0}{1}{0}$. That affine transformation is then instead
-applied to the ray, $R(t) = O + tD$, which yields the vector
+that when applied to the triangle, $T(u,v)$, again given by $T(u,v) =
+(1-u-v)a + ub + vc$, transforms it into the unit triangle, $U$, which
+has vertices $\vecthreeT{0}{0}{0}$, $\vecthreeT{1}{0}{0}$ and
+$\vecthreeT{0}{1}{0}$. That affine transformation is then applied to
+the ray, $R(t) = O + tD$, which yields the vector
 $\vecthreeT{t}{u}{v}$, where $t$ is the distance to the plane spanned
 by $T(u,v)$ and $u$ and $v$ are the barycentric coordinates of the
 intersection point.
 
-In short this boils down to solving the linear system of equations
+In short this boils down to solving the linear system of equations,
+which I will call the \textit{ray/triangle intersection equation}
 
 \begin{displaymath}
   \begin{array}{rl}
@@ -152,38 +139,153 @@ and $Q = T \times  E_1$.
 
 \subsubsection{Implementation}
 
-% Due to the GPU's SIMT architecture, providing as many early out
-% possiblities as Möller-Trumbore's implementation caused a branching
-% overhead. The universal sweetspot in all of this thesis ray tracers
-% was found to be ...
+The implementation of this method is pretty straightforward using
+CUDA's vector primitives and can be seen in
+\refalg{alg:moellerTrumbore}. The implementation provided in
+\citebook{MollerTrumbore97} was optimized for CPU and therefore
+provided a lot of early out options as soon as the algorithm detects
+that the ray has missed the plane. Due to SIMT architecture of GPGPUs,
+providing as many early out possibilities as
+\citebook{MollerTrumbore97} causes a branching overhead and reduces
+performance. This is understandable since only one ray needs to
+intersect its triangle in order for the warp to continue testing
+intersection. For the ray tracers in this thesis the sweetspot was
+found to be only providing an early exit after the ray/plane
+intersection.
+
+\begin{algorithm}
+  \caption{Möller-Trumbore ray/triangle intersection test}
+  \label{alg:moellerTrumbore}
+  \begin{algorithmic}
+    \PROCEDURE{Möller-Trumbore}
+              {$T$ : triangle, $R$ : ray}
+              {$hit$ : bool, $t$ : distance, $(u,v)$ : barycentric coordinates}
+              {\ASSIGN{$E_1$}{$T.b - T.a$}
+                \ASSIGN{$E_2$}{$T.c - T.a$}
+                \ASSIGN{$T$}{$R.O - T.a$}
+                \ASSIGN{$P$}{$R.D - E_2$}
+                \ASSIGN{$Q$}{$T - E_1$}
+                \ASSIGN{$determinant$}{$P \cdot E_1$}
+                \ASSIGN{$t$}{$(Q \cdot E_2) / determinant$}
+                \COMMENTIT{Provide early out if the triangle is behind
+                  the ray.}
+                \IF{$0 < t$}
+                  \ASSIGN{$u$}{$(P \cdot T) / determinant$}
+                  \ASSIGN{$v$}{$(Q \cdot R.D) / determinant$}
+                  \ASSIGN{$hit$}{$0 \le u$ \textbf{and} $0 \le v$
+                    \textbf{and} $u+v \le 1$}
+                \ELSE
+                  \ASSIGN{$hit$}{$false$}
+                \ENDIF
+              }
+  \end{algorithmic}
+\end{algorithm}
 
 \subsection{Woop}
 
+% Why Woop is better
+
+While the Möller-Trumbore ray/triangle intersection approach requires
+minimal storage, it does unfortunatly require quite a lot of
+registers, since it needs to both store the ray information aswell as
+the determinant and the matrix $\vecthreeT{Q \cdot E_2}{P \cdot T}{Q
+  \cdot D}$. The high register usage can be remedied by performing
+precalulations per triangle as described in Chapter 5 of Sven Woops
+diploma thesis\citebook{woop:04:diplom}. This unfortunatly also means
+a higher storage requirement for a scene.
+
 % Also translates the ray using the unit triangle.
 
-As was the case with the Möller-Trumbore approach, Woops was also
-interested in transforming the generel ray/triangle intersection
-problem into a ray/unit triangle intersection problem, where the
-solution is trivially calculated.
+As was the case with the Möller-Trumbore approach, Woops approach also
+transforms the generel ray/triangle intersection problem into a
+ray/unit triangle intersection problem, where the solution is
+trivially calculated.
 
 He observed that the triangle, $T$, can be transformed into the unit
-triangle, $U$, via an affine transformation, consiting of a rotation
+triangle, $U$, via an affine transformation, consisting of a rotation
 matrix, $m$, and a translation, $n$.
 
 \begin{displaymath}
-  U_d = m T_d + n, d \in \{x, y, z\}
+  U_v = m T_v + n, v \in \{a, b, c\}
 \end{displaymath}
 
-% Does some precalculation, which means we can save calculations and
-% register space when performaing the actual ray tracing.
+The inverse affine transformation is the one that transforms the unit
+triangle into $T$.
 
-% The extra space used by the precalcultations can be mitigated if
-% the vertices are no longer needed.
+\begin{displaymath}
+  T_v = m' U_v + n', v \in \{a, b, c\}, m' = m^{-1}, n' = -m^{-1}n
+\end{displaymath}
+
+Given that we already know $T$ and $U$, $m'$ and $n'$ can be
+constructed as follows
+
+\begin{displaymath}
+  m' = \left[ T_a - T_c, T_b - T_c, (T_a - T_c) \times (T_b - T_c)
+    \right],
+  n = T_c
+\end{displaymath}
+
+We can then derive $m$ and $n$ from $m'$ and $n'$. 
+
+\begin{displaymath}
+  m = (m')^{-1},
+  n = - m n'
+\end{displaymath}
+
+This requires $m'$ to be invertable, which it always is for
+\textit{non-degenerate triangles}\footnote{A degenerate triangles is
+  a triangles that has collapsed into a line.}.
+
+%% Applying the affine transformation described by $m$ and $n$ to the
+%% ray/triangle intersection equation we get
+
+%% \begin{displaymath}
+%%   \begin{array}{rl}
+%%     & m R(t) + n = m T(u,v) + n\\
+%%     \Updownarrow \\
+%%     & m (O + tD) + n = m ((1-u-v)a + ub + vc) + n \\
+%%     \Updownarrow \\
+%%     & m (O + tD) + n = (1-u-v)U_a + u U_b + v U_c \\
+%%   \end{array}
+%% \end{displaymath}
+
+Applying the affine transformation described by $m$ and $n$ to the
+ray, $m * R(t) + n = R'(t) = tD' + O'$, it is transformed into the
+same space as the unit triangle. Computing the distance, $t$, and
+barycentric coordinates, $(u,v)$ then becomes trivial.
+
+\begin{displaymath}
+  \begin{array}{l}
+    t = - D'_z / O'_z \\
+    u = t D'_x + O'_x \\
+    v = t D'_y + O'_y
+  \end{array}
+\end{displaymath}
+
+Since each dimension in $R'$ can be computed independently, we get 
+
+\begin{displaymath}
+  \begin{array}{l}
+    t = - (m_z \cdot D + n_z) / (m_z \cdot O) \\
+    u = t (m_x \cdot D + n_x) + m_x \cdot O \\
+    u = t (m_y \cdot D + n_y) + m_y \cdot O \\
+  \end{array}
+\end{displaymath}
+
+where $m_i$ is the i'th row of $m$.
 
 \subsubsection{Implementation}
 
-% Higher occupancy, which in turn will make it easier for the GPU to
-% hide global memory lookup latency. Or not. Still at 32 registers.
+The implementation is strightforward. $m$ and $n$ are computed and
+stored in 4 component vectors as $w_i = \left[m_i, n_i \right]$ prior
+to ray tracing. When the ray tracer performs ray/triangle
+intersection, each $w_i$ vector can then be loaded into register
+memory one vector at a time. Compared to the Möller-Trumbore approach
+this saves X registers and yields a sizeable performance increase, as
+can be seen in \reffig{TODO result section figure}.
+
+% The extra space used by the precalcultations can be mitigated if
+% the vertices are no longer needed.
 
 
 
@@ -342,6 +444,6 @@ the rays.
 
 
 
-\section{Coloring}
+\section{Shading}
 
 % Everything is paper thin and empty space
