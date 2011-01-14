@@ -354,6 +354,8 @@ of $O(n \log m)$.
 
 % Describe how the tree is traversed
 
+
+
 \begin{figure}
   \centering
   \subfloat[A simple scene divided by a kd-tree.]{
@@ -375,28 +377,44 @@ of $O(n \log m)$.
       \draw (0,4) -- (4,4);
       \draw (2,4) -- (2,6);
       \draw (4,2) -- (8,2);
+
+      % Ray
+      \drawRay{0,0}{2,1.5}
+
+      %axes
+      \draw (0,0) -- coordinate (x axis mid) (10,0);
+      \draw (0,0) -- coordinate (y axis mid) (0,8);
+    	%ticks
+    	\foreach \x in {0,2,...,10}
+     		\draw (\x,1pt) -- (\x,-3pt)
+			node[anchor=north] {\x};
+    	\foreach \y in {0,2,...,8}
+     		\draw (1pt,\y) -- (-3pt,\y) 
+     			node[anchor=east] {\y}; 
     \end{tikzpicture}
   }
-  \subfloat[The kd-tree.]{
+  \subfloat[The kd-tree matching the scene. Nodes contain information
+    about which axis have been divided and where. Leaf nodes contain a
+    set of the triangles they overlap.]{
     \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
-        level/.style={sibling distance=55mm/#1},
+        level/.style={sibling distance=40mm/#1},
         node/.style={circle, fill=white, draw, drop shadow},
         leaf/.style={rectangle, rounded corners=1mm, fill=white, draw, drop shadow}]
       \node [node] (0){$x:4$}
         child {node [node] (1) {$y:4$}
-          child {node [leaf] (e) {$leaf:\emptyset$}}
+          child {node [leaf] (e) {$\emptyset$}}
           child {node [node] (3) {$x:2$}            
-            child {node [leaf] (e) {$leaf:\{0\}$}}
-            child {node [leaf] (e) {$leaf:\{1\}$}}
+            child {node [leaf] (e) {$\{0\}$}}
+            child {node [leaf] (e) {$\{1\}$}}
           }
         }
         child {node [node] (2) {$y:2$}
-            child {node [leaf] (e) {$leaf:\{2\}$}}
-            child {node [leaf] (e) {$leaf:\{3\}$}}
-          }
-        ;
+            child {node [leaf] (e) {$\{2\}$}}
+            child {node [leaf] (e) {$\{3\}$}}
+        };
     \end{tikzpicture}
   }
+  \caption{}
 \end{figure}
 
 
