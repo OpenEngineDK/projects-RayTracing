@@ -349,12 +349,20 @@ triangles the time complexity becomes $O(nm)$.
 Hierarchical ray tracers provide a better upper bound than an
 exhaustive ray tracer. Given a hierachical data structure over $m$
 geometric primitives in a scene, then the nearest leaf node can be
-found in $O(\log m)$ time. For $n$ rays this yeilds a time complexity
+found in $O(\log m)$ time. For $n$ rays this yields a time complexity
 of $O(n \log m)$.
 
 % Describe how the tree is traversed
 
+When ray tracing a scene divided by a kd-tree, each ray needs to
+traverse the tree an find the nearest leaf node. At each interior
+node, the ray needs to determine which of the child nodes are closest
+and in front of the ray and then traverse that node until it reaches a
+leaf node. 
 
+In \reffig{fig:simpleScene} a simple scene consisting of 4 triangles
+is shown. The corrosponding kd-tree matching the axis aligned
+splitting planes is show in \reffig{fig:simpleTree}. 
 
 \begin{figure}
   \centering
@@ -382,17 +390,19 @@ of $O(n \log m)$.
       \drawRay{0,0}{2,1.5}
 
       %axes
-      \draw (0,0) -- coordinate (x axis mid) (10,0);
-      \draw (0,0) -- coordinate (y axis mid) (0,8);
+      \draw[->] (0,0) -- coordinate (x axis mid) (9,0);
+      \draw[->] (0,0) -- coordinate (y axis mid) (0,7);
     	%ticks
-    	\foreach \x in {0,2,...,10}
+    	\foreach \x in {0,2,...,9}
      		\draw (\x,1pt) -- (\x,-3pt)
 			node[anchor=north] {\x};
-    	\foreach \y in {0,2,...,8}
+    	\foreach \y in {0,2,...,7}
      		\draw (1pt,\y) -- (-3pt,\y) 
      			node[anchor=east] {\y}; 
     \end{tikzpicture}
+    \label{fig:simpleScene}
   }
+  \hspace{20pt}
   \subfloat[The kd-tree matching the scene. Nodes contain information
     about which axis have been divided and where. Leaf nodes contain a
     set of the triangles they overlap.]{
@@ -400,19 +410,20 @@ of $O(n \log m)$.
         level/.style={sibling distance=40mm/#1},
         node/.style={circle, fill=white, draw, drop shadow},
         leaf/.style={rectangle, rounded corners=1mm, fill=white, draw, drop shadow}]
-      \node [node] (0){$x:4$}
-        child {node [node] (1) {$y:4$}
-          child {node [leaf] (e) {$\emptyset$}}
-          child {node [node] (3) {$x:2$}            
-            child {node [leaf] (e) {$\{0\}$}}
-            child {node [leaf] (e) {$\{1\}$}}
+      \node [node] (0){$\begin{array}{c}0\\x:4\end{array}$}
+        child {node [node] (1) {$\begin{array}{c}1\\y:4\end{array}$}
+          child {node [leaf] (e) {$\begin{array}{c}3\\\emptyset\end{array}$}}
+          child {node [node] (3) {$\begin{array}{c}4\\x:2\end{array}$}            
+            child {node [leaf] (e) {$\begin{array}{c}7\\\{0\}\end{array}$}}
+            child {node [leaf] (e) {$\begin{array}{c}8\\\{1\}\end{array}$}}
           }
         }
-        child {node [node] (2) {$y:2$}
-            child {node [leaf] (e) {$\{2\}$}}
-            child {node [leaf] (e) {$\{3\}$}}
+        child {node [node] (2) {$\begin{array}{c}2\\y:2\end{array}$}
+            child {node [leaf] (e) {$\begin{array}{c}5\\\{2\}\end{array}$}}
+            child {node [leaf] (e) {$\begin{array}{c}6\\\{3\}\end{array}$}}
         };
     \end{tikzpicture}
+    \label{fig:simpleTree}
   }
   \caption{}
 \end{figure}

@@ -1,11 +1,11 @@
-\def\documentstate{final} % Lav om til FINAL når vi er done!
+%\def\documentstate{} % Lav om til FINAL når vi er done!
 \usepackage[utf8]{inputenc}
-\usepackage[\documentstate]{fixme} % kræver at folk er smarte nok til at installere FiXme
+\usepackage{fixme} % kræver at folk er smarte nok til at installere FiXme
 \usepackage[T1]{fontenc}
 \usepackage{babel}
 %\usepackage{lmodern} % vector font, ikke bitmap!!
 % ^- kun interessant med latex, pdflatex er vector i forvejen
-\usepackage{graphicx}
+\usepackage[final]{graphicx}
 \graphicspath{{graphics/}}
 \DeclareGraphicsExtensions{.pdf,.jpeg,.jpg,.png}
 \usepackage{tikz}
@@ -31,7 +31,7 @@
 %\citestyle{chicago} % Chicago Manual of Style citations
 
 %\renewcommand{\danishhyphenmins}{22} % fuck lorte orddeling!
-\usepackage[\documentstate]{ifdraft}
+\usepackage{ifdraft}
 \ifdraft{
   \usepackage{draftwatermark}
   \SetWatermarkScale{4.0}
