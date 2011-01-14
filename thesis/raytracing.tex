@@ -55,14 +55,14 @@ rays to effectively hide data fetching latency. This means that each
 rays register usage must be kept to a minimum.
 
 Deciding which ray/triangle intersection method to use when ray
-tracing can both lower register usage and give a significant
+tracing can both lower register usage and yield a significant
 performance boost.
 
 % Consists of 2 parts. Ray/plane intersection which tells us the
 % distance the ray will travel, and ray/triangle tests which tells us
 % if the ray intersected the triangle.
 
-Ray/triangle intersection can be broken down into 2 parts: A
+Ray/triangle intersection and can be broken down into 2 parts: A
 \textit{ray/plane intersection} test, which computes the signed
 distance a ray will have to travel to intersect the plane spanned by a
 triangle, and a \textit{triangle inclusion} test, which tells us if
@@ -281,34 +281,48 @@ stored in 4 component vectors as $w_i = \left[m_i, n_i \right]$ prior
 to ray tracing. When the ray tracer performs ray/triangle
 intersection, each $w_i$ vector can then be loaded into register
 memory one vector at a time. Compared to the Möller-Trumbore approach
-this saves X registers and yields a sizeable performance increase, as
+this saves 3 registers and yields a sizeable performance increase, as
 can be seen in \reffig{TODO result section figure}.
 
 % early out
 
+As in the implementation of Möller-Trumbore, the Woop implementation
+also only has one early out option, which is placed right after the
+distance calculation.
+
 % The extra space used by the precalcultations can be mitigated if
 % the vertices are no longer needed.
 
-% Finally
-
-The extra space required for precalculating $m$ and $n$ can be
-mitigated if the triangles vertex positions are overwritten by
+Finally, the extra space required for precalculating $m$ and $n$ can
+be mitigated if the triangles vertex positions are overwritten by
 $m$. This is only possible however, if the vertices are not used
-elsewhere.
+elsewhere in the ray tracer.
 
 
 \section{Exhaustive Ray Tracing}
 
+Before directing our focus to the hierarchical ray tracers, we will
+first take a look at an exhaustive ray tracer.
+
 % GPU does bruteforcing well.
 
-% Cite paper on kNN done on the GPU.
+The reason that an exhaustive ray tracer is interesting is that the
+graphics card comes with high computational power, but little
+tolerance for branching. An exhaustive ray tracer fits very well into
+such an architecture. Having to intersect every ray with every
+triangle certainly requires a lot of computational power, and every
+ray in a warp will loop the same rays, so the triangle-loop will not
+cause thread divergence.
 
 % Algorithm
 
-% Why even use datastructures on the GPU. They work wonders on the CPU
-% but for the GPU they might hinder performance (cite KNN paper and
-% dataparallism example with 31 threads waiting)
-
+The algorithm itself per ray is presented in
+\refalg{alg:exhaustive}. The actual ray tracers implemented in this
+thesis also compute the barycentric coordinates and returns a
+reference to the intersected geometric primitive, which is used for
+shading. In order to keep the algorithms simple these have been
+omitted and instead we only focus on computing the signed distance,
+$t_{min}$, to the intersected primitive.
 
 \begin{algorithm}
   \caption{Exhaustive ray tracer}
@@ -316,7 +330,7 @@ elsewhere.
   \begin{algorithmic}
     \PROCEDURE{Exhaustive}
               {$ray$ : Ray, $T$, Triangle List}
-              {$t_{min}$ : Integer}{
+              {$t_{min}$ : Number}{
                 \ASSIGN{$t_{min}$}{$\infty$}
                 \FOREACH{$triangle$}{$T$}
                   \ASSIGN{$t_{min}$}{\MIN{$(t_{min}}{$\textbf{Intersect}$(triangle, ray))$}}
@@ -325,14 +339,66 @@ elsewhere.
   \end{algorithmic}
 \end{algorithm}
 
+The downside to the exhaustive approach is that for $n$ rays and $m$
+triangles the time complexity becomes $O(nm)$.
 
 \section{Hierarchical Ray Tracing}
 
-% Brief introduction to several acceleration techniques. BVH, KD,
-% quad/oct trees and BSP.
+% Time complexity of O(n log m)
 
-% KD-trees are ze leetzors according to Havran? Another motivation is
-% Zhou's paper on fast KD tree construction.
+Hierarchical ray tracers provide a better upper bound than an
+exhaustive ray tracer. Given a hierachical data structure over $m$
+geometric primitives in a scene, then the nearest leaf node can be
+found in $O(\log m)$ time. For $n$ rays this yeilds a time complexity
+of $O(n \log m)$.
+
+% Describe how the tree is traversed
+
+\begin{figure}
+  \centering
+  \subfloat[A simple scene divided by a kd-tree.]{
+    \begin{tikzpicture}[y=0.5cm, x=0.5cm,font=\sffamily]
+      \drawNode{0,0}{8,0}{8,6}{0,6}
+
+      % Tris
+      \drawTri{0,6}{1,4}{2,5}
+      \draw (1,5) node{0};
+      \drawTri{4,6}{3,4}{2,5}
+      \draw (3,5) node{1};
+      \drawTri{4,2}{5,6}{6,4}
+      \draw (5,4) node{2};
+      \drawTri{8,0}{7,2}{6,1}
+      \draw (7,1) node{3};
+
+      % Splits
+      \draw (4,0) -- (4,6);
+      \draw (0,4) -- (4,4);
+      \draw (2,4) -- (2,6);
+      \draw (4,2) -- (8,2);
+    \end{tikzpicture}
+  }
+  \subfloat[The kd-tree.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
+        level/.style={sibling distance=55mm/#1},
+        node/.style={circle, fill=white, draw, drop shadow},
+        leaf/.style={rectangle, rounded corners=1mm, fill=white, draw, drop shadow}]
+      \node [node] (0){$x:4$}
+        child {node [node] (1) {$y:4$}
+          child {node [leaf] (e) {$leaf:\emptyset$}}
+          child {node [node] (3) {$x:2$}            
+            child {node [leaf] (e) {$leaf:\{0\}$}}
+            child {node [leaf] (e) {$leaf:\{1\}$}}
+          }
+        }
+        child {node [node] (2) {$y:2$}
+            child {node [leaf] (e) {$leaf:\{2\}$}}
+            child {node [leaf] (e) {$leaf:\{3\}$}}
+          }
+        ;
+    \end{tikzpicture}
+  }
+\end{figure}
+
 
 \subsection{KD-restart}
 
@@ -346,7 +412,7 @@ elsewhere.
   \begin{algorithmic}
     \PROCEDURE{KDRestart}
               {$ray$ : Ray}
-              {$t_{min}$ : Integer}{
+              {$t_{min}$ : Number}{
                 \ASSIGN{$t_{min}$}{$0$}
                 \WHILE{$t_{min} < \infty$}
                   \ASSIGN{$t_{next}$}{$\infty$}
@@ -398,7 +464,7 @@ elsewhere.
   \begin{algorithmic}
     \PROCEDURE{ShortStack}
               {$ray$ : Ray}
-              {$t_{min}$ : Integer}{
+              {$t_{min}$ : Number}{
     \ASSIGN{$t_{min}$}{$0$}
     \WHILE{$t_{min} < \infty$}
       \IF{$\color{green}stack.IsEmpty$}
@@ -438,32 +504,32 @@ elsewhere.
 
 % Combines BVH and KD tree
 
-\subsection{Push Down}
+%% \subsection{Push Down}
 
-I will not be implementing the push-down approach from
-\citebook{1230129}. While it will most likely improve the generel ray
-tracing case, where some of the geometry will be located behind the
-rays and can safely be excluded, it will only add an overhead to worst
-case situations, where the uppermost splitting plane is intersected by
-the rays.
+%% I will not be implementing the push-down approach from
+%% \citebook{1230129}. While it will most likely improve the generel ray
+%% tracing case, where some of the geometry will be located behind the
+%% rays and can safely be excluded, it will only add an overhead to worst
+%% case situations, where the uppermost splitting plane is intersected by
+%% the rays.
 
-\subsection{Ropes}
+%% \subsection{Ropes}
 
-% stackless raytracing using ropes. 
-% Place in future works?
+%% % stackless raytracing using ropes. 
+%% % Place in future works?
 
-\subsection{Persistent Threads}
+%% \subsection{Persistent Threads}
 
-% Use persistent threads / own scheduler. Aila2009.
+%% % Use persistent threads / own scheduler. Aila2009.
 
-\subsection{Caching 'hot' nodes}
+%% \subsection{Caching 'hot' nodes}
 
-% wrap node and geometry arrays in textures to utilize cache? Or
-% simply don't care and refere to cached global memory in future
-% GPU's?
+%% % wrap node and geometry arrays in textures to utilize cache? Or
+%% % simply don't care and refere to cached global memory in future
+%% % GPU's?
 
-% Like persistent threads, this is not an important optimazition
-% longterm, since global memory are being given a cache.
+%% % Like persistent threads, this is not an important optimazition
+%% % longterm, since global memory are being given a cache.
 
 
 
