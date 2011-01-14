@@ -502,8 +502,10 @@ $0$ splits the scene along the x-axis at position 4 and from
                   \FOREACH{$triangle$}{$node.triangles$}
                     \ASSIGN{$t_{min}$}{\MIN{$(t_{min}}{$\textbf{Intersect}$(triangle, ray))$}}
                   \ENDFOR
+                  \IF{$t_{min} < t_{next}$}
+                    \STATE{\textbf{break}}
+                  \ENDIF
                 \ENDWHILE
-                \STATE{\textbf{return} $t_{min}$}
               }
   \end{algorithmic}
 \end{algorithm}
@@ -546,8 +548,10 @@ $0$ splits the scene along the x-axis at position 4 and from
       \FOREACH{$triangle$}{$node.triangles$}
         \ASSIGN{$t_{min}$}{min$(t_{min}, $\bf{Intersect}$(triangle, ray))$}
       \ENDFOR
+      \IF{$t_{min} < t_{next}$}
+        \STATE{\textbf{break}}
+      \ENDIF
     \ENDWHILE
-    \STATE{\textbf{return} $t_{min}$}
               }
   \end{algorithmic}
 \end{algorithm}
