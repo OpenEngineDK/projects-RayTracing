@@ -358,11 +358,51 @@ When ray tracing a scene divided by a kd-tree, each ray needs to
 traverse the tree an find the nearest leaf node. At each interior
 node, the ray needs to determine which of the child nodes are closest
 and in front of the ray and then traverse that node until it reaches a
-leaf node. 
+leaf node. At the leaf the ray needs to intersect each triangle in the
+leaf and determine which intersected triangle is closest, if any. If
+the ray intersects a triangle, then it reports this intersection, if
+not then it needs to continue traversing the tree. How this is done is
+the topic of \refsection{sec:kdRestart} and
+\refsection{sec:shortStack}. The generel algorithm for traversing a
+kd-tree can be seen in \refalg{alg:generelTraversal}.
+
+\begin{algorithm}
+  \caption{A general kd-tree traversal algorithm}
+  \label{alg:generelTraversal}
+  \begin{algorithmic}
+    \PROCEDURE{KDTraversal}
+              {$ray$ : Ray, $tree$ : kd-tree}
+              {$t_{min}$ : Number}{
+                \ASSIGN{$t_{min}$}{$0$}
+                \WHILE{ray hasn't intersected}
+                  \COMMENTIT{Traverse the tree until the closest leaf is found
+                    and store the distance to the closest splitting
+                    plane in $t_{split}$.}
+                  \ASSIGN{$(leaf, t_{split})$}{Traverse($ray, tree$)}
+                  \COMMENTIT{Intersect triangles in leaf and return
+                    closest intersection.}
+                  \ASSIGN{$t_{hit}$}{Intersect($ray, leaf.triangles$)}
+                  \COMMENTIT{Break if a closest intersection
+                    is found and assign to $t_{min}$.}
+                  \IF{$t_{hit} < t_{split}$}
+                    \ASSIGN{$t_{min}$}{$t_{hit}$}
+                    \STATE{\textbf{break}}
+                  \ELSE
+                    \ASSIGN{$t_{min}$}{$t_{split}$}
+                  \ENDIF
+                \ENDWHILE
+              }
+  \end{algorithmic}
+\end{algorithm}
+
+
 
 In \reffig{fig:simpleScene} a simple scene consisting of 4 triangles
 is shown. The corrosponding kd-tree matching the axis aligned
-splitting planes is show in \reffig{fig:simpleTree}. 
+splitting planes is show in \reffig{fig:simpleTree}. A tree traversal
+of the ray entering the scene in the lower left would look like this:
+Upon entering the scene the ray first visits the root node, $0$. Node
+$0$ splits the scene along the x-axis at position 4 and from 
 
 \begin{figure}
   \centering
@@ -429,7 +469,7 @@ splitting planes is show in \reffig{fig:simpleTree}.
 \end{figure}
 
 
-\subsection{KD-restart}
+\subsection{KD-restart}\label{sec:kdRestart}
 
 % KD restart is the simplest and fastest.
 
@@ -440,14 +480,14 @@ splitting planes is show in \reffig{fig:simpleTree}.
   \label{alg:KDRestart}
   \begin{algorithmic}
     \PROCEDURE{KDRestart}
-              {$ray$ : Ray}
+              {$ray$ : Ray, $tree$ : kd-tree}
               {$t_{min}$ : Number}{
                 \ASSIGN{$t_{min}$}{$0$}
                 \WHILE{$t_{min} < \infty$}
                   \ASSIGN{$t_{next}$}{$\infty$}
-                  \ASSIGN{$node$}{$root$}
+                  \ASSIGN{$node$}{$tree.root$}
                   \COMMENTIT{Traverse the tree until a leaf node is reached}
-                  \WHILE{$node.info \neq LEAF$}
+                  \WHILE{$node \neq LEAF$}
                     \ASSIGN{$t_{split}$}{($node.splitValue - ray.origin[node.axis]) / ray.direction[node.axis]$}
                     \IF{$t_{min} < t_{split}$}
                       \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
@@ -463,27 +503,12 @@ splitting planes is show in \reffig{fig:simpleTree}.
                     \ASSIGN{$t_{min}$}{\MIN{$(t_{min}}{$\textbf{Intersect}$(triangle, ray))$}}
                   \ENDFOR
                 \ENDWHILE
-                \STATE{\bf{return} $t_{min}$}
+                \STATE{\textbf{return} $t_{min}$}
               }
   \end{algorithmic}
 \end{algorithm}
 
-\subsection{Packets}
-
-% Packets: 2x2 packets on the CPU for to take advantage of SIMD
-% instructions (Wald), warp size packets on the GPU. While
-% \citebook{1230129} implemented packets, they merely assumed it would
-% yield a speedup and did not provide any results. Aila2009 is against
-% packets as they in practice seem to make it slower.
-
-% As ray tracing becomes more complex packets also become less
-% effective, as rays will become more chaotic in nature and less
-% likely to fit into packets.
-
-% I will adobt a pretty cheap packet strategy: I will trace my rays in
-% 4x8 packets to increase ray coherence across warps.
-
-\subsection{Short stack}
+\subsection{Short stack}\label{sec:shortStack}
 
 % Only push usefull 'forward' nodes to the stack.
 
@@ -492,18 +517,18 @@ splitting planes is show in \reffig{fig:simpleTree}.
   \label{alg:ShortStack}
   \begin{algorithmic}
     \PROCEDURE{ShortStack}
-              {$ray$ : Ray}
+              {$ray$ : Ray, $tree$ : kd-tree}
               {$t_{min}$ : Number}{
     \ASSIGN{$t_{min}$}{$0$}
     \WHILE{$t_{min} < \infty$}
       \IF{$\color{green}stack.IsEmpty$}
-        \ASSIGN{$node$}{$root$}
+        \ASSIGN{$node$}{$tree.root$}
         \ASSIGN{$t_{next}$}{$\infty$}
       \ELSE
         \color{green}\ASSIGN{$(node, t_{next})$}{stack.pop}
       \ENDIF
       \COMMENTIT{Traverse the tree until a leaf node is reached}
-      \WHILE{$node.info \neq LEAF$}
+      \WHILE{$node \neq LEAF$}
         \ASSIGN{$t_{split}$}{($node.splitValue - ray.origin[node.axis]) / ray.direction[node.axis]$}
         \IF{$t_{min} < t_{split}$}
           \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
@@ -522,10 +547,25 @@ splitting planes is show in \reffig{fig:simpleTree}.
         \ASSIGN{$t_{min}$}{min$(t_{min}, $\bf{Intersect}$(triangle, ray))$}
       \ENDFOR
     \ENDWHILE
-    \STATE{\bf{return} $t_{min}$}
+    \STATE{\textbf{return} $t_{min}$}
               }
   \end{algorithmic}
 \end{algorithm}
+
+\subsection{Packets}
+
+% Packets: 2x2 packets on the CPU for to take advantage of SIMD
+% instructions (Wald), warp size packets on the GPU. While
+% \citebook{1230129} implemented packets, they merely assumed it would
+% yield a speedup and did not provide any results. Aila2009 is against
+% packets as they in practice seem to make it slower.
+
+% As ray tracing becomes more complex packets also become less
+% effective, as rays will become more chaotic in nature and less
+% likely to fit into packets.
+
+% I will adobt a pretty cheap packet strategy: I will trace my rays in
+% 4x8 packets to increase ray coherence across warps.
 
 \subsection{Skipping Leaf Nodes}
 

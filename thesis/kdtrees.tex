@@ -431,10 +431,10 @@ demonstrated on \reffig{fig:aabbClipped}.
   \end{tikzpicture}
   \caption{The triangles bounding box has been clipped to fit the part
   of the triangle contained in the nodes bounding boxes.}
-  \label{fig:aabbContained}
+  \label{fig:aabbClipped}
 \end{figure}
 
-% TODO mention that it's seperating axis theorem?
+\fixme{mention that it's seperating axis theorem?}
 
 Another solution is to simply remove the offending triangles, reafter
 refered to as \textit{false primitives}, from the node. This can be
@@ -780,7 +780,7 @@ these.
 
 \begin{algorithm}
   \caption{Calculate balanced split}
-  \label{alg:calcSAHCost}
+  \label{alg:calcBalancedCost}
   \begin{algorithmic}
     \PROCEDURE{ComputeBalancedSplit}
               {$activeList$ : list}
