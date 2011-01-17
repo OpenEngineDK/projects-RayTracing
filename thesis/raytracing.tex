@@ -313,12 +313,12 @@ graphics card comes with high computational power, but little
 tolerance for branching. An exhaustive ray tracer fits very well into
 such an architecture. Having to intersect every ray with every
 triangle certainly requires a lot of computational power, and every
-ray in a warp will loop the same rays, so the triangle-loop will not
-cause thread divergence.
+ray in a warp will loop over the same rays, so the triangle-loop will
+not cause thread divergence.
 
 % Algorithm
 
-The algorithm itself per ray is presented in
+The per ray algorithm itself is presented in
 \refalg{alg:exhaustive}. The actual ray tracers implemented in this
 thesis also compute the barycentric coordinates and returns a
 reference to the intersected geometric primitive, which is used for
@@ -331,11 +331,11 @@ $t_{min}$, to the intersected primitive.
   \label{alg:exhaustive}
   \begin{algorithmic}
     \PROCEDURE{Exhaustive}
-              {$ray$ : Ray, $T$, Triangle List}
+              {$R$ : Ray, $Ts$, Triangle List}
               {$t_{min}$ : Number}{
                 \ASSIGN{$t_{min}$}{$\infty$}
-                \FOREACH{$triangle$}{$T$}
-                  \ASSIGN{$t_{min}$}{\MIN{$(t_{min}}{$\textbf{Intersect}$(triangle, ray))$}}
+                \FOREACH{$T$}{$Ts$}
+                  \ASSIGN{$t_{min}$}{\MIN{$(t_{min}}{$\textbf{Intersect}$(T, R))$}}
                 \ENDFOR
               }
   \end{algorithmic}
@@ -357,20 +357,20 @@ of $O(n \log m)$.
 % Describe how the tree is traversed
 
 When ray tracing a scene divided by a kd-tree, each ray needs to
-traverse the tree an find the nearest leaf node. At each interior
-node, the ray needs to determine which of the child nodes are closest
-and in front of the ray and then traverse that node until it reaches a
+traverse the tree and find the nearest leaf node. At each interior
+node, the ray needs to determine which of the child nodes are closest,
+in front of the ray and then traverse that node until it reaches a
 leaf node. At the leaf the ray needs to intersect each triangle in the
 leaf and determine which intersected triangle is closest, if any. If
 the ray intersects a triangle, then it reports this intersection, if
 not then it needs to continue traversing the tree. How this is done is
 the topic of \refsection{sec:kdRestart} and
-\refsection{sec:shortStack}. The generel algorithm for traversing a
+\refsection{sec:shortStack}. The generel algorithm for ray tracing a
 kd-tree can be seen in \refalg{alg:generelTraversal}.
 
 \begin{algorithm}
   \caption{A general kd-tree ray tracing algorithm}
-  \label{alg:generelTraversal}
+  \label{alg:generelTracing}
   \begin{algorithmic}
     \PROCEDURE{KDTraversal}
               {$ray$ : Ray, $tree$ : kd-tree}
@@ -398,8 +398,18 @@ kd-tree can be seen in \refalg{alg:generelTraversal}.
 \end{algorithm}
 
 % Traversal method
-\fixme{Hertil!}
 
+The method used to determine which of an interior node's children to
+visit next can be seen in \refalg{alg:generelTraversal}. For each
+interior node the ray first needs to determine which of the 2 children
+are placed \textit{nearest} and \textit{farthest} along the rays
+direction. It then computes the signed distance from the ray to the
+nodes splitting plane. If this distance is below 0 then the plane is
+located behind the ray and the farthest child is visited. If the
+distance is above 0 then the nearest node needs to be visited next. In
+addition the distance to the nearest splitting plane in front of the
+ray needs to be updated. This information is used to advance the ray
+beyond a visited leaf node if it did not intersect any primitives.
 
 \begin{algorithm}
   \caption{A basic kd-tree traversal algorithm}
@@ -407,16 +417,19 @@ kd-tree can be seen in \refalg{alg:generelTraversal}.
   \begin{algorithmic}
     \PROCEDURE{Traversal}
               {$ray$ : Ray, $tree$ : kd-tree}
-              {$leaf$ : Node, $t_{split}$ : Number}{
-                \ASSIGN{$t_{split}$}{$\infty$}
+              {$leaf$ : Node, $t_{far}$ : Number}{
+                \ASSIGN{$t_{far}$}{$\infty$}
                 \ASSIGN{$node$}{$tree.root$}
                 \WHILE{$node \neq LEAF$}
-                  \ASSIGN{$t_{node}$}{($node.splitValue - ray.origin[node.axis]) / ray.direction[node.axis]$}
+                  \COMMENTIT{The signed distance to the nodes splitting plane.}
+                  \ASSIGN{$node_{near}$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
+                  \ASSIGN{$node_{far}$}{$ray.direction[node.axis] > 0$ ? $node.right$ : $node.left$}
+                  \ASSIGN{$t_{split}$}{($node.splitValue - ray.origin[node.axis]) / ray.direction[node.axis]$}
                   \IF{$0 < t_{split}$}
-                    \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
-                    \ASSIGN{$t_{split}$}{min$(t_{split}, t_{node})$}
+                    \ASSIGN{$node$}{$node_{near}$}
+                    \ASSIGN{$t_{far}$}{min$(t_{split}, t_{far})$}
                   \ELSE
-                    \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.right$ : $node.left$}
+                    \ASSIGN{$node$}{$node_{far}$}
                   \ENDIF
                 \ENDWHILE
               }
