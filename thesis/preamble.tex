@@ -1,6 +1,6 @@
-%\def\documentstate{} % Lav om til FINAL når vi er done!
+\def\documentstate{draft} % Lav om til FINAL når vi er done!
 \usepackage[utf8]{inputenc}
-\usepackage{fixme} % kræver at folk er smarte nok til at installere FiXme
+\usepackage[\documentstate]{fixme} % kræver at folk er smarte nok til at installere FiXme
 \usepackage[T1]{fontenc}
 \usepackage{babel}
 %\usepackage{lmodern} % vector font, ikke bitmap!!
@@ -31,10 +31,10 @@
 %\citestyle{chicago} % Chicago Manual of Style citations
 
 %\renewcommand{\danishhyphenmins}{22} % fuck lorte orddeling!
-\usepackage{ifdraft}
+\usepackage[\documentstate]{ifdraft}
 \ifdraft{
   \usepackage{draftwatermark}
-  \SetWatermarkScale{4.0}
+  \SetWatermarkScale{2.0}
 }{}
 
 \setcounter{secnumdepth}{2}

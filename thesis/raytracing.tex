@@ -19,32 +19,34 @@
 % spend on creating a better kD tree will pay off in final rendering
 % time.
 
-In this chapter we will look at the actual ray tracing and how to
-implement it efficiently on the graphics hardware. The result of this
-chapter is an optimized ray tracer, that will be used to test the
-quality of the kd-tree and wether or not more time spend on creating a
-better kD tree will pay off in final rendering time. The chapter is
-divided into 4 parts.
+The focus of this chapter will be the actual ray tracing and how to
+implement it efficiently on the graphics hardware. The result will be
+an optimized ray tracer, that will be used to test the quality of the
+kd-tree and wether or not more time spend on creating a better kD tree
+will pay off in final rendering time. The chapter is divided into 4
+parts.
 
-Before we discuss the different approaches to ray tracing, we will
-first investigate 2 different ray/triangle intersection algorithms and
+Before discussing the different approaches to ray tracing, we will
+investigate 2 different ray/triangle intersection algorithms and
 discuss them with respect to the graphics cards memory hierarchy and
 maximizing occupancy.
 
-We will then motivate the use of acceleration structures on the GPU,
-by comparing them to an exhaustive ray tracer, where each ray is
-tested against all triangles.
+The implementation of an exhaustive ray tracer, where each ray is
+tested against all triangles, will then briefly be discussed. In
+\refchapter{chp:results} it will be compared to the hierachical
+version to motivate the continued use of data structures on GPGPU's.
 
-Next I present the hierarchical ray tracer and cover how it traverses
-the kd-tree created in the previous section. Optimizations will be
-added incrementally to the ray tracer and implementation details to
-each specific optimization will therefore be discussed alongside the
-theory. The optimized ray tracer will use techniques from
-\citebook{Aila2009} and \citebook{1230129} along with an optimization
-inspired by empty space splitting.
+Next the hierarchical ray tracer implementes and optimizations are
+presented. This section will cover how to traverse the kd-tree created
+in the previous section. The optimizations will be added incrementally
+to the ray tracer and implementation details to each specific
+optimization will therefore be discussed alongside the theory. The
+optimized ray tracer will use techniques from \citebook{Aila2009} and
+\citebook{1230129} along with an optimization inspired by empty space
+splitting.
 
-Finally I will briefly discuss shading and how reflection and
-refraction is calculated.
+Finally I will briefly discuss shading and how reflections and
+refractions are calculated.
 
 \section{Ray/Triangle Intersection}
 
@@ -52,7 +54,8 @@ The inherent diverging behaviour of each ray makes them hard to
 parallize efficiently on the graphics card, since data access will be
 nearly impossible to coallesce. The solution is to have enough active
 rays to effectively hide data fetching latency. This means that each
-rays register usage must be kept to a minimum.
+rays register usage must be kept to a minimum, in order to have room
+for as many active warps as possible.
 
 Deciding which ray/triangle intersection method to use when ray
 tracing can both lower register usage and yield a significant
@@ -71,20 +74,20 @@ intersection inclussion test is usually performed by calculating the
 intersection points \textit{barycentric coordinates} within the
 triangle.
 
-Every point on a triangle, $T$, with vertices $a$, $b$ and $c$ can be
-described as 
+Every point on a triangle, $T$, with vertices $a$, $b$ and $c$, can be
+described as
 
 \begin{displaymath}
   T(u,v) = (1-u-v)a + ub + vc
 \end{displaymath}
  
-where $(u, v)$ are the barycentric coordinates. For a barycentric
-coordinate to be inside $T$ it must fulfill $0 \le u$, $0 \le v$ and
-$u+v \le 1$.
+where $(u, v)$ are the aforementioned barycentric coordinates. For a
+barycentric coordinate to be inside $T$ it must fulfill $0 \le u$, $0
+\le v$ and $u+v \le 1$.
 
-Barycentric coordinates are also important for linearly interpolating
-vertex attributes, such as normals or colors, across a triangles
-surface.
+Just as barycentric coordinates are used to linearly interpolate the
+vertex positions across the triangle, they are also important for
+interpolating other vertex attributes, such as normals or colors.
 
 The following 2 ray/triangle intersection methods will both compute
 the signed distance and barycentric coordinates for later use when
@@ -97,23 +100,22 @@ shading.
 
 The Möller-Trumbore algorithm presented in \citebook{MollerTrumbore97}
 is one of the most popular algorithms for ray/triangle intersection,
-due probably in no small part to it's appearence in chapter 16.8 in
+probably in no small part due to it's appearence in chapter 16.8 in
 \citebook{RTR3}, but also because it is one of the fastest
 ray/triangle intersection algorithms that does not rely on extra
-memory and/or precomputations. 
+memory and/or precomputations.
 
 % Calculates the transformation that transform the triangle into the
 % unit triangle and applies this transformation to the ray.
 
 The basic idea of their algorithm is to find the affine transformation
-that when applied to the triangle, $T(u,v)$, again given by $T(u,v) =
-(1-u-v)a + ub + vc$, transforms it into the unit triangle, $U$, which
-has vertices $\vecthreeT{0}{0}{0}$, $\vecthreeT{1}{0}{0}$ and
-$\vecthreeT{0}{1}{0}$. That affine transformation is then applied to
-the ray, $R(t) = O + tD$, which yields the vector
-$\vecthreeT{t}{u}{v}$, where $t$ is the distance to the plane spanned
-by $T(u,v)$ and $u$ and $v$ are the barycentric coordinates of the
-intersection point.
+that when applied to the triangle $T(u,v)$, transforms it into the unit
+triangle, $U$, which has vertices $\vecthreeT{0}{0}{0}$,
+$\vecthreeT{1}{0}{0}$ and $\vecthreeT{0}{1}{0}$. That affine
+transformation is then applied to the ray, $R(t) = O + tD$, which
+yields the vector $\vecthreeT{t}{u}{v}$, where $t$ is the distance to
+the plane spanned by $T(u,v)$ and $u$ and $v$ are the barycentric
+coordinates of the intersection point.
 
 In short this boils down to solving the linear system of equations,
 which I will call the \textit{ray/triangle intersection equation}
@@ -142,16 +144,16 @@ and $Q = T \times  E_1$.
 The implementation of this method is pretty straightforward using
 CUDA's vector primitives and can be seen in
 \refalg{alg:moellerTrumbore}. The implementation provided in
-\citebook{MollerTrumbore97} was optimized for CPU and therefore
-provided a lot of early out options as soon as the algorithm detects
-that the ray has missed the plane. Due to SIMT architecture of GPGPUs,
-providing as many early out possibilities as
-\citebook{MollerTrumbore97} causes a branching overhead and reduces
-performance. This is understandable since only one ray needs to
-intersect its triangle in order for the warp to continue testing
-intersection. For the ray tracers in this thesis the sweetspot was
-found to be only providing an early exit after the ray/plane
-intersection.
+\citebook{MollerTrumbore97} was optimized for the CPU and therefore
+provided a lot of early out options as soon as the algorithm detected
+that the ray had missed the plane. Due to the SIMT architecture of
+GPGPUs, providing as many early out possibilities as
+\citebook{MollerTrumbore97} causes a branching overhead and results in
+reduced performance. This is understandable since only one ray needs
+to intersect its triangle in order for the entire warp to perform the
+complete intersection testing. For the ray tracers in this thesis the
+sweetspot was found to be only providing an early exit after the
+ray/plane intersection.
 
 \begin{algorithm}
   \caption{Möller-Trumbore ray/triangle intersection test}
@@ -187,12 +189,12 @@ intersection.
 
 While the Möller-Trumbore ray/triangle intersection approach requires
 minimal storage, it does unfortunatly require quite a lot of
-registers, since it needs to both store the ray information aswell as
+registers, since it needs to both store the ray's parameters aswell as
 the determinant and the matrix $\vecthreeT{Q \cdot E_2}{P \cdot T}{Q
   \cdot D}$. The high register usage can be remedied by performing
 precalulations per triangle as described in Chapter 5 of Sven Woops
-diploma thesis\citebook{woop:04:diplom}. This unfortunatly also means
-a higher storage requirement for a scene.
+diploma thesis\citebook{woop:04:diplom}. The trade-off is a higher per
+triangle storage requirement for the scene.
 
 % Also translates the ray using the unit triangle.
 
@@ -234,7 +236,7 @@ We can then derive $m$ and $n$ from $m'$ and $n'$.
 
 This requires $m'$ to be invertable, which it always is for
 \textit{non-degenerate triangles}\footnote{A degenerate triangles is
-  a triangles that has collapsed into a line.}.
+  a triangles that has collapsed into a line or a point.}.
 
 %% Applying the affine transformation described by $m$ and $n$ to the
 %% ray/triangle intersection equation we get
@@ -278,11 +280,11 @@ where $m_i$ is the i'th row of $m$.
 
 The implementation is strightforward. $m$ and $n$ are computed and
 stored in 4 component vectors as $w_i = \left[m_i, n_i \right]$ prior
-to ray tracing. When the ray tracer performs ray/triangle
-intersection, each $w_i$ vector can then be loaded into register
-memory one vector at a time. Compared to the Möller-Trumbore approach
-this saves 3 registers and yields a sizeable performance increase, as
-can be seen in \reffig{TODO result section figure}.
+to ray tracing. During ray/triangle intersection each $w_i$ vector can
+then be loaded into register memory one vector at a time. Compared to
+the Möller-Trumbore approach this saves 3 registers and yields a
+sizeable performance increase, as can be seen in \reffig{TODO result
+  section figure}. \fixme{TODO result section figure.}
 
 % early out
 
@@ -293,8 +295,8 @@ distance calculation.
 % The extra space used by the precalcultations can be mitigated if
 % the vertices are no longer needed.
 
-Finally, the extra space required for precalculating $m$ and $n$ can
-be mitigated if the triangles vertex positions are overwritten by
+Finally, the extra memory required for precalculating $m$ and $n$ can
+be mitigated if the triangles vertex positions are replaced by
 $m$. This is only possible however, if the vertices are not used
 elsewhere in the ray tracer.
 
@@ -367,7 +369,7 @@ the topic of \refsection{sec:kdRestart} and
 kd-tree can be seen in \refalg{alg:generelTraversal}.
 
 \begin{algorithm}
-  \caption{A general kd-tree traversal algorithm}
+  \caption{A general kd-tree ray tracing algorithm}
   \label{alg:generelTraversal}
   \begin{algorithmic}
     \PROCEDURE{KDTraversal}
@@ -395,14 +397,40 @@ kd-tree can be seen in \refalg{alg:generelTraversal}.
   \end{algorithmic}
 \end{algorithm}
 
+% Traversal method
+\fixme{Hertil!}
 
 
-In \reffig{fig:simpleScene} a simple scene consisting of 4 triangles
-is shown. The corrosponding kd-tree matching the axis aligned
-splitting planes is show in \reffig{fig:simpleTree}. A tree traversal
-of the ray entering the scene in the lower left would look like this:
-Upon entering the scene the ray first visits the root node, $0$. Node
-$0$ splits the scene along the x-axis at position 4 and from 
+\begin{algorithm}
+  \caption{A basic kd-tree traversal algorithm}
+  \label{alg:generelTraversal}
+  \begin{algorithmic}
+    \PROCEDURE{Traversal}
+              {$ray$ : Ray, $tree$ : kd-tree}
+              {$leaf$ : Node, $t_{split}$ : Number}{
+                \ASSIGN{$t_{split}$}{$\infty$}
+                \ASSIGN{$node$}{$tree.root$}
+                \WHILE{$node \neq LEAF$}
+                  \ASSIGN{$t_{node}$}{($node.splitValue - ray.origin[node.axis]) / ray.direction[node.axis]$}
+                  \IF{$0 < t_{split}$}
+                    \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
+                    \ASSIGN{$t_{split}$}{min$(t_{split}, t_{node})$}
+                  \ELSE
+                    \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.right$ : $node.left$}
+                  \ENDIF
+                \ENDWHILE
+              }
+  \end{algorithmic}
+\end{algorithm}
+
+
+
+%% In \reffig{fig:simpleScene} a simple scene consisting of 4 triangles
+%% is shown. The corrosponding kd-tree matching the axis aligned
+%% splitting planes is show in \reffig{fig:simpleTree}. A tree traversal
+%% of the ray entering the scene in the lower left would look like this:
+%% Upon entering the scene the ray first visits the root node, $0$. Node
+%% $0$ splits the scene along the x-axis at position 4 and from 
 
 \begin{figure}
   \centering
