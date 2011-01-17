@@ -522,9 +522,15 @@ traversal process is restarted for $R'(t)$.
 
 % KD restart is the simplest and fastest.
 
-% Start with kd restart, simple to get up and running.
+The approach presented above, where kd-tree traversal is restarted at
+the root node, is known as \textit{KD-restart} and is one of the
+simplest algorithms for ray tracing kd-trees.
 
 % Instead of advancing the ray simply update tMin
+
+The algorithm in it's entirety is presented in
+\refalg{alg:KDRestart}. Instead of advancing the ray by updating it's
+origin, a signed distance, $t_{min}$ is used.
 
 \begin{algorithm}
   \caption{KD Restart}
@@ -563,7 +569,46 @@ traversal process is restarted for $R'(t)$.
 
 \subsection{Short stack}\label{sec:shortStack}
 
+% Kd-Restart traverses many of the same nodes, because 
+
+When a ray triggers a restart in kd-restart, it will almost always
+traverse many of the same tree nodes as it did in its previous
+traversel. The reason for this is that kd-trees will often store
+spatially local nodes as local nodes in the tree. CPU ray tracers
+solve this problem by pushing the not-visited child of an interior
+node onto a stack and then restarting from the first node on that
+stack. This can save a lot of resources otherwise spend on traversing
+the tree, since the ray will now restart much closer to the leaf
+nodes.
+
+The memory model of the GPGPU however isn't flexible enough for this
+approach, which requires either dynamically allocating more memory if
+the stack is filled or pre-allocating a \textit{large enough} stack in
+local memory to handle a given kd-tree, something that could require
+quite large amounts memory for huge scenes and might even require too
+much memory for practical use on todays graphics cards. The solution
+found by \horn{} was to use a \textit{short-stack}, a fixed-size,
+circular stack of $N$ elements and then revert to using kd-restart
+when the stack underflows. In their research they found that a
+short-stack approach only visited 3\% more nodes compared to the
+unlimited stack CPU approach.
+
 % Only push usefull 'forward' nodes to the stack.
+
+Obviously all child nodes can not be pushed onto the stack, as that
+would force the rays to visit the entire kd-tree. Therefore
+restrictions as to which nodes should be considered needs to be
+formulated. The first restriction is not to push nodes behind the ray,
+since they will never contain geometry that the ray will
+intersect. The second restriction is not to push nodes whose splitting
+planes distance is greater than $t_{next}$, as these would never be
+visited in a kd-restart traversal. The reason behind this is that
+intersecting the splitting plane of a higher interior node,
+effectively means the ray will never again enter the current subtree
+from that node and therefore should not store any of the subtrees
+nodes in its short-stack.
+
+% Example
 
 \begin{algorithm}
   \caption{Short stack}
@@ -620,7 +665,7 @@ traversal process is restarted for $R'(t)$.
 % likely to fit into packets.
 
 % I will adobt a pretty cheap packet strategy: I will trace my rays in
-% 4x8 packets to increase ray coherence across warps.
+% 4x8 packets to increase spatial ray coherence across warps.
 
 \subsection{Skipping Leaf Nodes}
 

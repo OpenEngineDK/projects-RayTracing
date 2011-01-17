@@ -135,7 +135,7 @@ Finally, in his phd. dissertation, Vlastimil Havran did an extensive
 study of spatial data structures, including grids, octress and
 kd-trees, and found that the kd-tree performed the best in most cases.
 
-Given all of the above and with the recent paper by \zhou, in which
+Given all of the above and with the recent paper by \zhou{}, in which
 kd-trees are constructed in real-time on graphics hardware, it is easy
 to see why the choice fell on kd-trees as the acceleration structure.
 
@@ -490,7 +490,7 @@ allowing the ray to skip over the triangles above.
 
 Unfortunatly how large a percentage of a node that should be empty
 before empty sapce splitting can cut it away is highly scene specific,
-making this optimization less usefull in the general case. Like \zhou
+making this optimization less usefull in the general case. Like \zhou{}
 I have found that it performing an empty space split is optimal when a
 bounding box is more than 25\% empty along one of the axes.
 
@@ -605,7 +605,7 @@ themselves are not tested for inclusion, but their bounding boxes are.
                    \STATE{Reduce the individual segments.}
                  \ENDFOR
                  \STATE{Using segmented reduction as described in
-                   \zhou, reduce each nodes bounding box. Perform 
+                   \zhou{}, reduce each nodes bounding box. Perform 
                    median splitting on the nodes.}
 
                  \STATE{}
@@ -662,7 +662,7 @@ themselves are not tested for inclusion, but their bounding boxes are.
 % Explain that splitSide has the convention adopted in prefix-sum
 % section where left is 0 and right 1.
 
-Instead of reducing the sizes of child nodes, as done in \zhou I
+Instead of reducing the sizes of child nodes, as done in \zhou{} I
 propose a method for calculating them directly. This leads to lots
 of uncoalesced lookups, so argue if the GPU is able to properly hide
 these.
