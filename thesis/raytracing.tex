@@ -436,14 +436,22 @@ beyond a visited leaf node if it did not intersect any primitives.
   \end{algorithmic}
 \end{algorithm}
 
+In \reffig{fig:simpleScene} a simple scene consisting of 4 triangles
+is shown. The corrosponding kd-tree matching the axis aligned
+splitting planes is show in \reffig{fig:simpleTree}. A tree traversal
+of the ray, $R(t) = t \vectwoT{2}{1} + \vectwoT{0}{1}$, entering the
+scene in the lower left would look like this: Upon entering the scene
+the ray first visits the root node, 0. Node 0 splits the scene along
+the x-axis at position 4 and the rays distance to that plane is then
+$(4 - 0) / 2 = 2$. The ray therefore proceeds to the childnode $2 > 0
+? 1 : 2 = 1$. The signed distance to node 1's splitting plane is $(4 -
+1) / 1 = 3$ and the ray proceeds to node $1 > 0 ? 3 : 2 = 3$, where it
+finds no primitives to intersect. The ray is then advance by the
+minimum splitting distance, which was 2, and becomes $R'(t) = R(t) + 2
+\vectwoT{2}{1} = t \vectwoT{2}{1} + \vectwoT{4}{3}$. Since the ray did
+not intersect any geometry and has not advanced beyond the scene, the
+traversal process is restarted for $R'(t)$.
 
-
-%% In \reffig{fig:simpleScene} a simple scene consisting of 4 triangles
-%% is shown. The corrosponding kd-tree matching the axis aligned
-%% splitting planes is show in \reffig{fig:simpleTree}. A tree traversal
-%% of the ray entering the scene in the lower left would look like this:
-%% Upon entering the scene the ray first visits the root node, $0$. Node
-%% $0$ splits the scene along the x-axis at position 4 and from 
 
 \begin{figure}
   \centering
@@ -468,7 +476,7 @@ beyond a visited leaf node if it did not intersect any primitives.
       \draw (4,2) -- (8,2);
 
       % Ray
-      \drawRay{0,0}{2,1.5}
+      \drawRay{0,1}{2,2}
 
       %axes
       \draw[->] (0,0) -- coordinate (x axis mid) (9,0);
@@ -515,6 +523,8 @@ beyond a visited leaf node if it did not intersect any primitives.
 % KD restart is the simplest and fastest.
 
 % Start with kd restart, simple to get up and running.
+
+% Instead of advancing the ray simply update tMin
 
 \begin{algorithm}
   \caption{KD Restart}
