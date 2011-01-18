@@ -438,7 +438,7 @@ beyond a visited leaf node if it did not intersect any primitives.
 
 In \reffig{fig:simpleScene} a simple scene consisting of 4 triangles
 is shown. The corrosponding kd-tree matching the axis aligned
-splitting planes is show in \reffig{fig:simpleTree}. A tree traversal
+splitting planes is shown in \reffig{fig:simpleTree}. A tree traversal
 of the ray, $R(t) = t \vectwoT{2}{1} + \vectwoT{0}{1}$, entering the
 scene in the lower left would look like this: Upon entering the scene
 the ray first visits the root node, 0. Node 0 splits the scene along
@@ -496,9 +496,7 @@ traversal process is restarted for $R'(t)$.
     about which axis have been divided and where. Leaf nodes contain a
     set of the triangles they overlap.]{
     \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
-        level/.style={sibling distance=40mm/#1},
-        node/.style={circle, fill=white, draw, drop shadow},
-        leaf/.style={rectangle, rounded corners=1mm, fill=white, draw, drop shadow}]
+        level/.style={sibling distance=40mm/#1}]
       \node [node] (0){$\begin{array}{c}0\\x:4\end{array}$}
         child {node [node] (1) {$\begin{array}{c}1\\y:4\end{array}$}
           child {node [leaf] (e) {$\begin{array}{c}3\\\emptyset\end{array}$}}
@@ -515,6 +513,7 @@ traversal process is restarted for $R'(t)$.
     \label{fig:simpleTree}
   }
   \caption{}
+  \label{fig:simpleSceneTree}
 \end{figure}
 
 
@@ -584,12 +583,12 @@ nodes.
 The memory model of the GPGPU however isn't flexible enough for this
 approach, which requires either dynamically allocating more memory if
 the stack is filled or pre-allocating a \textit{large enough} stack in
-local memory to handle a given kd-tree, something that could require
+local memory to handle any given kd-tree, something that could require
 quite large amounts memory for huge scenes and might even require too
 much memory for practical use on todays graphics cards. The solution
 found by \horn{} was to use a \textit{short-stack}, a fixed-size,
-circular stack of $N$ elements and then revert to using kd-restart
-when the stack underflows. In their research they found that a
+circular stack of $N$ elements, and then revert to using kd-restart
+if the stack underflows. In their research they found that a
 short-stack approach only visited 3\% more nodes compared to the
 unlimited stack CPU approach.
 
@@ -599,16 +598,15 @@ Obviously all child nodes can not be pushed onto the stack, as that
 would force the rays to visit the entire kd-tree. Therefore
 restrictions as to which nodes should be considered needs to be
 formulated. The first restriction is not to push nodes behind the ray,
-since they will never contain geometry that the ray will
-intersect. The second restriction is not to push nodes whose splitting
-planes distance is greater than $t_{next}$, as these would never be
-visited in a kd-restart traversal. The reason behind this is that
-intersecting the splitting plane of a higher interior node,
-effectively means the ray will never again enter the current subtree
-from that node and therefore should not store any of the subtrees
-nodes in its short-stack.
-
-% Example
+since the ray can never intersect them. The second restriction is not
+to push nodes whose splitting planes distance is greater than
+$t_{next}$, as these would never be visited in a kd-restart
+traversal. The reasoning behind this is that if a ray advances beyond
+the splitting plane of a higher interior node, it effectively means
+the ray should never visit that nodes nearest subtree again and
+therefore no nodes from that subtree should be stored in the
+short-stack. The changes made to kd-restart to facilitate a
+short-stack is marked in green in \refalg{alg:ShortStack}.
 
 \begin{algorithm}
   \caption{Short stack}
@@ -642,7 +640,7 @@ nodes in its short-stack.
       \ASSIGN{$t_{min}$}{$t_{next}$}
       \COMMENTIT{Test intersection with the leafs primitives}
       \FOREACH{$triangle$}{$node.triangles$}
-        \ASSIGN{$t_{min}$}{min$(t_{min}, $\bf{Intersect}$(triangle, ray))$}
+        \ASSIGN{$t_{min}$}{\MIN{$(t_{min}}{$\bf{Intersect}$(triangle, ray))$}}
       \ENDFOR
       \IF{$t_{min} < t_{next}$}
         \STATE{\textbf{break}}
@@ -651,6 +649,98 @@ nodes in its short-stack.
               }
   \end{algorithmic}
 \end{algorithm}
+
+% Example
+
+Let us look at a simple example of how the short-stack will speedup
+traversal. Using \reffig{fig:simpleSceneTree} as our scene again, we
+saw previously that the ray, $R(t) = t \vectwoT{2}{1} +
+\vectwoT{0}{1}$, will traverse nodes 0, 1, and 3. At node 0 the
+distance to the splitting plane was 2, meaning the splitting plane is
+in front and the not traversed child should be pushed to the
+short-stack. At node 1 the distance was 3, so the ray intersects node
+1's splitting plane after node 0's. Node 1's other child therefore
+doesn't need to be pushed to the stack. The result of the first
+traversal can be seen on \reffig{fig:shortStack1}.
+
+So far the short-stack traversal and kd-restart traversal have both
+choosen the exact same path through the tree. But kd-restart would
+have had to restart from the root node, the short-stack allows the ray
+to start the second traversal from node 2 and proceed to leaf 5 where
+the ray intersects triangle 2. 
+
+In this simple example having a short-stack only allows the ray to
+skip one node at the cost of maintaining and using a short-stack,
+which will cause a significant overhead. Consequently in this small
+example a short-stack will probably not provide any speedup. But
+imagine this simple tree as a subtree in a much larger scene, perhaps
+with 10 levels of nodes above it, then a short-stack implementation
+allows the ray to skip those first 11 nodes, which can yield quite a
+performance improvement.
+
+\begin{figure}
+  \centering
+
+  \subfloat[The short stack algorithm's first traversal of the scene
+    from \reffig{fig:simpleSceneTree}. When the ray traversed node 0
+    it pushed  node 2 onto the short-stack.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
+        level/.style={sibling distance=40mm/#1}]
+      \node [visitedNode] (0){$\begin{array}{c}0\\x:4\end{array}$}
+        child {node [visitedNode] (1) {$\begin{array}{c}1\\y:4\end{array}$}
+          child {node [visitedLeaf] (e) {$\begin{array}{c}3\\\emptyset\end{array}$}}
+          child {node [node] (3) {$\begin{array}{c}4\\x:2\end{array}$}            
+            child {node [leaf] (e) {$\begin{array}{c}7\\\{0\}\end{array}$}}
+            child {node [leaf] (e) {$\begin{array}{c}8\\\{1\}\end{array}$}}
+          }
+        }
+        child {node [node] (2) {$\begin{array}{c}2\\y:2\end{array}$}
+            child {node [leaf] (e) {$\begin{array}{c}5\\\{2\}\end{array}$}}
+            child {node [leaf] (e) {$\begin{array}{c}6\\\{3\}\end{array}$}}
+        };
+                        
+      % Short stack
+      \draw (10,-4.5) -- (10,-7.5) -- (12,-7.5) -- (12,-4.5) -- (10,-4.5);
+      \draw (10, -6.5) -- (12, -6.5);
+      \draw (10, -5.5) -- (12, -5.5);
+      \draw (11, -7) node{2};
+      \draw (11, -6) node{-};
+      \draw (11, -5) node{-};
+    \end{tikzpicture}
+    \label{fig:shortStack1}
+  }
+  \\
+  \subfloat[The short stack algorithm's second traversal of the scene
+    from \reffig{fig:simpleSceneTree}. Traversal starts from the first
+    node on the stack, which is 2.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
+        level/.style={sibling distance=40mm/#1}]
+      \node [node] (0){$\begin{array}{c}0\\x:4\end{array}$}
+        child {node [node] (1) {$\begin{array}{c}1\\y:4\end{array}$}
+          child {node [leaf] (e) {$\begin{array}{c}3\\\emptyset\end{array}$}}
+          child {node [node] (3) {$\begin{array}{c}4\\x:2\end{array}$}            
+            child {node [leaf] (e) {$\begin{array}{c}7\\\{0\}\end{array}$}}
+            child {node [leaf] (e) {$\begin{array}{c}8\\\{1\}\end{array}$}}
+          }
+        }
+        child {node [visitedNode] (2) {$\begin{array}{c}2\\y:2\end{array}$}
+            child {node [visitedLeaf] (e) {$\begin{array}{c}5\\\{2\}\end{array}$}}
+            child {node [leaf] (e) {$\begin{array}{c}6\\\{3\}\end{array}$}}
+        };
+                        
+      % Short stack
+      \draw (10,-4.5) -- (10,-7.5) -- (12,-7.5) -- (12,-4.5) -- (10,-4.5);
+      \draw (10, -6.5) -- (12, -6.5);
+      \draw (10, -5.5) -- (12, -5.5);
+      \draw (11, -7) node{-};
+      \draw (11, -6) node{-};
+      \draw (11, -5) node{-};
+    \end{tikzpicture}
+    \label{fig:shortStack2}
+  }
+  \caption{}
+\end{figure}
+
 
 \subsection{Packets}
 
@@ -672,6 +762,10 @@ nodes in its short-stack.
 % Inspired by empty space splitting.
 
 % Combines BVH and KD tree
+
+% Is not a generel kd-tree optimization. Only works because we already
+% have the bounding boxes from the tree creation phase and won't
+% deallocate the space.
 
 %% \subsection{Push Down}
 

@@ -1,4 +1,5 @@
 once:
+	mkdir -p build
 	max_print_line=12000000	pdflatex -halt-on-error -output-directory=build master.tex
 
 all:

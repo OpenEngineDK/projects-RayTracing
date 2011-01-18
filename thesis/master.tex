@@ -64,6 +64,12 @@
 }
 
 %Tikz macroes
+\tikzset{
+  node/.style={circle, fill=white, draw, drop shadow},
+  visitedNode/.style={circle, fill=green!40, draw, drop shadow},
+  leaf/.style={rectangle, rounded corners=1mm, fill=white, draw, drop shadow},
+  visitedLeaf/.style={rectangle, rounded corners=1mm, fill=green!40, draw, drop shadow}
+}
 \newcommand{\drawTri}[3]{
   \draw[fill=lightgray, drop shadow] (#1) -- (#2) -- (#3) -- (#1);
 }
