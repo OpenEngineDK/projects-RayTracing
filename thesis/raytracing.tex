@@ -481,8 +481,8 @@ traversal process is restarted for $R'(t)$.
       %axes
       \draw[->] (0,0) -- coordinate (x axis mid) (9,0);
       \draw[->] (0,0) -- coordinate (y axis mid) (0,7);
-    	%ticks
-    	\foreach \x in {0,2,...,9}
+      %ticks
+      \foreach \x in {0,2,...,9}
      		\draw (\x,1pt) -- (\x,-3pt)
 			node[anchor=north] {\x};
     	\foreach \y in {0,2,...,7}
@@ -750,12 +750,94 @@ performance improvement.
 % yield a speedup and did not provide any results. Aila2009 is against
 % packets as they in practice seem to make it slower.
 
+Using some form of \textit{packets} to accelerate ray tracing is quite
+a standard technique. Packets where introduced to CPU ray tracers by
+Wald et al.\citebook{Wald:2001:IRCRT}, who utilized
+\textit{SIMD}\footnote{Single instruction, multiple data.}
+instructions to trace four rays at a time. \horn{} extended the
+short-stack approach with packet tracing, where individual threads
+would trace multiple rays at a time to amortize the cost of traversing
+the tree. Unfortunatly tracing several rays in one thread increases
+thread incoherence across warps and \aila{} concludes that
+
+\quotebook{It is worth noticing that while-while is faster than packet
+  traversal in all cases, and with diffuse rays the difference is
+  approximately 2X.}{Aila2009}
+
 % As ray tracing becomes more complex packets also become less
 % effective, as rays will become more chaotic in nature and less
 % likely to fit into packets.
 
 % I will adobt a pretty cheap packet strategy: I will trace my rays in
-% 4x8 packets to increase spatial ray coherence across warps.
+% 4x8 packets to increase (spatial) ray coherence across warps.
+
+While \horn's approach to packet tracing might not have yielded the
+intended increase in performance, the warp constructions likeness to
+SIMD means that the GPGPU is actually performing packet tracing.
+Instead of 4 rays per instruction, as is the case with SIMD, a warp
+will trace rays in packets of 32 at a time on current hardware.
+
+Since the rays are stored in a linear array, performing a
+\textit{sequantial ray/warp tracing} results in the ray/warps
+classification seen in \reffig{fig:sequentialRayWarp} for a 64x48
+resolution. As seen on the figure a large number of warps are
+intersecting the detailed dragon geometry, causing the threads od rays
+in the same warp that intersects the simple box to idle.
+
+Instead I propose to take advantage of the spatial coherence between
+neighbouring rays and structure them in warpsized screenspace packets
+as done in \reffig{fig:coherentRayWarp}. As the figure demonstrates
+not only does fewer warps ray trace the detailed dragon, but the
+spatial coherence between the rays in a warp causes more warps to ray
+trace only spatially local geometry.
+
+\begin{figure}
+  \subfloat[Sequential ray/warp tracing. Notice how almost all of the
+    warps overlap both the dragon and box.]{
+    \begin{tikzpicture}[y=0.45cm, x=.45cm,font=\sffamily]
+      \node {\includegraphics[width=7.2cm, height=5.4cm]{RefractionDragon}};
+      \foreach \x in {-8,0,...,8} \draw (\x,-6) -- (\x, 6);
+      \foreach \y in {-6,-5.75,...,6} \draw (-8,\y) -- (8, \y);
+    \end{tikzpicture}
+    \label{fig:sequentialRayWarp}
+  }
+  \hspace{20pt}
+  \subfloat[Spatially coherent ray/warp tracing. Fewer warps will now
+    ray trace the dragon and the spatial coherence between rays
+    results in entire warps raytracing the same side of the box.]{
+    \begin{tikzpicture}[y=0.45cm, x=.45cm,font=\sffamily]
+      \node {\includegraphics[width=7.2cm, height=5.4cm]{RefractionDragon}};
+      \foreach \x in {-8,-7,...,8} \draw (\x,-6) -- (\x, 6);
+      \foreach \y in {-6,-4,...,6} \draw (-8,\y) -- (8, \y);
+    \end{tikzpicture}
+    \label{fig:coherentRayWarp}
+  }
+  \caption{}
+\end{figure}
+
+The calculations needed to transform sequential thread ids into
+packeted ray ids are quite simple, \refalg{alg:packet}, but the
+performance benefits of coherent rays and data fetching are enourmous.
+
+\begin{algorithm}
+  \caption{Converting a thread id to a ray id.}
+  \label{alg:packet}
+  \begin{algorithmic}
+    \PROCEDURE{PacketID}
+              {$thread$ : id}
+              {$ray$ : id}
+              {\ASSIGN{$p$}{$thread / (p_{width} * p_{height})$}
+                \ASSIGN{$grid_x$}{$p \mod  (image_{width} / p_{width})$}
+                \ASSIGN{$grid_y$}{$p / (image_{width} / p_{width})$}
+                \ASSIGN{$p_x$}{$threads \mod  p_{width}$}
+                \ASSIGN{$p_y$}{$(threads \mod (p_{width} * p_{height})) / p_{width}$}
+                \ASSIGN{$ray_x$}{$grid_x * p_{width} + p_x$}
+                \ASSIGN{$ray_y$}{$grid_y * p_{height} + p_y$}
+                \ASSIGN{$ray$}{$ray_x + ray_y * screen_{width}$}
+              }
+  \end{algorithmic}
+\end{algorithm}
+
 
 \subsection{Skipping Leaf Nodes}
 
