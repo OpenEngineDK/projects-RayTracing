@@ -841,13 +841,59 @@ performance benefits of coherent rays and data fetching are enourmous.
 
 \subsection{Skipping Leaf Nodes}
 
-% Inspired by empty space splitting.
+% Inspired by empty space splitting and combines BVH and KD tree
 
-% Combines BVH and KD tree
+The final ray tracer optimization presented in this thesis is inspired
+by the early out option provided by empty space splitting and combines
+the kd-tree with the bvh-tree.
+
+Since in a kd-tree the only information available to the ray is the
+position of the splitting plane and not the bounding volume of the
+node, the ray can easily get sidetracked and end up in leaf nodes,
+whose bounding box it does not even intersect. \reffig{fig:waywardRay}
+is an example of this.
+
+\begin{figure}
+  \centering
+  \subfloat[hat]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm]
+      \drawNode{0,0}{6,0}{6,6}{0,6}      
+
+      %Splits
+      \draw (0,3) -- (6,3);
+      
+      % Leaf names
+      \draw (3,1.5) node[leaf]{1};
+      \draw (3,4.5) node[leaf]{2};
+
+      \axes{7}{7}
+
+      \drawRay{-4,0}{-3,1}
+      \draw[line width=2pt, dashed, ->, color=gray] (-3,1) -- (0,4);
+    \end{tikzpicture}
+    \label{fig:waywardScene}
+  }
+  \subfloat[hut]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
+        level/.style={sibling distance=25mm/#1}]
+      \node [visitedNode] (0){$y:3$}
+        child {node [visitedLeaf] (1) {1}}
+        child {node [leaf] (2) {2}}
+        ;
+    \end{tikzpicture}
+    \label{fig:waywardTree}
+  }
+  \caption{}
+  \label{fig:waywardRay}
+\end{figure}
 
 % Is not a generel kd-tree optimization. Only works because we already
 % have the bounding boxes from the tree creation phase and won't
 % deallocate the space.
+
+
+
+
 
 %% \subsection{Push Down}
 
