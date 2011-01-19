@@ -522,8 +522,11 @@ traversal process is restarted for $R'(t)$.
 % KD restart is the simplest and fastest.
 
 The approach presented above, where kd-tree traversal is restarted at
-the root node, is known as \textit{KD-restart} and is one of the
-simplest algorithms for ray tracing kd-trees.
+the root node, is known as \textit{kd-restart} and is one of the
+simplest algorithms for ray tracing kd-trees. The reason for the name
+is that if a ray does not intersect any triangles in the current leaf
+node, then it advances past that leaf node and restarts traversal from
+the root of the tree.
 
 % Instead of advancing the ray simply update tMin
 
@@ -817,7 +820,7 @@ trace only spatially local geometry.
 
 The calculations needed to transform sequential thread ids into
 packeted ray ids are quite simple, \refalg{alg:packet}, but the
-performance benefits of coherent rays and data fetching are enourmous.
+performance benefits of coherent rays and data fetches are enourmous.
 
 \begin{algorithm}
   \caption{Converting a thread id to a ray id.}
@@ -845,13 +848,33 @@ performance benefits of coherent rays and data fetching are enourmous.
 
 The final ray tracer optimization presented in this thesis is inspired
 by the early out option provided by empty space splitting and combines
-the kd-tree with the bvh-tree.
+the simple traversal of kd-trees with the bvh-tree's rigorous
+intersection checks.
 
 Since in a kd-tree the only information available to the ray is the
 position of the splitting plane and not the bounding volume of the
 node, the ray can easily get sidetracked and end up in leaf nodes,
 whose bounding box it does not even intersect. \reffig{fig:waywardRay}
-is an example of this.
+is a simple example of this. Extending the ray, $R(t) = t
+\vectwoT{1}{1} + \vectwoT{-4}{0}$, we can clearly see that it will
+intersect leaf node 2. Unfortunatly, when using kd-trees, the only
+information available to the ray is that the node is split along the
+y-axis at position 3, which means it needs to check everything below
+$y=3$ for intersection. 
+
+Empty space splitting has shown us that providing an early out option
+for rays that would otherwise get sidetracked can increase performance
+substantially and that also applies to this case. Since the leafs
+bounding box is known from the tree creation phase, it can be used to
+quickly skip false leaf nodes and save a ray lots of triangle
+intersection testing.
+
+This optimization is not possible with the kd-tree alone and will thus
+not be a solution to static geometry, where the kd-tree is only
+calculated once and superfluous information is disgarded, such as the
+bounding box and parent node. Another solution to this problem will
+quickly be discussed in the Future Work chapter,
+\refchapter{chp:future}.
 
 \begin{figure}
   \centering
