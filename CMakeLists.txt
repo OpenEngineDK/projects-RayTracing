@@ -6,6 +6,7 @@ SET( PROJECT_NAME "PhotonMapping")
 SET( PROJECT_SOURCES
   # Add all the cpp source files here
   main.cpp
+  Handlers.cpp
 )
 
 # Project executable
@@ -29,4 +30,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
   Extensions_AssimpResource
   Extensions_FreeImage
   Extensions_MeshUtils
+  Extensions_AntTweakBar
+  Extensions_Inspection
+  Extensions_InspectionBar
 )

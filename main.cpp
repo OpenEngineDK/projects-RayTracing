@@ -47,6 +47,13 @@
 
 #include <Utils/CUDA/Utils.h>
 
+// Ant tweak bar
+#include "Handlers.h"
+#include <Display/AntTweakBar.h>
+#include <Utils/IInspector.h>
+#include <Utils/InspectionBar.h>
+
+
 // name spaces that we will be using.
 // this combined with the above imports is almost the same as
 // fx. import OpenEngine.Logging.*; in Java.
@@ -86,7 +93,7 @@ ISceneNode* CreateDragon() {
     IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
     //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
     duckRes->Load();
-    MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0);
+    MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0)->GetNode(0);
 
     GeometrySetPtr dragonGeom = dragon->GetMesh()->GetGeometrySet();
     IDataBlockPtr color = dragonGeom->GetDataBlock("color");
@@ -133,6 +140,8 @@ ISceneNode* CreateSibenik() {
 }
 
 
+TransformationNode* geomTrans;
+
 ISceneNode* SetupScene(){
 
     RenderStateNode* rsNode = new RenderStateNode();
@@ -175,14 +184,26 @@ ISceneNode* SetupScene(){
     */
 
     // Dragon
-    TransformationNode* dragonTrans = new TransformationNode();
-    dragonTrans->SetScale(Vector<3, float>(40, 40, 40));
-    dragonTrans->SetPosition(Vector<3, float>(0, -7, 0));
-    rsNode->AddNode(dragonTrans);
+    geomTrans = new TransformationNode();
+    geomTrans->SetScale(Vector<3, float>(40, 40, 40));
+    geomTrans->SetPosition(Vector<3, float>(0, -7, 0));
+    rsNode->AddNode(geomTrans);
     ISceneNode* dragon = CreateDragon();
-    dragonTrans->AddNode(dragon);
+    geomTrans->AddNode(dragon);
 
     return rsNode;
+}
+
+// Setup ant tweak bar
+AntTweakBar* SetupAntTweakBar(PhotonRenderingView* rv, IRenderer* renderer,
+                      IKeyboard* keyboard, IMouse* mouse){
+    AntTweakBar* atb = new AntTweakBar();
+    keyboard->KeyEvent().Attach(*atb);
+    mouse->MouseMovedEvent().Attach(*atb);
+    mouse->MouseButtonEvent().Attach(*atb);
+    atb->AttachTo(*renderer);
+    new RayInspectionBar(atb, rv, renderer, geomTrans);
+    return atb;
 }
 
 /**
@@ -244,15 +265,18 @@ int main(int argc, char** argv) {
     QuitHandler* quit_h = new QuitHandler(*engine);
     env->GetKeyboard()->KeyEvent().Attach(*quit_h);
 
+    AntTweakBar* atb = SetupAntTweakBar(renderingview, renderer, 
+                                        env->GetKeyboard(), env->GetMouse());
+
     BetterMoveHandler *move = new BetterMoveHandler(*camera,
                                                     *(env->GetMouse()),
                                                     true);
 
     engine->InitializeEvent().Attach(*move);
     engine->ProcessEvent().Attach(*move);
-    env->GetKeyboard()->KeyEvent().Attach(*move);
-    env->GetMouse()->MouseButtonEvent().Attach(*move);
-    env->GetMouse()->MouseMovedEvent().Attach(*move);
+    atb->KeyEvent().Attach(*move);
+    atb->MouseButtonEvent().Attach(*move);
+    atb->MouseMovedEvent().Attach(*move);
 
     // Start the engine.
     engine->Start();
