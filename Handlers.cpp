@@ -16,6 +16,7 @@
 #include <Utils/IInspector.h>
 #include <Utils/InspectionBar.h>
 #include <Utils/CUDA/IRayTracer.h>
+#include <Utils/CUDA/TriangleMap.h>
 
 #include <Logging/Logger.h>
 
@@ -67,6 +68,7 @@ namespace OpenEngine {
             (*geomTrans, &TransformationNode::GetPosition,
              &TransformationNode::SetPosition);
         posGeom->name = "Position geometry";
+        posGeom->properties[STEP] = Vector<3,float>(0.1f);
         values.push_back(posGeom);
         
         RWValueCall<TransformationNode, Quaternion<float> > *rotateGeom
@@ -84,5 +86,17 @@ namespace OpenEngine {
         values.push_back(updateGeom);
 
         atb->AddBar(new InspectionBar("Ray Tracing", values));
+    }
+
+
+    HostTraceListener::HostTraceListener(Renderers::OpenGL::PhotonRenderingView* rv)
+        : rv(rv) {}
+
+    void HostTraceListener::Handle(Devices::MouseButtonEventArg arg){
+        if (arg.button == BUTTON_RIGHT && arg.type == EVENT_PRESS){
+            //logger.info << "(" << arg.state.x << ", " << arg.state.y << ")" << logger.end;
+            rv->GetRayTracer()->HostTrace(arg.state.x, arg.state.y, 
+                                          rv->GetTriangleMap()->GetNodes());
+        }
     }
 }

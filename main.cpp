@@ -268,6 +268,9 @@ int main(int argc, char** argv) {
     AntTweakBar* atb = SetupAntTweakBar(renderingview, renderer, 
                                         env->GetKeyboard(), env->GetMouse());
 
+    HostTraceListener* tracer = new HostTraceListener(renderingview);
+    atb->MouseButtonEvent().Attach(*tracer);
+    
     BetterMoveHandler *move = new BetterMoveHandler(*camera,
                                                     *(env->GetMouse()),
                                                     true);

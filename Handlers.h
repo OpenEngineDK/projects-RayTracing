@@ -11,22 +11,16 @@
 #include <Renderers/IRenderer.h>
 
 namespace OpenEngine {
-    namespace Display {
-        class AntTweakBar;
-    }
+    namespace Devices { class MouseButtonEventArg; }
+    namespace Display { class AntTweakBar; }
     namespace Renderers{
-        namespace OpenGL{
-            class PhotonRenderingView;
-        }
+        namespace OpenGL{ class PhotonRenderingView; }
     }
-    namespace Scene {
-        class TransformationNode;
-    }
-    namespace Utils {
-        class InspectionBar;
-    }
+    namespace Scene { class TransformationNode; }
+    namespace Utils { class InspectionBar; }
     
     class RayInspectionBar : public Core::IListener<Renderers::RenderingEventArg>{
+    private:
         class RVRayTracer;
         
         Display::AntTweakBar* atb;
@@ -43,5 +37,13 @@ namespace OpenEngine {
 
         void Handle(Renderers::RenderingEventArg);
     };
-    
+
+    class HostTraceListener : public Core::IListener<Devices::MouseButtonEventArg> {
+    private:
+        Renderers::OpenGL::PhotonRenderingView* rv;
+    public:
+        HostTraceListener(Renderers::OpenGL::PhotonRenderingView* rv);
+
+        void Handle(Devices::MouseButtonEventArg arg);
+    };
 }
