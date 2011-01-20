@@ -85,6 +85,13 @@ namespace OpenEngine {
         updateGeom->name = "Update geometry";
         values.push_back(updateGeom);
 
+        TriangleMap* map = rv->GetTriangleMap();
+        ActionValueCall<TriangleMap> *printTree
+            = new ActionValueCall<TriangleMap>
+            (*map, &TriangleMap::PrintTree);
+        printTree->name = "Print kd-tree";
+        values.push_back(printTree);
+
         atb->AddBar(new InspectionBar("Ray Tracing", values));
     }
 

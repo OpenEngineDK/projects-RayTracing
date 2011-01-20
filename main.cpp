@@ -84,14 +84,14 @@ ISceneNode* CreateCornellBox() {
 }
 
 ISceneNode* CreateSmallBox() {
-    MeshPtr box = MeshCreator::CreateCube(3, 1, Vector<3,float>(1.0f, 1.0f, 1.0f));
+    MeshPtr box = MeshCreator::CreateCube(3, 2, Vector<3,float>(1.0f, 1.0f, 1.0f));
 
     return new MeshNode(box);
 }
 
 ISceneNode* CreateDragon() {
-    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
-    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
+    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
+    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
     duckRes->Load();
     MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0)->GetNode(0);
 
@@ -140,7 +140,7 @@ ISceneNode* CreateSibenik() {
 }
 
 
-TransformationNode* geomTrans;
+TransformationNode *geomTrans = new TransformationNode();
 
 ISceneNode* SetupScene(){
 
@@ -166,13 +166,16 @@ ISceneNode* SetupScene(){
     //ISceneNode* cornellBox = CreateSibenik();
     rsNode->AddNode(cornellBox);
 
-    /*
     ISceneNode* box = CreateSmallBox();
     TransformationNode* smallTrans = new TransformationNode();
+    // x:0.45, y:-0.14, z:-0.12, s:0.87
     smallTrans->SetRotation(Quaternion<float>(0.0f, -Math::PI/8.0f, 0.0f));
+    //smallTrans->SetRotation(Quaternion<float>(0.87f, 0.45, -0.14, -0.12));
     smallTrans->Move(2.0f, -3.48f, 1.0);
     rsNode->AddNode(smallTrans);
     smallTrans->AddNode(box);
+
+    geomTrans = smallTrans;
 
     ISceneNode* bigBox = CreateSmallBox();
     TransformationNode* bigTrans = new TransformationNode();
@@ -181,16 +184,15 @@ ISceneNode* SetupScene(){
     bigTrans->SetScale(Vector<3, float>(1.0f, 2.0f, 1.0f));
     rsNode->AddNode(bigTrans);
     bigTrans->AddNode(bigBox);
-    */
 
+    /*
     // Dragon
-    geomTrans = new TransformationNode();
     geomTrans->SetScale(Vector<3, float>(40, 40, 40));
     geomTrans->SetPosition(Vector<3, float>(0, -7, 0));
     rsNode->AddNode(geomTrans);
     ISceneNode* dragon = CreateDragon();
     geomTrans->AddNode(dragon);
-
+    */
     return rsNode;
 }
 
@@ -274,6 +276,7 @@ int main(int argc, char** argv) {
     BetterMoveHandler *move = new BetterMoveHandler(*camera,
                                                     *(env->GetMouse()),
                                                     true);
+    move->SetMoveScale(0.00001);
 
     engine->InitializeEvent().Attach(*move);
     engine->ProcessEvent().Attach(*move);
