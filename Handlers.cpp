@@ -33,8 +33,12 @@ namespace OpenEngine {
         
         void SetVisualizeRays(bool v) {rv->GetRayTracer()->SetVisualizeRays(v);}
         bool GetVisualizeRays() { return rv->GetRayTracer()->GetVisualizeRays(); }
+        void SetIntersectionAlgorithm(IRayTracer::IntersectionAlgorithm a) { rv->GetRayTracer()->SetIntersectionAlgorithm(a);}
+        IRayTracer::IntersectionAlgorithm GetIntersectionAlgorithm() { return rv->GetRayTracer()->GetIntersectionAlgorithm(); }
         void SetLeafSkipping(bool s) { rv->GetRayTracer()->SetLeafSkipping(s); }
         bool GetLeafSkipping() { return rv->GetRayTracer()->GetLeafSkipping(); }
+        void PrintTiming(bool p) { rv->GetRayTracer()->PrintTiming(p);}
+        bool GetPrintTiming() { return rv->GetRayTracer()->GetPrintTiming(); }
     };
 
     RayInspectionBar::RayInspectionBar(AntTweakBar* atb, 
@@ -49,12 +53,25 @@ namespace OpenEngine {
     void RayInspectionBar::Handle(RenderingEventArg) {
         ValueList values;
         
-        RWValueCall<PhotonRenderingView, string> *traceName
-            = new RWValueCall<PhotonRenderingView, string>
-            (*rv, &PhotonRenderingView::GetRayTracerName,
-             &PhotonRenderingView::SetRayTracerName);
-        traceName->name = "Ray tracer name";
-        values.push_back(traceName);
+        EnumRWValueCall<PhotonRenderingView, PhotonRenderingView::RayTracerType> *traceType
+            = new EnumRWValueCall<PhotonRenderingView, PhotonRenderingView::RayTracerType>
+            (*rv, &PhotonRenderingView::GetRayTracerType,
+             &PhotonRenderingView::SetRayTracerType, "RayTracerType");
+        traceType->name = "Ray tracer type";
+        traceType->AddEnum("Exhaustive", PhotonRenderingView::EXHAUSTIVE);
+        traceType->AddEnum("kd-restart", PhotonRenderingView::KD_RESTART);
+        traceType->AddEnum("Short stack", PhotonRenderingView::SHORTSTACK);
+        values.push_back(traceType);
+        
+
+        EnumRWValueCall<RVRayTracer, IRayTracer::IntersectionAlgorithm> *intsect
+            = new EnumRWValueCall<RVRayTracer, IRayTracer::IntersectionAlgorithm>
+            (*ray, &RVRayTracer::GetIntersectionAlgorithm,
+             &RVRayTracer::SetIntersectionAlgorithm, "IntSectAlg");
+        intsect->name = "Intersection Alg";
+        intsect->AddEnum("Woop", IRayTracer::WOOP);
+        intsect->AddEnum("Moeller", IRayTracer::MOELLER);
+        values.push_back(intsect);        
 
         RWValueCall<RVRayTracer, bool> *visual 
             = new RWValueCall<RVRayTracer, bool>
@@ -62,6 +79,13 @@ namespace OpenEngine {
              &RVRayTracer::SetVisualizeRays);
         visual->name = "Visualize rays";
         values.push_back(visual);
+
+        RWValueCall<RVRayTracer, bool> *rayTiming 
+            = new RWValueCall<RVRayTracer, bool>
+            (*ray, &RVRayTracer::GetPrintTiming,
+             &RVRayTracer::PrintTiming);
+        rayTiming->name = "Ray tracer time";
+        values.push_back(rayTiming);
 
         RWValueCall<RVRayTracer, bool> *leafSkip
             = new RWValueCall<RVRayTracer, bool>
