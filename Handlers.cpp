@@ -48,6 +48,13 @@ namespace OpenEngine {
 
     void RayInspectionBar::Handle(RenderingEventArg) {
         ValueList values;
+        
+        RWValueCall<PhotonRenderingView, string> *traceName
+            = new RWValueCall<PhotonRenderingView, string>
+            (*rv, &PhotonRenderingView::GetRayTracerName,
+             &PhotonRenderingView::SetRayTracerName);
+        traceName->name = "Ray tracer name";
+        values.push_back(traceName);
 
         RWValueCall<RVRayTracer, bool> *visual 
             = new RWValueCall<RVRayTracer, bool>
