@@ -40,6 +40,8 @@ namespace OpenEngine {
         bool GetLeafSkipping() { return rv->GetRayTracer()->GetLeafSkipping(); }
         void PrintTiming(bool p) { rv->GetRayTracer()->PrintTiming(p);}
         bool GetPrintTiming() { return rv->GetRayTracer()->GetPrintTiming(); }
+        void SetRenderTime(float t) { rv->GetRayTracer()->SetRenderTime(t); }
+        float GetRenderTime() { return rv->GetRayTracer()->GetRenderTime(); }
     };
 
     RayInspectionBar::RayInspectionBar(AntTweakBar* atb, 
@@ -74,6 +76,20 @@ namespace OpenEngine {
         intsect->AddEnum("Moeller", IRayTracer::MOELLER);
         values.push_back(intsect);        
 
+        RWValueCall<RVRayTracer, bool> *leafSkip
+            = new RWValueCall<RVRayTracer, bool>
+            (*ray, &RVRayTracer::GetLeafSkipping,
+             &RVRayTracer::SetLeafSkipping);
+        leafSkip->name = "Leaf Skipping";
+        values.push_back(leafSkip);
+
+        RWValueCall<RVRayTracer, float> *rayTiming 
+            = new RWValueCall<RVRayTracer, float>
+            (*ray, &RVRayTracer::GetRenderTime, &RVRayTracer::SetRenderTime);
+        rayTiming->name = "Ray tracer time";
+        values.push_back(rayTiming);
+
+        /*
         RWValueCall<RVRayTracer, bool> *visual 
             = new RWValueCall<RVRayTracer, bool>
             (*ray, &RVRayTracer::GetVisualizeRays,
@@ -87,13 +103,7 @@ namespace OpenEngine {
              &RVRayTracer::PrintTiming);
         rayTiming->name = "Ray tracer time";
         values.push_back(rayTiming);
-
-        RWValueCall<RVRayTracer, bool> *leafSkip
-            = new RWValueCall<RVRayTracer, bool>
-            (*ray, &RVRayTracer::GetLeafSkipping,
-             &RVRayTracer::SetLeafSkipping);
-        leafSkip->name = "Leaf Skipping";
-        values.push_back(leafSkip);
+        */
 
         RWValueCall<TransformationNode, Vector<3, float> > *posGeom
             = new RWValueCall<TransformationNode, Vector<3, float> >
