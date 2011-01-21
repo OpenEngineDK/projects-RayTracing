@@ -8,6 +8,7 @@
 //--------------------------------------------------------------------
 
 #include <Core/IListener.h>
+#include <Math/Vector.h>
 #include <Renderers/IRenderer.h>
 
 namespace OpenEngine {
@@ -41,8 +42,10 @@ namespace OpenEngine {
     class HostTraceListener : public Core::IListener<Devices::MouseButtonEventArg> {
     private:
         Renderers::OpenGL::PhotonRenderingView* rv;
+        Math::Vector<2, int> screenSize;
+        
     public:
-        HostTraceListener(Renderers::OpenGL::PhotonRenderingView* rv);
+        HostTraceListener(Renderers::OpenGL::PhotonRenderingView* rv, Math::Vector<2, int> screen);
 
         void Handle(Devices::MouseButtonEventArg arg);
     };

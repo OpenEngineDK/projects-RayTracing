@@ -21,10 +21,11 @@
 #include <Logging/Logger.h>
 
 namespace OpenEngine {
-    using namespace Utils;
+    using namespace Math;
     using namespace Renderers;
     using namespace Renderers::OpenGL;
     using namespace Scene;
+    using namespace Utils;
 
     class RayInspectionBar::RVRayTracer {
     public:
@@ -127,13 +128,14 @@ namespace OpenEngine {
     }
 
 
-    HostTraceListener::HostTraceListener(Renderers::OpenGL::PhotonRenderingView* rv)
-        : rv(rv) {}
+    HostTraceListener::HostTraceListener(Renderers::OpenGL::PhotonRenderingView* rv, 
+                                         Vector<2, int> screen)
+        : rv(rv), screenSize(screen) {}
 
     void HostTraceListener::Handle(Devices::MouseButtonEventArg arg){
         if (arg.button == BUTTON_RIGHT && arg.type == EVENT_PRESS){
             //logger.info << "(" << arg.state.x << ", " << arg.state.y << ")" << logger.end;
-            rv->GetRayTracer()->HostTrace(arg.state.x, arg.state.y, 
+            rv->GetRayTracer()->HostTrace(arg.state.x, screenSize.Get(1) - arg.state.y, 
                                           rv->GetTriangleMap()->GetNodes());
         }
     }

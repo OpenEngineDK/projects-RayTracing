@@ -54,6 +54,9 @@
 #include <Utils/InspectionBar.h>
 
 
+int SCREEN_WIDTH = 640;
+int SCREEN_HEIGHT = 480;
+
 // name spaces that we will be using.
 // this combined with the above imports is almost the same as
 // fx. import OpenEngine.Logging.*; in Java.
@@ -91,7 +94,7 @@ ISceneNode* CreateSmallBox() {
 
 ISceneNode* CreateDragon() {
     //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
-    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
+    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res2.ply");
     duckRes->Load();
     MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0)->GetNode(0);
 
@@ -106,7 +109,7 @@ ISceneNode* CreateDragon() {
         Vector<4, float> bakersChocolate(0.36f, 0.2, 0.09f, 1.0f);
         Vector<4, float> lightChocolate(0.667f, 0.49f, 0.361f, 1.0f);
         for (unsigned int i = 0; i < color->GetSize(); ++i)
-            color->SetElement(i, jadeGreen);
+            color->SetElement(i, bakersChocolate);
             
         dragonGeom = GeometrySetPtr(new GeometrySet(dragonGeom->GetDataBlock("vertex"),
                                                     dragonGeom->GetDataBlock("normal"),
@@ -166,6 +169,7 @@ ISceneNode* SetupScene(){
     //ISceneNode* cornellBox = CreateSibenik();
     rsNode->AddNode(cornellBox);
 
+    /*
     ISceneNode* box = CreateSmallBox();
     TransformationNode* smallTrans = new TransformationNode();
     // x:0.45, y:-0.14, z:-0.12, s:0.87
@@ -176,6 +180,7 @@ ISceneNode* SetupScene(){
     smallTrans->AddNode(box);
 
     geomTrans = smallTrans;
+    */
 
     ISceneNode* bigBox = CreateSmallBox();
     TransformationNode* bigTrans = new TransformationNode();
@@ -193,6 +198,7 @@ ISceneNode* SetupScene(){
     ISceneNode* dragon = CreateDragon();
     geomTrans->AddNode(dragon);
     */
+
     return rsNode;
 }
 
@@ -220,11 +226,11 @@ int main(int argc, char** argv) {
 
     // Print usage info.
     logger.info << "========= Efficient Algorithms for Ray Tracing Dynamic Scenes =========" << logger.end;
+    logger.info << "========= Techniques for Efficient Ray Tracing of Dynamic Scenes =========" << logger.end;
 
     // setup the engine
     Engine* engine = new Engine;
-    //IEnvironment* env = new SDLEnvironment(800, 600, 32);
-    IEnvironment* env = new SDLEnvironment(640, 480, 32);
+    IEnvironment* env = new SDLEnvironment(SCREEN_WIDTH, SCREEN_HEIGHT, 32);
     //IEnvironment* env = new SDLEnvironment(160, 120, 32, FRAME_FULLSCREEN);
     //IEnvironment* env = new SDLEnvironment(1024, 768, 32, FRAME_FULLSCREEN);
     //IEnvironment* env = new SDLEnvironment(1440, 900, 32, FRAME_FULLSCREEN);
@@ -270,7 +276,7 @@ int main(int argc, char** argv) {
     AntTweakBar* atb = SetupAntTweakBar(renderingview, renderer, 
                                         env->GetKeyboard(), env->GetMouse());
 
-    HostTraceListener* tracer = new HostTraceListener(renderingview);
+    HostTraceListener* tracer = new HostTraceListener(renderingview, Vector<2, int>(SCREEN_WIDTH, SCREEN_HEIGHT));
     atb->MouseButtonEvent().Attach(*tracer);
     
     BetterMoveHandler *move = new BetterMoveHandler(*camera,
