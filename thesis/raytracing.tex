@@ -862,6 +862,10 @@ information available to the ray is that the node is split along the
 y-axis at position 3, which means it needs to check everything below
 $y=3$ for intersection. 
 
+\fixme{Problem when the ray travels through a lot of empty space that
+  empty space splitting doesn't pick up on, such as sponza. Then it
+  goes boom!}
+
 Empty space splitting has shown us that providing an early out option
 for rays that would otherwise get sidetracked can increase performance
 substantially and that also applies to this case. Since the leafs
