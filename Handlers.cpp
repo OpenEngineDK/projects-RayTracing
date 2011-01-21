@@ -28,8 +28,9 @@ namespace OpenEngine {
     using namespace Utils;
 
     class RayInspectionBar::RVRayTracer {
-    public:
+    private:
         PhotonRenderingView* rv;
+    public:
         RVRayTracer(PhotonRenderingView* rv) : rv(rv) {}
         
         void SetVisualizeRays(bool v) {rv->GetRayTracer()->SetVisualizeRays(v);}
@@ -44,11 +45,24 @@ namespace OpenEngine {
         float GetRenderTime() { return rv->GetRayTracer()->GetRenderTime(); }
     };
 
+    class RayInspectionBar::TriangleMapWrapper {
+    private:
+        PhotonRenderingView* rv;
+    public:
+        TriangleMapWrapper(PhotonRenderingView* rv) :rv(rv) {}
+        
+        void PrintTree() { rv->GetTriangleMap()->PrintTree(); }
+        void SetConstructionTime(float t) {}
+        float GetConstructionTime() { return rv->GetTriangleMap()->GetConstructionTime(); }
+    };
+
     RayInspectionBar::RayInspectionBar(AntTweakBar* atb, 
                                        PhotonRenderingView* rv,
                                        IRenderer* renderer,
                                        TransformationNode* geomTrans) :
-        atb(atb), rv(rv), renderer(renderer), ray(new RVRayTracer(rv)), geomTrans(geomTrans){
+        atb(atb), rv(rv), renderer(renderer), 
+        ray(new RVRayTracer(rv)), triangleMap(new TriangleMapWrapper(rv)),
+        geomTrans(geomTrans){
 
         renderer->InitializeEvent().Attach(*this);
     }
@@ -127,10 +141,15 @@ namespace OpenEngine {
         updateGeom->name = "Update geometry";
         values.push_back(updateGeom);
 
-        TriangleMap* map = rv->GetTriangleMap();
-        ActionValueCall<TriangleMap> *printTree
-            = new ActionValueCall<TriangleMap>
-            (*map, &TriangleMap::PrintTree);
+        RWValueCall<TriangleMapWrapper, float> *treeTiming 
+            = new RWValueCall<TriangleMapWrapper, float>
+            (*triangleMap, &TriangleMapWrapper::GetConstructionTime, &TriangleMapWrapper::SetConstructionTime);
+        treeTiming->name = "Construction time";
+        values.push_back(treeTiming);
+
+        ActionValueCall<TriangleMapWrapper> *printTree
+            = new ActionValueCall<TriangleMapWrapper>
+            (*triangleMap, &TriangleMapWrapper::PrintTree);
         printTree->name = "Print kd-tree";
         values.push_back(printTree);
 

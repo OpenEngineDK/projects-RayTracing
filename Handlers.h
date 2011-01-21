@@ -23,11 +23,13 @@ namespace OpenEngine {
     class RayInspectionBar : public Core::IListener<Renderers::RenderingEventArg>{
     private:
         class RVRayTracer;
+        class TriangleMapWrapper;
         
         Display::AntTweakBar* atb;
         Renderers::OpenGL::PhotonRenderingView* rv;
         Renderers::IRenderer* renderer;
         RVRayTracer* ray;
+        TriangleMapWrapper* triangleMap;
         Scene::TransformationNode* geomTrans;
         
     public:

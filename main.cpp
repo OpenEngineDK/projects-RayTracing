@@ -87,14 +87,14 @@ ISceneNode* CreateCornellBox() {
 }
 
 ISceneNode* CreateSmallBox() {
-    MeshPtr box = MeshCreator::CreateCube(3, 2, Vector<3,float>(1.0f, 1.0f, 1.0f));
+    MeshPtr box = MeshCreator::CreateCube(3, 1, Vector<3,float>(1.0f, 1.0f, 1.0f));
 
     return new MeshNode(box);
 }
 
 ISceneNode* CreateDragon() {
-    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
-    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res2.ply");
+    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res3.ply");
+    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res2.ply");
     duckRes->Load();
     MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0)->GetNode(0);
 
@@ -109,7 +109,7 @@ ISceneNode* CreateDragon() {
         Vector<4, float> bakersChocolate(0.36f, 0.2, 0.09f, 1.0f);
         Vector<4, float> lightChocolate(0.667f, 0.49f, 0.361f, 1.0f);
         for (unsigned int i = 0; i < color->GetSize(); ++i)
-            color->SetElement(i, bakersChocolate);
+            color->SetElement(i, jadeGreen);
             
         dragonGeom = GeometrySetPtr(new GeometrySet(dragonGeom->GetDataBlock("vertex"),
                                                     dragonGeom->GetDataBlock("normal"),
@@ -169,18 +169,13 @@ ISceneNode* SetupScene(){
     //ISceneNode* cornellBox = CreateSibenik();
     rsNode->AddNode(cornellBox);
 
-    /*
     ISceneNode* box = CreateSmallBox();
     TransformationNode* smallTrans = new TransformationNode();
-    // x:0.45, y:-0.14, z:-0.12, s:0.87
     smallTrans->SetRotation(Quaternion<float>(0.0f, -Math::PI/8.0f, 0.0f));
-    //smallTrans->SetRotation(Quaternion<float>(0.87f, 0.45, -0.14, -0.12));
     smallTrans->Move(2.0f, -3.48f, 1.0);
     rsNode->AddNode(smallTrans);
     smallTrans->AddNode(box);
-
     geomTrans = smallTrans;
-    */
 
     ISceneNode* bigBox = CreateSmallBox();
     TransformationNode* bigTrans = new TransformationNode();
@@ -190,13 +185,15 @@ ISceneNode* SetupScene(){
     rsNode->AddNode(bigTrans);
     bigTrans->AddNode(bigBox);
 
-    /*
     // Dragon
-    geomTrans->SetScale(Vector<3, float>(40, 40, 40));
-    geomTrans->SetPosition(Vector<3, float>(0, -7, 0));
-    rsNode->AddNode(geomTrans);
+    /*
+    TransformationNode* dragonTrans = new TransformationNode();
+    dragonTrans->SetScale(Vector<3, float>(40, 40, 40));
+    dragonTrans->SetPosition(Vector<3, float>(0, -7, 0));
+    rsNode->AddNode(dragonTrans);
     ISceneNode* dragon = CreateDragon();
-    geomTrans->AddNode(dragon);
+    dragonTrans->AddNode(dragon);
+    geomTrans = dragonTrans;
     */
 
     return rsNode;
@@ -227,6 +224,8 @@ int main(int argc, char** argv) {
     // Print usage info.
     logger.info << "========= Efficient Algorithms for Ray Tracing Dynamic Scenes =========" << logger.end;
     logger.info << "========= Techniques for Efficient Ray Tracing of Dynamic Scenes =========" << logger.end;
+    logger.info << "========= Efficient Ray Tracing of Dynamic Scenes on the GPU =========" << logger.end;
+    logger.info << "========= Efficient GPU Accelerated Dynamic Ray Tracing =========" << logger.end;
 
     // setup the engine
     Engine* engine = new Engine;
