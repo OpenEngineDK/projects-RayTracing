@@ -41,7 +41,7 @@ namespace OpenEngine {
         bool GetLeafSkipping() { return rv->GetRayTracer()->GetLeafSkipping(); }
         void PrintTiming(bool p) { rv->GetRayTracer()->PrintTiming(p);}
         bool GetPrintTiming() { return rv->GetRayTracer()->GetPrintTiming(); }
-        void SetRenderTime(float t) { rv->GetRayTracer()->SetRenderTime(t); }
+        void SetRenderTime(float t) { }
         float GetRenderTime() { return rv->GetRayTracer()->GetRenderTime(); }
     };
 
@@ -54,6 +54,10 @@ namespace OpenEngine {
         void PrintTree() { rv->GetTriangleMap()->PrintTree(); }
         void SetConstructionTime(float t) {}
         float GetConstructionTime() { return rv->GetTriangleMap()->GetConstructionTime(); }
+        TriangleMap::LowerAlgorithm GetLowerAlgorithm() { return rv->GetTriangleMap()->GetLowerAlgorithm(); }
+        void SetLowerAlgorithm(TriangleMap::LowerAlgorithm l) { rv->GetTriangleMap()->SetLowerAlgorithm(l); }
+        void SplitEmptySpace(bool s) { rv->GetTriangleMap()->SplitEmptySpace(s); }
+        bool IsSplittingEmptySpace() { return rv->GetTriangleMap()->IsSplittingEmptySpace(); }
     };
 
     RayInspectionBar::RayInspectionBar(AntTweakBar* atb, 
@@ -80,7 +84,6 @@ namespace OpenEngine {
         traceType->AddEnum("Short stack", PhotonRenderingView::SHORTSTACK);
         values.push_back(traceType);
         
-
         EnumRWValueCall<RVRayTracer, IRayTracer::IntersectionAlgorithm> *intsect
             = new EnumRWValueCall<RVRayTracer, IRayTracer::IntersectionAlgorithm>
             (*ray, &RVRayTracer::GetIntersectionAlgorithm,
@@ -123,7 +126,7 @@ namespace OpenEngine {
             = new RWValueCall<TransformationNode, Vector<3, float> >
             (*geomTrans, &TransformationNode::GetPosition,
              &TransformationNode::SetPosition);
-        posGeom->name = "Position geometry";
+        posGeom->name = "Geometry position";
         posGeom->properties[STEP] = Vector<3,float>(0.1f);
         values.push_back(posGeom);
         
@@ -131,15 +134,40 @@ namespace OpenEngine {
             = new RWValueCall<TransformationNode, Quaternion<float> >
             (*geomTrans, &TransformationNode::GetRotation,
              &TransformationNode::SetRotation);
-        rotateGeom->name = "Rotate geometry";
+        rotateGeom->name = "Geometry rotation";
         values.push_back(rotateGeom);
         
-        RWValueCall<PhotonRenderingView, bool> *updateGeom
+        RWValueCall<TransformationNode, Vector<3, float> > *geomScale
+            = new RWValueCall<TransformationNode, Vector<3, float> >
+            (*geomTrans, &TransformationNode::GetScale,
+             &TransformationNode::SetScale);
+        geomScale->name = "Geometry scale";
+        geomScale->properties[STEP] = Vector<3,float>(0.1f);
+        values.push_back(geomScale);
+        
+        RWValueCall<PhotonRenderingView, bool> *dynamicGeom
             = new RWValueCall<PhotonRenderingView, bool>
             (*rv, &PhotonRenderingView::GetTreeUpdate,
              &PhotonRenderingView::SetTreeUpdate);
-        updateGeom->name = "Update geometry";
-        values.push_back(updateGeom);
+        dynamicGeom->name = "Dynamic geometry";
+        values.push_back(dynamicGeom);
+
+        RWValueCall<TriangleMapWrapper, bool> *emptySplit
+            = new RWValueCall<TriangleMapWrapper, bool>
+            (*triangleMap, &TriangleMapWrapper::IsSplittingEmptySpace,
+             &TriangleMapWrapper::SplitEmptySpace);
+        emptySplit->name = "Empty space splits";
+        values.push_back(emptySplit);
+
+        EnumRWValueCall<TriangleMapWrapper, TriangleMap::LowerAlgorithm> *lowerType
+            = new EnumRWValueCall<TriangleMapWrapper, TriangleMap::LowerAlgorithm>
+            (*triangleMap, &TriangleMapWrapper::GetLowerAlgorithm,
+             &TriangleMapWrapper::SetLowerAlgorithm, "LowerAlgorithm");
+        lowerType->name = "Lower Algorithm";
+        lowerType->AddEnum("Bitmap", TriangleMap::BITMAP);
+        lowerType->AddEnum("Balanced", TriangleMap::BALANCED);
+        lowerType->AddEnum("SAH", TriangleMap::SAH);
+        values.push_back(lowerType);
 
         RWValueCall<TriangleMapWrapper, float> *treeTiming 
             = new RWValueCall<TriangleMapWrapper, float>
