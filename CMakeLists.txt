@@ -7,6 +7,7 @@ SET( PROJECT_SOURCES
   # Add all the cpp source files here
   main.cpp
   Handlers.cpp
+  SceneCreator.cpp
 )
 
 # Project executable

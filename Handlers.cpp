@@ -58,6 +58,8 @@ namespace OpenEngine {
         void SetLowerAlgorithm(TriangleMap::LowerAlgorithm l) { rv->GetTriangleMap()->SetLowerAlgorithm(l); }
         void SplitEmptySpace(bool s) { rv->GetTriangleMap()->SplitEmptySpace(s); }
         bool IsSplittingEmptySpace() { return rv->GetTriangleMap()->IsSplittingEmptySpace(); }
+        void SetSplitMethod(TriangleMap::SplitMethod s) { rv->GetTriangleMap()->SetSplitMethod(s); }
+        TriangleMap::SplitMethod GetSplitMethod() { return rv->GetTriangleMap()->GetSplitMethod(); }
     };
 
     RayInspectionBar::RayInspectionBar(AntTweakBar* atb, 
@@ -106,22 +108,6 @@ namespace OpenEngine {
         rayTiming->name = "Ray tracer time";
         values.push_back(rayTiming);
 
-        /*
-        RWValueCall<RVRayTracer, bool> *visual 
-            = new RWValueCall<RVRayTracer, bool>
-            (*ray, &RVRayTracer::GetVisualizeRays,
-             &RVRayTracer::SetVisualizeRays);
-        visual->name = "Visualize rays";
-        values.push_back(visual);
-
-        RWValueCall<RVRayTracer, bool> *rayTiming 
-            = new RWValueCall<RVRayTracer, bool>
-            (*ray, &RVRayTracer::GetPrintTiming,
-             &RVRayTracer::PrintTiming);
-        rayTiming->name = "Ray tracer time";
-        values.push_back(rayTiming);
-        */
-
         RWValueCall<TransformationNode, Vector<3, float> > *posGeom
             = new RWValueCall<TransformationNode, Vector<3, float> >
             (*geomTrans, &TransformationNode::GetPosition,
@@ -151,6 +137,16 @@ namespace OpenEngine {
              &PhotonRenderingView::SetTreeUpdate);
         dynamicGeom->name = "Dynamic geometry";
         values.push_back(dynamicGeom);
+
+        EnumRWValueCall<TriangleMapWrapper, TriangleMap::SplitMethod> *splitScheme
+            = new EnumRWValueCall<TriangleMapWrapper, TriangleMap::SplitMethod>
+            (*triangleMap, &TriangleMapWrapper::GetSplitMethod,
+             &TriangleMapWrapper::SetSplitMethod, "SplittingScheme");
+        splitScheme->name = "Splitting Scheme";        
+        splitScheme->AddEnum("Box", TriangleMap::BOX);
+        splitScheme->AddEnum("Divide", TriangleMap::DIVIDE);
+        splitScheme->AddEnum("Split", TriangleMap::SPLIT);
+        values.push_back(splitScheme);
 
         RWValueCall<TriangleMapWrapper, bool> *emptySplit
             = new RWValueCall<TriangleMapWrapper, bool>

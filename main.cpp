@@ -17,7 +17,7 @@
 #include <Renderers/DataBlockBinder.h>
 #include <Resources/ResourceManager.h>
 #include <Scene/PointLightNode.h>
-#include <Scene/SceneNode.h>
+#include <Scene/ISceneNode.h>
 #include <Scene/RenderStateNode.h>
 
 // SDL extension
@@ -36,16 +36,15 @@
 #include <Utils/BetterMoveHandler.h>
 #include <Utils/QuitHandler.h>
 
-// Mesh Utils
-#include <Utils/MeshCreator.h>
-#include <Utils/MeshTransformer.h>
-
 #include <Resources/FreeImage.h>
 
 // Photon Mapping stuff
 #include <Renderers/OpenGL/PhotonRenderingView.h>
 
 #include <Utils/CUDA/Utils.h>
+
+// Scene setup
+#include "SceneCreator.h"
 
 // Ant tweak bar
 #include "Handlers.h"
@@ -68,68 +67,6 @@ using namespace OpenEngine::Renderers::OpenGL;
 using namespace OpenEngine::Scene;
 using namespace OpenEngine::Utils;
 
-ISceneNode* CreateCornellBox() {
-    MeshPtr box = MeshCreator::CreateCube(10, 1, Vector<3,float>(1.0f, 1.0f, 1.0f), true);
-    
-    IDataBlockPtr colors = box->GetGeometrySet()->GetColors();
-    Vector<4,float> red(1.0f, 0.0f, 0.0f, 1.0f);
-    Vector<4,float> blue(0.0f, 0.0f, 0.8f, 1.0f);
-    colors->SetElement(8, red);
-    colors->SetElement(9, red);
-    colors->SetElement(10, red);
-    colors->SetElement(11, red);
-    colors->SetElement(12, blue);
-    colors->SetElement(13, blue);
-    colors->SetElement(14, blue);
-    colors->SetElement(15, blue);
-
-    return new MeshNode(box);
-}
-
-ISceneNode* CreateSmallBox() {
-    MeshPtr box = MeshCreator::CreateCube(3, 1, Vector<3,float>(1.0f, 1.0f, 1.0f));
-
-    return new MeshNode(box);
-}
-
-ISceneNode* CreateDragon() {
-    IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res3.ply");
-    //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res2.ply");
-    duckRes->Load();
-    MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0)->GetNode(0);
-
-    GeometrySetPtr dragonGeom = dragon->GetMesh()->GetGeometrySet();
-    IDataBlockPtr color = dragonGeom->GetDataBlock("color");
-    if (color != NULL){
-        *color *= 0.0f;
-        *color += Vector<3, float>(0.0f, 165.0f/255.0f, 101.0f/255.0f);
-    }else{
-        color = Float4DataBlockPtr(new DataBlock<4, float>(dragonGeom->GetSize()));
-        Vector<4, float> jadeGreen(0.0f, 0.647, 0.396f, 0.5f);
-        Vector<4, float> bakersChocolate(0.36f, 0.2, 0.09f, 1.0f);
-        Vector<4, float> lightChocolate(0.667f, 0.49f, 0.361f, 1.0f);
-        for (unsigned int i = 0; i < color->GetSize(); ++i)
-            color->SetElement(i, jadeGreen);
-            
-        dragonGeom = GeometrySetPtr(new GeometrySet(dragonGeom->GetDataBlock("vertex"),
-                                                    dragonGeom->GetDataBlock("normal"),
-                                                    IDataBlockList(), color));
-        Mesh* dragonMesh = new Mesh(dragon->GetMesh()->GetIndices(),
-                                    dragon->GetMesh()->GetType(),
-                                    dragonGeom, dragon->GetMesh()->GetMaterial());
-        dragon = new MeshNode(MeshPtr(dragonMesh));
-    }
-
-    duckRes->Unload();
-    return dragon;
-}
-
-ISceneNode* CreateSponza() {
-    IModelResourcePtr mdl = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/sponza/Sponza.obj");
-    mdl->Load();
-    return mdl->GetSceneNode();
-}
-
 ISceneNode* CreateForest() {
     IModelResourcePtr mdl = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/fairyForest/fairyForest.obj");
     mdl->Load();
@@ -142,10 +79,9 @@ ISceneNode* CreateSibenik() {
     return mdl->GetSceneNode();
 }
 
-
 TransformationNode *geomTrans = new TransformationNode();
 
-ISceneNode* SetupScene(){
+ISceneNode* SetupScene(std::string name, Camera* cam){
 
     RenderStateNode* rsNode = new RenderStateNode();
     rsNode->DisableOption(RenderStateNode::BACKFACE);
@@ -163,38 +99,9 @@ ISceneNode* SetupScene(){
     light->specular = lightColor * 0.3;
     lightTrans->AddNode(light);
 
-    ISceneNode* cornellBox = CreateCornellBox();
-    //ISceneNode* cornellBox = CreateSponza();
-    //ISceneNode* cornellBox = CreateForest();
-    //ISceneNode* cornellBox = CreateSibenik();
-    rsNode->AddNode(cornellBox);
+    geomTrans = new TransformationNode();
 
-    ISceneNode* box = CreateSmallBox();
-    TransformationNode* smallTrans = new TransformationNode();
-    smallTrans->SetRotation(Quaternion<float>(0.0f, -Math::PI/8.0f, 0.0f));
-    smallTrans->Move(2.0f, -3.48f, 1.0);
-    rsNode->AddNode(smallTrans);
-    smallTrans->AddNode(box);
-    geomTrans = smallTrans;
-
-    ISceneNode* bigBox = CreateSmallBox();
-    TransformationNode* bigTrans = new TransformationNode();
-    bigTrans->SetRotation(Quaternion<float>(0.0f, Math::PI/8.0f, 0.0f));
-    bigTrans->Move(-1.5f, -1.98f, -3.0);
-    bigTrans->SetScale(Vector<3, float>(1.0f, 2.0f, 1.0f));
-    rsNode->AddNode(bigTrans);
-    bigTrans->AddNode(bigBox);
-
-    // Dragon
-    /*
-    TransformationNode* dragonTrans = new TransformationNode();
-    dragonTrans->SetScale(Vector<3, float>(40, 40, 40));
-    dragonTrans->SetPosition(Vector<3, float>(0, -7, 0));
-    rsNode->AddNode(dragonTrans);
-    ISceneNode* dragon = CreateDragon();
-    dragonTrans->AddNode(dragon);
-    geomTrans = dragonTrans;
-    */
+    SceneCreator::CreateScene(name, rsNode, cam, geomTrans);
 
     return rsNode;
 }
@@ -221,17 +128,14 @@ int main(int argc, char** argv) {
     // Setup logging facilities.
     Logger::AddLogger(new StreamLogger(&std::cout));
 
+    string sceneName = argc >= 2 ? string(argv[1]) : "";
+
     // Print usage info.
-    logger.info << "========= Efficient Algorithms for Ray Tracing Dynamic Scenes =========" << logger.end;
-    logger.info << "========= Techniques for Efficient Ray Tracing of Dynamic Scenes =========" << logger.end;
     logger.info << "========= Efficient Ray Tracing of Dynamic Scenes on the GPU =========" << logger.end;
-    logger.info << "========= Efficient GPU Accelerated Dynamic Ray Tracing =========" << logger.end;
 
     // setup the engine
     Engine* engine = new Engine;
     IEnvironment* env = new SDLEnvironment(SCREEN_WIDTH, SCREEN_HEIGHT, 32);
-    //IEnvironment* env = new SDLEnvironment(160, 120, 32, FRAME_FULLSCREEN);
-    //IEnvironment* env = new SDLEnvironment(1024, 768, 32, FRAME_FULLSCREEN);
     //IEnvironment* env = new SDLEnvironment(1440, 900, 32, FRAME_FULLSCREEN);
     engine->InitializeEvent().Attach(*env);
     engine->ProcessEvent().Attach(*env);
@@ -242,18 +146,13 @@ int main(int argc, char** argv) {
     ResourceManager<IModelResource>::AddPlugin(new AssimpPlugin());
     ResourceManager<ITexture2D>::AddPlugin(new FreeImagePlugin());
 
-    ISceneNode* scene = SetupScene();
+    Camera* camera  = new Camera(*(new PerspectiveViewingVolume(1, 4000)));
+    ISceneNode* scene = SetupScene(sceneName, camera);
 
     //DataBlockBinder* bob = new DataBlockBinder(*renderer);
     //bob->Bind(*scene);
 
     IFrame& frame = env->CreateFrame();
-
-    Camera* camera  = new Camera(*(new PerspectiveViewingVolume(1, 4000)));
-    camera->SetPosition(Vector<3, float>(-4.5f, 3.0f, 4.5f));
-    camera->LookAt(Vector<3, float>(-0.8f, -1.0f, 0.0f));
-    //camera->SetPosition(Vector<3, float>(0.0f, 0.0f, 0.0f));
-    //camera->LookAt(Vector<3, float>(-2.5f, -5.0f, -4.5f));
 
     PhotonRenderingView* renderingview = new PhotonRenderingView();
     renderer->InitializeEvent().Attach(*renderingview);    
