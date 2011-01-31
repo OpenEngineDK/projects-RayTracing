@@ -102,7 +102,7 @@ namespace OpenEngine {
         sceneRoot->AddNode(cornell);
 
         geomTrans->SetScale(Vector<3, float>(40, 40, 40));
-        geomTrans->SetPosition(Vector<3, float>(0, -7, 0));
+        geomTrans->SetPosition(Vector<3, float>(0, -6.5, 0));
         sceneRoot->AddNode(geomTrans);
         ISceneNode* bunny = LoadBunny();
         geomTrans->AddNode(bunny);
@@ -149,7 +149,6 @@ namespace OpenEngine {
 
     ISceneNode* SceneCreator::LoadDragon() {
         IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
-        //IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
         duckRes->Load();
         MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0)->GetNode(0);
 

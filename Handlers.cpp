@@ -60,6 +60,8 @@ namespace OpenEngine {
         bool IsSplittingEmptySpace() { return rv->GetTriangleMap()->IsSplittingEmptySpace(); }
         void SetSplitMethod(TriangleMap::SplitMethod s) { rv->GetTriangleMap()->SetSplitMethod(s); }
         TriangleMap::SplitMethod GetSplitMethod() { return rv->GetTriangleMap()->GetSplitMethod(); }
+        void SetPropagateBoundingBox(bool p) { rv->GetTriangleMap()->SetPropagateBoundingBox(p); }
+        bool GetPropagateBoundingBox() { return rv->GetTriangleMap()->GetPropagateBoundingBox(); }
     };
 
     RayInspectionBar::RayInspectionBar(AntTweakBar* atb, 
@@ -154,6 +156,13 @@ namespace OpenEngine {
              &TriangleMapWrapper::SplitEmptySpace);
         emptySplit->name = "Empty space splits";
         values.push_back(emptySplit);
+
+        RWValueCall<TriangleMapWrapper, bool> *propagateAabbs
+            = new RWValueCall<TriangleMapWrapper, bool>
+            (*triangleMap, &TriangleMapWrapper::GetPropagateBoundingBox,
+             &TriangleMapWrapper::SetPropagateBoundingBox);
+        propagateAabbs->name = "Propagate Aabbs";
+        values.push_back(propagateAabbs);
 
         EnumRWValueCall<TriangleMapWrapper, TriangleMap::LowerAlgorithm> *lowerType
             = new EnumRWValueCall<TriangleMapWrapper, TriangleMap::LowerAlgorithm>
