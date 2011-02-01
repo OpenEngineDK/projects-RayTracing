@@ -36,8 +36,10 @@ namespace OpenEngine {
             CreateDragon(scene, cam, geomTrans);
         else if (name.compare("bunny") == 0)
             CreateBunny(scene, cam, geomTrans);
-        else
+        else if (name.compare("cornell") == 0)
             CreateCornell(scene, cam, geomTrans);
+        else
+            CreateSponza(scene, cam, geomTrans);
     }
     
     void SceneCreator::CreateCornell(ISceneNode *sceneRoot, Camera *cam, 
@@ -76,29 +78,30 @@ namespace OpenEngine {
         sceneRoot->AddNode(sponza);
         
         cam->SetPosition(Vector<3, float>(20.0f, 5.0f, 0.0f));
-        cam->LookAt(Vector<3, float>(-1.0f, 5.0f, 0.0f));
+        cam->LookAt(Vector<3, float>(-1.0f, 9.0f, 0.0f));
     }
 
     void SceneCreator::CreateDragon(Scene::ISceneNode *sceneRoot, Display::Camera *cam, 
                                     Scene::TransformationNode * geomTrans){
         logger.info << "Creating Stanford Dragon Scene" << logger.end;
-        ISceneNode* cornell = CreateCornellBox();
+        MeshNode* cornell = CreateCornellBox();
         sceneRoot->AddNode(cornell);
 
         geomTrans->SetScale(Vector<3, float>(40, 40, 40));
-        geomTrans->SetPosition(Vector<3, float>(0, -7, 0));
+        geomTrans->SetPosition(Vector<3, float>(1, -7, -3));
+        geomTrans->SetRotation(Quaternion<float>(0.0f, 0.5f, 0.0f));
         sceneRoot->AddNode(geomTrans);
         ISceneNode* dragon = LoadDragon();
         geomTrans->AddNode(dragon);
         
-        cam->SetPosition(Vector<3, float>(-4.5f, 3.0f, 4.5f));
-        cam->LookAt(Vector<3, float>(-0.8f, -1.0f, 0.0f));
+        cam->SetPosition(Vector<3, float>(0.0f, 3.0f, 4.5f));
+        cam->LookAt(Vector<3, float>(0.0f, 0.0f, 0.0f));
     }
 
     void SceneCreator::CreateBunny(Scene::ISceneNode *sceneRoot, Display::Camera *cam, 
                                    Scene::TransformationNode * geomTrans){
         logger.info << "Creating Stanford Bunny Scene" << logger.end;
-        ISceneNode* cornell = CreateCornellBox();
+        MeshNode* cornell = CreateCornellBox();
         sceneRoot->AddNode(cornell);
 
         geomTrans->SetScale(Vector<3, float>(40, 40, 40));
@@ -111,7 +114,7 @@ namespace OpenEngine {
         //cam->LookAt(Vector<3, float>(-0.8f, -1.0f, 0.0f));
     }
 
-    ISceneNode* SceneCreator::CreateCornellBox() {
+    MeshNode* SceneCreator::CreateCornellBox() {
         MeshPtr box = MeshCreator::CreateCube(10, 1, Vector<3,float>(1.0f, 1.0f, 1.0f), true);
         
         IDataBlockPtr colors = box->GetGeometrySet()->GetColors();
@@ -152,7 +155,7 @@ namespace OpenEngine {
         duckRes->Load();
         MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0)->GetNode(0);
 
-        const Vector<4, float> jadeGreen(0.0f, 0.647, 0.396f, 0.65f);
+        const Vector<4, float> jadeGreen(0.0f, 0.647, 0.396f, 0.5f);
         GeometrySetPtr geom = dragon->GetMesh()->GetGeometrySet();
         IDataBlockPtr color = Float4DataBlockPtr(new DataBlock<4, float>(geom->GetSize()));
         for (unsigned int i = 0; i < color->GetSize(); ++i)
@@ -194,7 +197,7 @@ namespace OpenEngine {
     }
 
     ISceneNode* SceneCreator::LoadBunny() {
-        IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res2.ply");
+        IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
         duckRes->Load();
         MeshNode* bunny = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0)->GetNode(0);
 

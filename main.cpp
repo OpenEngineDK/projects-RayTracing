@@ -177,6 +177,9 @@ int main(int argc, char** argv) {
     HostTraceListener* tracer = new HostTraceListener(renderingview, Vector<2, int>(SCREEN_WIDTH, SCREEN_HEIGHT));
     atb->MouseButtonEvent().Attach(*tracer);
     
+    AntToggler* antToggle = new AntToggler(atb);
+    atb->KeyEvent().Attach(*antToggle);
+    
     BetterMoveHandler *move = new BetterMoveHandler(*camera,
                                                     *(env->GetMouse()),
                                                     true);

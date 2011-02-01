@@ -196,9 +196,13 @@ namespace OpenEngine {
 
     void HostTraceListener::Handle(Devices::MouseButtonEventArg arg){
         if (arg.button == BUTTON_RIGHT && arg.type == EVENT_PRESS){
-            //logger.info << "(" << arg.state.x << ", " << arg.state.y << ")" << logger.end;
             rv->GetRayTracer()->HostTrace(arg.state.x, screenSize.Get(1) - arg.state.y, 
                                           rv->GetTriangleMap()->GetNodes());
         }
+    }
+
+    void AntToggler::Handle(Devices::KeyboardEventArg arg){
+        if (arg.type == EVENT_PRESS && arg.sym == KEY_F5)
+            atb->ToggleEnabled();
     }
 }

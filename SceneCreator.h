@@ -13,6 +13,7 @@ namespace OpenEngine {
     namespace Display { class Camera; }
     namespace Scene { 
         class ISceneNode; 
+        class MeshNode; 
         class TransformationNode; 
     }
     
@@ -31,7 +32,7 @@ namespace OpenEngine {
         static void CreateBunny(Scene::ISceneNode *sceneRoot, Display::Camera *cam, 
                                 Scene::TransformationNode * geomTrans);
 
-        static Scene::ISceneNode* CreateCornellBox();
+        static Scene::MeshNode* CreateCornellBox();
         static Scene::ISceneNode* CreateSmallBox();
         static Scene::ISceneNode* LoadSponza();
         static Scene::ISceneNode* LoadDragon();

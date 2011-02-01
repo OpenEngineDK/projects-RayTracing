@@ -8,6 +8,7 @@
 //--------------------------------------------------------------------
 
 #include <Core/IListener.h>
+#include <Devices/IKeyboard.h>
 #include <Math/Vector.h>
 #include <Renderers/IRenderer.h>
 
@@ -50,5 +51,13 @@ namespace OpenEngine {
         HostTraceListener(Renderers::OpenGL::PhotonRenderingView* rv, Math::Vector<2, int> screen);
 
         void Handle(Devices::MouseButtonEventArg arg);
+    };
+
+    class AntToggler : public Core::IListener<Devices::KeyboardEventArg> {
+    protected:
+        Display::AntTweakBar* atb;
+    public:
+        AntToggler(Display::AntTweakBar* atb) : atb(atb) {}
+        void Handle(Devices::KeyboardEventArg arg);
     };
 }
