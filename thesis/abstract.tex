@@ -17,13 +17,13 @@ This thesis concerns itself with raytracing and doing that efficiently
 while exploiting the massive power of todays modern graphics cards. It
 is motivated by the ever increasing interest in raytracing and global
 illumination for creating effects in movies, but also the increased
-usage of 2D and 3D ray tracing used in modern computer games.
+usage of 2D and 3D ray tracing in modern computer games.
 
 The thesis present a survey of different techniques for creating
 hierarchical ray tracing acceleration structures, specifically the
-binary kd-trees, and how to do this efficiently on the wide SIMT
-hardware. A ray tracer will be used to test the quality of the
-differently created kd-trees.
+binary kd-trees, and how to do this efficiently on wide SIMT
+hardware. A ray tracer will be used to compare the quality of the
+different kd-trees.
 
 While previous work in the area has focused on creating optimal
 acceleration structures, the goal of this thesis is to explorer if
@@ -31,8 +31,10 @@ spending less time on optimizing the acceleration structures for ray
 tracing, can result in an overall performance increase in a dynamic
 scene.
 
+\fixme{Reformulate, use tradeoff?}
+
 To give a fair comparison of the time spend ray tracing and time spend
-creating the tree, both generel and SIMT specific optimizations have
+creating the tree, both general and SIMT specific optimizations have
 been applied to the ray tracer and kd-tree.
 
 \end{minipage}
