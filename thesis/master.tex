@@ -118,9 +118,14 @@
               Master's Thesis
               \vspace*{20pt}
               \\
-              \includegraphics[width=12cm,clip=true,trim=0cm 0cm 0cm 47pt]{sponzaShadow}
-%              \includegraphics[width=12cm]{sponza2}
-%              \shadowgraphics{width=12cm}{sponza2}
+%              \includegraphics[width=12cm,clip=true,trim=0cm 0cm 0cm
+%              47pt]{sponzaShadow}
+              \begin{tikzpicture}[y=1cm, x=1cm]
+                \draw (6,7.5) node {\includegraphics[width=12cm]{sponzaInShadow}};
+                \draw (2,1.5) node {\includegraphics[width=4cm]{opaqueDragon}};
+                \draw (6,1.5) node {\includegraphics[width=4cm]{semiReflectingDragon}};
+                \draw (10,1.5) node {\includegraphics[width=4cm]{reflectingDragon}};
+              \end{tikzpicture}
               \vspace*{40pt}
               \\
               \begin{minipage}{0.4\textwidth}
