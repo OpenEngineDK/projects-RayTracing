@@ -512,7 +512,7 @@ traversal process is restarted for $R'(t)$.
     \end{tikzpicture}
     \label{fig:simpleTree}
   }
-  \caption{}
+  \caption[A simple scene and its kd-tree.]{}
   \label{fig:simpleSceneTree}
 \end{figure}
 
@@ -741,7 +741,7 @@ performance improvement.
     \end{tikzpicture}
     \label{fig:shortStack2}
   }
-  \caption{}
+  \caption[Short-stack kd-tree traversal.]{}
 \end{figure}
 
 
@@ -815,7 +815,7 @@ trace only spatially local geometry.
     \end{tikzpicture}
     \label{fig:coherentRayWarp}
   }
-  \caption{}
+  \caption[Sequantial and spatially coherent rays per warp.]{}
 \end{figure}
 
 The calculations needed to transform sequential thread ids into
@@ -877,12 +877,11 @@ This optimization is not possible with the kd-tree alone and will thus
 not be a solution to static geometry, where the kd-tree is only
 calculated once and superfluous information is disgarded, such as the
 bounding box and parent node. Another solution to this problem will
-quickly be discussed in the Future Work chapter,
-\refchapter{chp:future}.
+quickly be discussed under Future Work in \refchapter{chp:future}.
 
 \begin{figure}
   \centering
-  \subfloat[hat]{
+  \subfloat{
     \begin{tikzpicture}[y=0.5cm, x=.5cm]
       \drawNode{0,0}{6,0}{6,6}{0,6}      
 
@@ -900,7 +899,7 @@ quickly be discussed in the Future Work chapter,
     \end{tikzpicture}
     \label{fig:waywardScene}
   }
-  \subfloat[hut]{
+  \subfloat{
     \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
         level/.style={sibling distance=25mm/#1}]
       \node [visitedNode] (0){$y:3$}
@@ -910,7 +909,8 @@ quickly be discussed in the Future Work chapter,
     \end{tikzpicture}
     \label{fig:waywardTree}
   }
-  \caption{}
+  \caption{A ray straying into a tree node, whose bounding box it does
+    not intersect.}
   \label{fig:waywardRay}
 \end{figure}
 

@@ -18,7 +18,8 @@ ray tracing entirely on the GPU.
 \begin{figure}
   \centering
   \includegraphics[width=8cm]{GFLOPS}
-  \caption{A comparison of the development of floating point
+  \caption[Comparison of floating point operations per second on GPU's
+    and CPU's.]{A comparison of the development of floating point
     operations per second on GPU's and CPU's. \\The figure is borrowed
     from Chapter 1 in \citebook{CUDAPG}.}
   \label{fig:gflops}
@@ -175,8 +176,9 @@ calculated as $id \leftarrow blockDim.x * blockIdx.x + threadIdx.x$.
 \begin{figure}
   \centering
   \includegraphics[width=8cm]{ThreadLayout}
-  \caption{A figure of CUDA's thread hierarchy.\\ The figure is borrowed
-    from Chapter 2 in \citebook{CUDAPG}.}
+  \caption[CUDA's thread hierarchy.]{A figure of CUDA's thread
+    hierarchy.\\ The figure is borrowed from Chapter 2 in
+    \citebook{CUDAPG}.}
   \label{fig:threadLayout}
 \end{figure}
 
@@ -384,9 +386,10 @@ yielding the final reduced value.
 \begin{figure}
   \centering
   \includegraphics[width=4cm]{SegmentedScan}
-  \caption{An example of multi-block segmented scan
-    communication. Cells with the same shading belong to the same
-    block. \\The figure is borrowed from \citebook{Sengupta:2007}.}
+  \caption[Multi-block segmented scan communication.]{An example of
+    multi-block segmented scan communication. Cells with the same
+    shading belong to the same block. \\The figure is borrowed from
+    \citebook{Sengupta:2007}.}
   \label{fig:segScan}
 \end{figure}
 

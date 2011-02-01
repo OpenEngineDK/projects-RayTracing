@@ -172,9 +172,10 @@ when accelerating sparse scenes.
     \end{tikzpicture}
     \label{fig:quadternarySplit}
   }
-  \caption{A comparisson of binary and quadternary splitting. Notice
-    that the binary splitting planes can be placed without
-    intersecting any geometry.}
+  \caption[Comparisson of binary and quadternary splitting]{A
+    comparisson of binary and quadternary splitting. Notice that the
+    binary splitting planes can be placed without intersecting any
+    geometry.}
   \label{fig:binQuadSplit}
 \end{figure}
 
@@ -351,10 +352,10 @@ kd-trees upper nodes, as is described in \refsection{sec:upperNodes}.
     \draw[color=green] (5,0) -- (5,4);
 
   \end{tikzpicture}
-  \caption{An example of how median splitting produces poor
-    splits. The red line is a median split. The green line is a more
-    optimal splitting plane, since it divides the large triangle from
-    the small.}
+  \caption[An example of median splitting producing poor splits.]{An
+    example of how median splitting produces poor splits. The red line
+    is a median split. The green line is a more optimal splitting
+    plane, since it divides the large triangle from the small.}
   \label{fig:crapMedian}
 \end{figure}
 
@@ -436,9 +437,9 @@ does. An example can be seen on \reffig{fig:aabbSplit}
     \drawAabb{3,2}{7,2}{7,6}{3,6}
 
   \end{tikzpicture}
-  \caption{An example of a triangles bounding box, the dashed box,
-    overlapping a nodes bounding box, while the triangle itself does
-    not.}
+  \caption[Triangle/Node bounding box intersection.]{An example of a
+    triangles bounding box, the dashed box, overlapping a nodes
+    bounding box, while the triangle itself does not.}
   \label{fig:aabbSplit}
 \end{figure}
 
@@ -458,7 +459,8 @@ candidates. \reffig{fig:aabbContained} demonstrates this.
     \draw (1,1) -- (3,1) -- (3,2) -- (1,2) -- (1,1);
 
   \end{tikzpicture}
-  \caption{The kd-tree nodes bounding box completely contained inside
+  \caption[A tree node's bounding box contained in a triangle bouding
+    box.]{The kd-tree node's bounding box completely contained inside
     the triangles bounding box.}
   \label{fig:aabbContained}
 \end{figure}
@@ -481,8 +483,9 @@ demonstrated on \reffig{fig:aabbClipped}.
     \drawNode{2,0}{5,0}{5,5}{2,5}
 
   \end{tikzpicture}
-  \caption{The triangles bounding box has been clipped to fit the part
-  of the triangle contained in the nodes bounding boxes.}
+  \caption[Triangle clipping.]{The triangles bounding box has been
+    clipped to fit the part of the triangle contained in the nodes
+    bounding boxes.}
   \label{fig:aabbClipped}
 \end{figure}
 
@@ -532,9 +535,10 @@ allowing the ray to skip over the triangles above.
     \drawRay{0,0}{6,4}
 
   \end{tikzpicture}
-  \caption{An example of empty space splitting. The grey ball shaded
-    area represents an empty node and allows the ray to leap across it
-    and skip intersection tests with the 5 triangles above.}
+  \caption[Empty Space Splitting.]{An example of empty space
+    splitting. The grey ball shaded area represents an empty node and
+    allows the ray to leap across it and skip intersection tests with
+    the 5 triangles above.}
   \label{fig:emptySpaceExample}
 \end{figure}
 
