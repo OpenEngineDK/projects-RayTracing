@@ -53,7 +53,7 @@ structures have since been revisited and improved upon countless
 times. One of the most important improvements was the introduction of
 the \textit{surface area heuristic}, \textit{SAH}, generally
 attributed to MacDonald and Booth\citebook{MacDonald:1990}. SAH
-estimates the expected cost of ray tracing a nodes 2 child nodes with
+estimates the expected cost of ray tracing a node's 2 child nodes with
 respect to some splitting plane. Given a list of splitting planes, the
 expected cost for all these planes can then be calculated and the
 plane with least cost is chosen as the splitting plane. How exactly
@@ -111,7 +111,7 @@ the tree.
 
 In this thesis I've adopted Horn et al.'s idea of a short stack to
 improve our ray tracer. In a worst case scenario where all the rays
-are intersecting the root nodes splitting plane, the push-down approch
+are intersecting the root node's splitting plane, the push-down approch
 yields no improvement, but only adds a computational overhead, which
 can also be seen in the papers results section. Therefore I have
 chosen not to implement it. With the increased detail in ray traced
