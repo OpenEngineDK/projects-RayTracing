@@ -10,23 +10,76 @@
 % calculations in the lower nodes useless.
 
 
+% Evaluate ray tracers
+
 % First establish which ray tracer works the best
 
-\begin{tabular}{ r  c  c | c | c | c | c | c | c |}
-%  & Cornell Box & Reflecting Dragon & Sponza & Fairy Forest \\
-  &&& \multicolumn{6}{|c|}{Reflecting Dragon - 32bit} \\
-  \cline{4-9}
-  &&& \multicolumn{3}{|c|}{None} & \multicolumn{3}{|c|}{Empty Space} \\
-  \cline{4-9}
-  &&& Box & Divide & Split & Box & Divide & Split \\
+\begin{tabular} {r | c | c | c || c || c || c ||}
+  \multicolumn{4}{c||}{ } & \begin{turn}{45}\begin{tabular}{c}Cornell \\Box\end{tabular}\end{turn} & \begin{turn}{45}\begin{tabular}{c}Reflecting \\Dragon\end{tabular}\end{turn} & \begin{turn}{45}Sponza\end{turn}\\
   \hline
-  \multirow{4}{*}{kd-Restart} & \multirow{2}{*}{Moeller} & Leaf Skipping & \\
-  && All Leafs & \\
-  \cline{2-8}
-  & \multirow{2}{*}{Woop} & Leaf Skipping & \\
-  && All Leafs & \\
+  \multirow{4}{*}{Exhaustive} & \multirow{2}{*}{Moeller} & No packets & N/A & 6 \\
+  \cline{3-7}
+  & & Packets & N/A & 6 \\
+  \cline{2-7}
+  & \multirow{2}{*}{Woop} & No packets & N/A & 6 \\
+  \cline{3-7}
+  & & Packets & N/A & 6 \\
+  \hline
+
+  % KD-Restart
+  \multirow{8}{*}{KD-Restart} & \multirow{4}{*}{Moeller} & \multirow{2}{*}{No packets} & All Leafs & 6 \\
+  \cline{4-7}
+  & & & Skip Leafs & 6 \\
+  \cline{3-7}
+  & & \multirow{2}{*}{Packets} & All Leafs & 6 \\
+  \cline{4-7}
+  & & & Skip Leafs & 6 \\
+  \cline{2-7}
+  & \multirow{4}{*}{Woop} & \multirow{2}{*}{No packets} & All Leafs & 6 \\
+  \cline{4-7}
+  & & & Skip Leafs & 6 \\
+  \cline{3-7}
+  & & \multirow{2}{*}{Packets} & All Leafs & 6 \\
+  \cline{4-7}
+  & & & Skip Leafs & 6 \\
+  \hline
+
+  % Short-Stack
+  \multirow{8}{*}{Short-Stack} & \multirow{4}{*}{Moeller} & \multirow{2}{*}{No packets} & All Leafs & 6 \\
+  \cline{4-7}
+  & & & Skip Leafs & 6 \\
+  \cline{3-7}
+  & & \multirow{2}{*}{Packets} & All Leafs & 6 \\
+  \cline{4-7}
+  & & & Skip Leafs & 6 \\
+  \cline{2-7}
+  & \multirow{4}{*}{Woop} & \multirow{2}{*}{No packets} & All Leafs & 6 \\
+  \cline{4-7}
+  & & & Skip Leafs & 6 \\
+  \cline{3-7}
+  & & \multirow{2}{*}{Packets} & All Leafs & 6 \\
+  \cline{4-7}
+  & & & Skip Leafs & 6 \\
   \hline
 \end{tabular}
+
+%% \begin{tabular}{ r  c  c | c | c | c | c | c | c |}
+%% %  & Cornell Box & Reflecting Dragon & Sponza & Fairy Forest \\
+%%   &&& \multicolumn{6}{|c|}{Reflecting Dragon - 32bit} \\
+%%   \cline{4-9}
+%%   &&& \multicolumn{3}{|c|}{None} & \multicolumn{3}{|c|}{Empty Space} \\
+%%   \cline{4-9}
+%%   &&& Box & Divide & Split & Box & Divide & Split \\
+%%   \hline
+%%   \multirow{4}{*}{kd-Restart} & \multirow{2}{*}{Moeller} & Leaf Skipping & \\
+%%   && All Leafs & \\
+%%   \cline{2-8}
+%%   & \multirow{2}{*}{Woop} & Leaf Skipping & \\
+%%   && All Leafs & \\
+%%   \hline
+%% \end{tabular}
+
+% Test scenes: Cornell, transparent/reflecting dragon2 and sponza
 
 % Splitting Schemes:
 
@@ -36,6 +89,10 @@
 % Compare amount of nodes.
 
 % Tree traversal time.
+
+% Warp coherence: balance between traversal steps and intersections =
+% high amount of nodes in the leafs ie even less important to spend
+% alot of time on that last split.
 
 
 \chapter{Conclusion}

@@ -248,7 +248,7 @@ In the following section 2 algorithms that solves this problem is
 presented and then extended with empty space splitting.
 
 
-\subsubsection{Spatial median}
+\subsubsection{Spatial Median}
 
 % Split at the spatial median.
 
@@ -276,8 +276,8 @@ node falls below a certain threshold, iteration stops.
 
 This method is refered to as naïve in \citebook{wald:06:NlogN} and
 rightly so. Not much thought is put into the distribution of geometry
-inside the bounding box. On \reffig{crapMedian} an example is given
-where the node is split in a non-intuitive way. Spatial median
+inside the bounding box. On \reffig{fig:crapMedian} an example is
+given where the node is split in a non-intuitive way. Spatial median
 splitting does, however, make up for its suboptimal splitting planes
 by being quite fast, and I will therefore use it for creating my
 kd-trees upper nodes, as is described in \refsection{sec:upperNodes}.
@@ -776,6 +776,17 @@ these.
 
 
 \subsubsection{Balanced Tree}
+
+% SAH is slow, so explore alternatives.
+
+% Testing shows that 'large' leaf node improves performance, cite Horn
+% about why.
+
+% Means that lower nodes will only be split 1-2 times and then
+% intersected, ie the lower splitting planes don't need to be placed
+% optimally.
+
+% Introducing the balanced split.
 
 \begin{algorithm}
   \caption{Calculate balanced split}

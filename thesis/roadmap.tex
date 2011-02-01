@@ -1,9 +1,11 @@
+\newpage
 
-\section*{Road Map}
-
+\chapter{Road Map}
+\fixme{Remove this from the final version}
 
 \begin{itemize}
-\item \color{green}Create the KD-tree from points on the GPU \checkmark
+\color{green}
+\item Create the KD-tree from points on the GPU \checkmark
 \item Visualize the KD-tree (as part of debugging), draw frame around
   splitting plane in color corrosponding to splitting axis. (\checkmark)
 \item Extend KD-tree to work on triangles \checkmark
@@ -19,8 +21,9 @@
       empty split nodes in front of the nodes and link them with the
       previous nodes parents.\\ Remember to update segments (used when
       splitting triangles), node size and activeIndex. \checkmark
-    \item \color{red}Make dynamic empty space threshold. Higher probability of
-      splits at the top, than bottom.
+    \item \color{red}Make dynamic empty space threshold. Higher
+      probability of splits at the top, than bottom. Let it adjust
+      relative to totalPrims / nodePrims.
     \item PROFIT
   \end{itemize}
 \item Optimize GeometryList
@@ -42,7 +45,7 @@ the compiler dropping the ball when switches contain huge cases..
   component. Less register usage! Yielded 20\% increase on dragon2 in
   cornell box.
 \item Make colors float instead of char. Removes 4 divisions when
-  coloring. (And apparently add a data fetching overhead, not worth
+  coloring. (And apparently adds a data fetching overhead, not worth
   it)
 \item Add a bounding box check before raytracing leafs? Provides an
   early out option for long rays. Nice speedup. Won't work aswell with
@@ -51,18 +54,9 @@ the compiler dropping the ball when switches contain huge cases..
   empty nodes after index + range and remember to skip them when
   creating children. (node size can be used for this, and the
   outermost while loop works unaltered).
+\item Handle axis aligned rays. y = copysignf(x, y);
 
 \color{red}
-\item Make indices in primMin and tHit a float\_to\_int gøjler. Saves
-  an actual conversion (and like what, 2ms total, boy you're starting
-  to go overboard here)
-\item Instead of resizing aabbs, perhaps just use the original size
-  and crop it with the propagated aabb. Then test if splitting and
-  creating new aabbs even adds any speed or if indexing is faster.
-\item Add triangle split. Triangle split can possibly gain
-  some performance, by always doing the ``2 triangles'' side first.
-\item Perhaps node creation can be sped up by adding a shared mem
-  block cache and then dumping data coallesced.
 \item Fix KernelConf1D when registers are used (something about 512bit
   allocation, unless 2.0 architeture)
 \end{itemize}
@@ -70,6 +64,16 @@ the compiler dropping the ball when switches contain huge cases..
 If time allows
 
 \begin{itemize}
+\item Placing splitting planes dependent on the propagated aabb yields
+  a much better result. Bug or explain? 
+\item Instead of resizing aabbs, perhaps just use the original size
+  and crop it with the propagated aabb. (Only if propagateAabbs is
+  true, so template argument ftw) Then test if splitting and creating
+  new aabbs even adds any speed or if indexing is faster. Lower
+  Creators need to be extended to clip the primitives bounding boxes
+  to the nodes aabb.
+\item Add triangle split. Triangle split can possibly gain
+  some performance, by always doing the ``2 triangles'' side first.
 \item Store empty split nodes in shared mem and then dump it all
   coallesced after they have been created.
 \item Speed up node child creation by using shared mem as
