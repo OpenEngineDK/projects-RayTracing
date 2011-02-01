@@ -78,7 +78,7 @@
     \draw[dashed] (#1) -- (#2) -- (#3) -- (#4) -- (#1);
 }
 \newcommand{\drawRay}[2]{
-    \draw[line width=2pt, dashed, ->] (#1) -- (#2);
+    \draw[line width=0.5pt, dashed, ->] (#1) -- (#2);
 }
 \newcommand{\drawNode}[4]{
     \draw (#1) -- (#2) -- (#3) -- (#4) -- (#1);
@@ -96,6 +96,11 @@
 
 }
 
+\newcommand{\shadowgraphics}[2]{
+  \begin{tikzpicture}
+    \node[rounded corners=1mm, drop shadow] {\includegraphics[#1]{#2}};
+  \end{tikzpicture}
+}
 
 
 \begin{document}
@@ -113,7 +118,9 @@
               Master's Thesis
               \vspace*{20pt}
               \\
-              \includegraphics[width=12cm]{cornellBoxWater}
+              \includegraphics[width=12cm,clip=true,trim=0cm 0cm 0cm 47pt]{sponzaShadow}
+%              \includegraphics[width=12cm]{sponza2}
+%              \shadowgraphics{width=12cm}{sponza2}
               \vspace*{40pt}
               \\
               \begin{minipage}{0.4\textwidth}
@@ -154,13 +161,25 @@
 
 \input{Conclussion}
 
-\clearpage
+\newpage
+\phantomsection \label{bib}
 \addcontentsline{toc}{chapter}{Bibliography}
 \bibliographystyle{amsplain}
 \bibliography{refs}
 
+\newpage
+\phantomsection \label{listofalg}
+\addcontentsline{toc}{chapter}{List of Algorithms}
+\listofalgorithms
+
+\newpage
+\phantomsection \label{listoffig}
+\addcontentsline{toc}{chapter}{List of Figures}
+\listoffigures
+
 \appendix
 
-\input{roadmap}
+
+%\input{roadmap}
 
 \end{document}

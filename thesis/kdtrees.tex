@@ -55,7 +55,7 @@ the exit point is calculated similarly.
 \begin{displaymath}
   \begin{array}{l}
     t_{far,d} = max((V_{min,d} - O_d) / D_d, (V_{max,d} - O_d) / D_d)\\
-    t_{entry} = min(t_{far,x}, t_{far,y}, t_{far,z})
+    t_{exit} = min(t_{far,x}, t_{far,y}, t_{far,z})
   \end{array}
 \end{displaymath}
 
@@ -66,9 +66,60 @@ given on \reffig{fig:rayBoxIntersection}.
 
 \begin{figure}
   \centering
-  \includegraphics[width=5cm]{RayBoxIntersection}
+%  \includegraphics[width=5cm]{RayBoxIntersection}
+  \subfloat[Ray miss.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+      % Planes
+      \draw[dashed, color=gray] (-2,0) -- (5,0);
+      \draw[dashed, color=gray] (-2,2) -- (5,2);
+      \draw[dashed, color=gray] (0,3.5) -- (0,-1.5);
+      \draw[dashed, color=gray] (3,3.5) -- (3,-1.5);
+
+      % AABB
+      \draw (0,0) -- (3,0) -- (3,2) -- (0,2) -- (0,0);
+
+      % Ray
+      \drawRay{0,5}{8,-1}
+
+      % Intersection
+      \draw[fill=black] (0,5) circle (0.05cm);
+      \draw (1,5.3) node{$t_{near,y}$};
+      \draw[fill=black] (3,2.75) circle (0.05cm);
+      \draw (4,3.05) node{$t_{far,y}$};
+      \draw[fill=black] (4,2) circle (0.05cm);
+      \draw (5,2.3) node{$t_{near,x}$};
+      \draw[fill=black] (6.66,0) circle (0.05cm);
+      \draw (7.66,0.3) node{$t_{far,x}$};
+
+    \end{tikzpicture}
+  }
+  \subfloat[Ray hit.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+      % Planes
+      \draw[dashed, color=gray] (-2,0) -- (5,0);
+      \draw[dashed, color=gray] (-2,2) -- (5,2);
+      \draw[dashed, color=gray] (0,3.5) -- (0,-1.5);
+      \draw[dashed, color=gray] (3,3.5) -- (3,-1.5);
+
+      % AABB
+      \draw (0,0) -- (3,0) -- (3,2) -- (0,2) -- (0,0);
+
+      % Ray
+      \drawRay{-1,4}{7,-2}
+
+      % Intersection
+      \draw[fill=black] (0,3.33) circle (0.05cm);
+      \draw (1,3.63) node{$t_{near,y}$};
+      \draw[fill=black] (1.66,2) circle (0.05cm);
+      \draw (2.66,2.3) node{$t_{near,x}$};
+      \draw[fill=black] (3,1) circle (0.05cm);
+      \draw (4,1.3) node{$t_{far,y}$};
+      \draw[fill=black] (4.33,0) circle (0.05cm);
+      \draw (5.33,0.3) node{$t_{far,x}$};
+
+    \end{tikzpicture}
+  }
   \caption{Ray/Box intersection.}
-%TODO image curtesy of http://www.baylee-online.net/Projects/Raytracing/RT4
   \label{fig:rayBoxIntersection}
 \end{figure}
 
@@ -103,6 +154,7 @@ when accelerating sparse scenes.
     \end{tikzpicture}
     \label{fig:binarySplit}
   }
+  \hspace{20pt}
   \subfloat[Possible quadternary splits.]{
     \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
       
@@ -684,7 +736,7 @@ these.
 % A good threshold. Did I make it vary and how did that go?
 
 \begin{algorithm}
-  \caption{}
+  \caption{Calculate Empty Space Maximization}
   \label{alg:emptySpaceSplitting}
   \begin{algorithmic}
     \PROCEDURE{CreateUpperNodes}
