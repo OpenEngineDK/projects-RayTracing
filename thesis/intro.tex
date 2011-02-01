@@ -263,21 +263,21 @@ The thesis is structured as follows:
 
 % Previous work
 
-In the next sectoin previous work in the area of ray tracing and
-kd-tree construction is presented. This includes a brief history of
-when ray tracing was introduced, aswell as key points in time for
-different acceleration structures. The last part of this section will
-focus on kd-trees and ray tracing on graphics hardware. Changes in
-this thesis compared to previous work in the area is also outlined in
-this section.
+The next section details previous work in the area of ray tracing and
+kd-tree construction. This includes a brief history of when ray
+tracing was introduced, aswell as key points in time for different
+acceleration structures. The last part of this section will focus on
+kd-trees and ray tracing on graphics hardware. Changes in this thesis
+compared to previous work in the area are also outlined in this
+section.
 
 % Understanding the GPGPU
 
 A chapter will then introduce the GPGPU architecture. Here I will
 describe \textit{CUDA}'s\footnote{NVIDIA's Compute Unified Device
   Architecture.} thread and memory model. I will then go on to
-describe new primitives as proposed by Sengupta et
-al.\citebook{Sengupta:2007}, which are helpful for performing
+describe a new primitive as proposed by Sengupta et
+al.\citebook{Sengupta:2007}, which will be helpful for performing
 scattering and compaction on wide SIMT architectures. Finally this
 section will focus on optimization techniques specific to CUDA, which
 will be applied incrementally in a case study of a \textit{reduction}
@@ -296,13 +296,14 @@ the actual implementation of kd-trees on a SIMT architecture.
 
 Having introduced kd-trees, the next chapter will deal with the
 algorithms for traversing such trees and ray tracing the scene. Here
-several optimizations to a basic raytracer will also be discussed an
+several optimizations to a basic raytracer will be discussed and
 incrementally added to the ray tracer. First though, an exhaustive ray
-tracer is presented and used to motivate the use of hierarchical data
-structures on the GPGPU. This section also includes a discussion of 2
-triangle intersection algorithms with respect to performance on the
-GPGPU. The section ends with a brief discussion of how colors and
-reflection and refraction are calculated.
+tracer is presented and will be used in the Results chapter to
+motivate the use of hierarchical data structures on the GPGPU. This
+section also includes a discussion of 2 triangle intersection
+algorithms with respect to performance on the GPGPU. The section ends
+with a brief discussion of how colors and reflection/refraction
+are calculated.
 
 % Results
 
