@@ -36,17 +36,18 @@ tested against all triangles, will then briefly be discussed. In
 \refchapter{chp:results} it will be compared to the hierachical
 version to motivate the continued use of data structures on GPGPU's.
 
-Next the hierarchical ray tracer implementes and optimizations are
+Next the hierarchical ray tracer implementations and optimizations are
 presented. This section will cover how to traverse the kd-tree created
 in the previous section. The optimizations will be added incrementally
 to the ray tracer and implementation details to each specific
 optimization will therefore be discussed alongside the theory. The
-optimized ray tracer will use techniques from \citebook{Aila2009} and
-\citebook{1230129} along with an optimization inspired by empty space
-splitting.
+optimized ray tracer will use the short-stack optimization from \horn,
+a packet scheme inspired by Wald et al.\citebook{Wald:2001:IRCRT} and
+an optimization inspired by empty space splitting, that utilizes the
+extra node bounding volume data computed while creating the tree.
 
-Finally I will briefly discuss shading and how reflections and
-refractions are calculated.
+Finally I will briefly discuss shading and how reflections are
+calculated.
 
 \section{Ray/Triangle Intersection}
 
@@ -65,12 +66,12 @@ performance boost.
 % distance the ray will travel, and ray/triangle tests which tells us
 % if the ray intersected the triangle.
 
-Ray/triangle intersection and can be broken down into 2 parts: A
+Ray/triangle intersection can be broken down into 2 parts: A
 \textit{ray/plane intersection} test, which computes the signed
 distance a ray will have to travel to intersect the plane spanned by a
 triangle, and a \textit{triangle inclusion} test, which tells us if
-the intersection point was located inside the triangle. The
-intersection inclussion test is usually performed by calculating the
+the plane intersection point was located inside the triangle. The
+inclussion test is usually performed by calculating the
 intersection points \textit{barycentric coordinates} within the
 triangle.
 
@@ -78,20 +79,19 @@ Every point on a triangle, $T$, with vertices $a$, $b$ and $c$, can be
 described as
 
 \begin{displaymath}
-  T(u,v) = (1-u-v)a + ub + vc
+  T(u,v) = (1-u-v)a + ub + vc, 0 \le u, 0 \le v, u+v \le 1
 \end{displaymath}
  
 where $(u, v)$ are the aforementioned barycentric coordinates. For a
-barycentric coordinate to be inside $T$ it must fulfill $0 \le u$, $0
-\le v$ and $u+v \le 1$.
+barycentric coordinate to be inside $T$ it must therefore fulfill $0
+\le u$, $0 \le v$ and $u+v \le 1$.
 
 Just as barycentric coordinates are used to linearly interpolate the
 vertex positions across the triangle, they are also important for
 interpolating other vertex attributes, such as normals or colors.
 
-The following 2 ray/triangle intersection methods will both compute
-the signed distance and barycentric coordinates for later use when
-shading.
+The following 2 ray/triangle intersection methods both computes
+the signed distance and barycentric coordinates.
 
 \subsection{Möller-Trumbore}
 
@@ -108,8 +108,8 @@ memory and/or precomputations.
 % Calculates the transformation that transform the triangle into the
 % unit triangle and applies this transformation to the ray.
 
-The basic idea of their algorithm is to find the affine transformation
-that when applied to the triangle $T(u,v)$, transforms it into the unit
+The basic idea of the algorithm is to find the affine transformation
+that, when applied to the triangle $T(u,v)$, transforms it into the unit
 triangle, $U$, which has vertices $\vecthreeT{0}{0}{0}$,
 $\vecthreeT{1}{0}{0}$ and $\vecthreeT{0}{1}{0}$. That affine
 transformation is then applied to the ray, $R(t) = O + tD$, which
@@ -118,7 +118,7 @@ the plane spanned by $T(u,v)$ and $u$ and $v$ are the barycentric
 coordinates of the intersection point.
 
 In short this boils down to solving the linear system of equations,
-which I will call the \textit{ray/triangle intersection equation}
+the \textit{ray/triangle intersection equation}
 
 \begin{displaymath}
   \begin{array}{rl}
@@ -194,7 +194,7 @@ the determinant and the matrix $\vecthreeT{Q \cdot E_2}{P \cdot T}{Q
   \cdot D}$. The high register usage can be remedied by performing
 precalulations per triangle as described in Chapter 5 of Sven Woops
 diploma thesis\citebook{woop:04:diplom}. The trade-off is a higher per
-triangle storage requirement for the scene.
+triangle storage requirement of the scene's geometry.
 
 % Also translates the ray using the unit triangle.
 
@@ -204,8 +204,8 @@ ray/unit triangle intersection problem, where the solution is
 trivially calculated.
 
 He observed that the triangle, $T$, can be transformed into the unit
-triangle, $U$, via an affine transformation, consisting of a rotation
-matrix, $m$, and a translation, $n$.
+triangle, $U$, by applying an affine transformation, consisting of a rotation
+matrix, $m$, and a translation, $n$, on each of $T$'s vertices, $v$.
 
 \begin{displaymath}
   U_v = m T_v + n, v \in \{a, b, c\}
@@ -282,7 +282,7 @@ The implementation is strightforward. $m$ and $n$ are computed and
 stored in 4 component vectors as $w_i = \left[m_i, n_i \right]$ prior
 to ray tracing. During ray/triangle intersection each $w_i$ vector can
 then be loaded into register memory one vector at a time. Compared to
-the Möller-Trumbore approach this saves 3 registers and yields a
+the Möller-Trumbore approach this saves 3 registers and can yield a
 sizeable performance increase, as can be seen in \reffig{TODO result
   section figure}. \fixme{TODO result section figure.}
 
@@ -301,10 +301,10 @@ $m$. This is only possible however, if the vertices are not used
 elsewhere in the ray tracer.
 
 
-\section{Exhaustive Ray Tracing}
+\section{Exhaustive Ray Tracing} \label{sec:exhaustive}
 
-Before directing our focus to the hierarchical ray tracers, we will
-first take a look at an exhaustive ray tracer.
+Before directing our focus on hierarchical ray tracers, we will first
+take a look at an exhaustive ray tracer.
 
 % GPU does bruteforcing well.
 
@@ -352,7 +352,8 @@ Hierarchical ray tracers provide a better upper bound than an
 exhaustive ray tracer. Given a hierachical data structure over $m$
 geometric primitives in a scene, then the nearest leaf node can be
 found in $O(\log m)$ time. For $n$ rays this yields a time complexity
-of $O(n \log m)$.
+of $O(n \log m)$, significantly better than the exhaustive ray tracer
+from \refsection{sec:exhaustive}.
 
 % Describe how the tree is traversed
 
@@ -361,15 +362,15 @@ traverse the tree and find the nearest leaf node. At each interior
 node, the ray needs to determine which of the child nodes are closest,
 in front of the ray and then traverse that node until it reaches a
 leaf node. At the leaf the ray needs to intersect each triangle in the
-leaf and determine which intersected triangle is closest, if any. If
+leaf and determine which intersected triangle, if any, is closest. If
 the ray intersects a triangle, then it reports this intersection, if
 not then it needs to continue traversing the tree. How this is done is
 the topic of \refsection{sec:kdRestart} and
 \refsection{sec:shortStack}. The generel algorithm for ray tracing a
-kd-tree can be seen in \refalg{alg:generelTraversal}.
+kd-tree can be seen in \refalg{alg:generelTracing}.
 
 \begin{algorithm}
-  \caption{A general kd-tree ray tracing algorithm}
+  \caption{A generel kd-tree ray tracing algorithm}
   \label{alg:generelTracing}
   \begin{algorithmic}
     \PROCEDURE{KDTraversal}
@@ -405,7 +406,7 @@ interior node the ray first needs to determine which of the 2 children
 are placed \textit{nearest} and \textit{farthest} along the rays
 direction. It then computes the signed distance from the ray to the
 nodes splitting plane. If this distance is below 0 then the plane is
-located behind the ray and the farthest child is visited. If the
+located behind the ray and the farthest child must be visited. If the
 distance is above 0 then the nearest node needs to be visited next. In
 addition the distance to the nearest splitting plane in front of the
 ray needs to be updated. This information is used to advance the ray
@@ -443,9 +444,9 @@ of the ray, $R(t) = t \vectwoT{2}{1} + \vectwoT{0}{1}$, entering the
 scene in the lower left would look like this: Upon entering the scene
 the ray first visits the root node, 0. Node 0 splits the scene along
 the x-axis at position 4 and the rays distance to that plane is then
-$(4 - 0) / 2 = 2$. The ray therefore proceeds to the childnode $2 > 0
-? 1 : 2 = 1$. The signed distance to node 1's splitting plane is $(4 -
-1) / 1 = 3$ and the ray proceeds to node $1 > 0 ? 3 : 2 = 3$, where it
+$(4 - 0) / 2 = 2$. The ray therefore proceeds to the childnode $2 > 0$ 
+? $1$ : $2 = 1$. The signed distance to node 1's splitting plane is $(4 -
+1) / 1 = 3$ and the ray proceeds to node $1 > 0$ ? $3$ : $2 = 3$, where it
 finds no primitives to intersect. The ray is then advance by the
 minimum splitting distance, which was 2, and becomes $R'(t) = R(t) + 2
 \vectwoT{2}{1} = t \vectwoT{2}{1} + \vectwoT{4}{3}$. Since the ray did
@@ -497,9 +498,9 @@ traversal process is restarted for $R'(t)$.
     set of the triangles they overlap.]{
     \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
         level/.style={sibling distance=40mm/#1}]
-      \node [node] (0){$\begin{array}{c}0\\x:4\end{array}$}
-        child {node [node] (1) {$\begin{array}{c}1\\y:4\end{array}$}
-          child {node [leaf] (e) {$\begin{array}{c}3\\\emptyset\end{array}$}}
+      \node [visitedNode] (0){$\begin{array}{c}0\\x:4\end{array}$}
+        child {node [visitedNode] (1) {$\begin{array}{c}1\\y:4\end{array}$}
+          child {node [visitedLeaf] (e) {$\begin{array}{c}3\\\emptyset\end{array}$}}
           child {node [node] (3) {$\begin{array}{c}4\\x:2\end{array}$}            
             child {node [leaf] (e) {$\begin{array}{c}7\\\{0\}\end{array}$}}
             child {node [leaf] (e) {$\begin{array}{c}8\\\{1\}\end{array}$}}
@@ -524,7 +525,7 @@ traversal process is restarted for $R'(t)$.
 The approach presented above, where kd-tree traversal is restarted at
 the root node, is known as \textit{kd-restart} and is one of the
 simplest algorithms for ray tracing kd-trees. The reason for the name
-is that if a ray does not intersect any triangles in the current leaf
+is that if a ray does not intersect any triangles in the nearest leaf
 node, then it advances past that leaf node and restarts traversal from
 the root of the tree.
 
@@ -587,12 +588,12 @@ The memory model of the GPGPU however isn't flexible enough for this
 approach, which requires either dynamically allocating more memory if
 the stack is filled or pre-allocating a \textit{large enough} stack in
 local memory to handle any given kd-tree, something that could require
-quite large amounts memory for huge scenes and might even require too
-much memory for practical use on todays graphics cards. The solution
-found by \horn{} was to use a \textit{short-stack}, a fixed-size,
-circular stack of $N$ elements, and then revert to using kd-restart
-if the stack underflows. In their research they found that a
-short-stack approach only visited 3\% more nodes compared to the
+quite large amounts of memory for huge scenes and might even require
+too much memory for practical use on todays graphics cards. The
+solution found by \horn{} was to use a \textit{short-stack}, a
+fixed-size, circular stack of $N$ elements, and then revert to using
+kd-restart if the stack underflows. In their research they found that
+a short-stack approach only visited 3\% more nodes compared to the
 unlimited stack CPU approach.
 
 % Only push usefull 'forward' nodes to the stack.
@@ -660,7 +661,7 @@ traversal. Using \reffig{fig:simpleSceneTree} as our scene again, we
 saw previously that the ray, $R(t) = t \vectwoT{2}{1} +
 \vectwoT{0}{1}$, will traverse nodes 0, 1, and 3. At node 0 the
 distance to the splitting plane was 2, meaning the splitting plane is
-in front and the not traversed child should be pushed to the
+in front and the child not traversed should be pushed to the
 short-stack. At node 1 the distance was 3, so the ray intersects node
 1's splitting plane after node 0's. Node 1's other child therefore
 doesn't need to be pushed to the stack. The result of the first
@@ -674,10 +675,10 @@ the ray intersects triangle 2.
 
 In this simple example having a short-stack only allows the ray to
 skip one node at the cost of maintaining and using a short-stack,
-which will cause a significant overhead. Consequently in this small
-example a short-stack will probably not provide any speedup. But
-imagine this simple tree as a subtree in a much larger scene, perhaps
-with 10 levels of nodes above it, then a short-stack implementation
+which will cause a significant overhead. Consequentlya short-stack
+will probably not provide any speedup in this small example. But
+imagine this simple tree as a subtree in a much larger scene, with
+perhaps 10 levels of nodes above it. Then a short-stack implementation
 allows the ray to skip those first 11 nodes, which can yield quite a
 performance improvement.
 
@@ -763,9 +764,9 @@ would trace multiple rays at a time to amortize the cost of traversing
 the tree. Unfortunatly tracing several rays in one thread increases
 thread incoherence across warps and \aila{} concludes that
 
-\quotebook{It is worth noticing that while-while is faster than packet
-  traversal in all cases, and with diffuse rays the difference is
-  approximately 2X.}{Aila2009}
+\quotebook{It is worth noticing that [kd-restart] is faster than
+  packet traversal in all cases, and with diffuse rays the difference
+  is approximately 2X.}{Aila2009}
 
 % As ray tracing becomes more complex packets also become less
 % effective, as rays will become more chaotic in nature and less
@@ -784,8 +785,8 @@ Since the rays are stored in a linear array, performing a
 \textit{sequantial ray/warp tracing} results in the ray/warps
 classification seen in \reffig{fig:sequentialRayWarp} for a 64x48
 resolution. As seen on the figure a large number of warps are
-intersecting the detailed dragon geometry, causing the threads od rays
-in the same warp that intersects the simple box to idle.
+intersecting the detailed dragon geometry, causing the rays in the
+same warp, which quickly intersects the simple box, to idle.
 
 Instead I propose to take advantage of the spatial coherence between
 neighbouring rays and structure them in warpsized screenspace packets
@@ -822,6 +823,11 @@ The calculations needed to transform sequential thread ids into
 packeted ray ids are quite simple, \refalg{alg:packet}, but the
 performance benefits of coherent rays and data fetches are enourmous.
 
+It should be noted that rays reflected multiple times may eventually
+diverge and no longer be spatially coherent, but this is no more of a
+problem than with the sequential approach and the screen packets will
+still speed up primary rays.
+
 \begin{algorithm}
   \caption{Converting a thread id to a ray id.}
   \label{alg:packet}
@@ -854,7 +860,7 @@ intersection checks.
 Since in a kd-tree the only information available to the ray is the
 position of the splitting plane and not the bounding volume of the
 node, the ray can easily get sidetracked and end up in leaf nodes,
-whose bounding box it does not even intersect. \reffig{fig:waywardRay}
+whose bounding box it does not even intersect. \refFig{fig:waywardRay}
 is a simple example of this. Extending the ray, $R(t) = t
 \vectwoT{1}{1} + \vectwoT{-4}{0}$, we can clearly see that it will
 intersect leaf node 2. Unfortunatly, when using kd-trees, the only
