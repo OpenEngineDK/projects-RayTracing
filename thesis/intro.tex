@@ -71,31 +71,45 @@ lightsource. Using advanced lighting algorithms such as \textit{photon
 lighting from reflective surfaces, color bleeding and even correct
 caustics can be simulated.
 
-\fixme{reference reflection image.}
-\fixme{Use reflection image from dragon age instead.}
 \begin{figure}
   \centering
-
-  \subfloat[A Whiskey Glass rendered by Zhou et al.\citebook{1409079}
-    using ray tracing and photon mapping. The scene includes shadow,
-    reflection and refraction rays, aswell as caustics from light rays
-    passing through the glass and whiskey, as can be seen on table.]{
-    \includegraphics[height=5cm]{WhiskeyGlass}
-    \label{fig:PhotonGlass}
+  
+  \subfloat[A cubemapped reflecting dragon.]{
+    \includegraphics[width=6cm]{cubemappedDragon}
+    \label{fig:cubeDragon}
   }
 
-  \subfloat[A glass of whiskey from a cutscene in StarCraft 2,
-    rendered with OpenGL. A reasonable approximation to refraction can
-    be seen on the glass sides, but the missing caustics leave the
-    table looking flat. This is especially noticeable when the glass is
-    moved.]{ 
-    \includegraphics[height=5cm]{StarcraftGlass}
-    \label{fig:StarCraftGlass}
+  \subfloat[A ray traced reflecting dragon. Notice the self reflecting
+  on the back and inside the mouth.]{
+    \includegraphics[width=6cm]{semiReflectingDragon}
+    \label{fig:rayReflectingDragon}
   }
-  \caption{Examples of a whiskey glass rendered with OpenGL and Photon
-  Mapping.}
-  \label{fig:caustics}
+  \label{fig:reflectingDragons}
 \end{figure}
+
+%% \begin{figure}
+%%   \centering
+
+%%   \subfloat[A Whiskey Glass rendered by Zhou et al.\citebook{1409079}
+%%     using ray tracing and photon mapping. The scene includes shadow,
+%%     reflection and refraction rays, aswell as caustics from light rays
+%%     passing through the glass and whiskey, as can be seen on table.]{
+%%     \includegraphics[height=5cm]{WhiskeyGlass}
+%%     \label{fig:PhotonGlass}
+%%   }
+
+%%   \subfloat[A glass of whiskey from a cutscene in StarCraft 2,
+%%     rendered with OpenGL. A reasonable approximation to refraction can
+%%     be seen on the glass sides, but the missing caustics leave the
+%%     table looking flat. This is especially noticeable when the glass is
+%%     moved.]{ 
+%%     \includegraphics[height=5cm]{StarcraftGlass}
+%%     \label{fig:StarCraftGlass}
+%%   }
+%%   \caption{Examples of a whiskey glass rendered with OpenGL and Photon
+%%   Mapping.}
+%%   \label{fig:caustics}
+%% \end{figure}
 
 
 Nevertheless, the photorealistic images rendered by ray tracers does
