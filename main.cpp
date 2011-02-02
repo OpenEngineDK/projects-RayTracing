@@ -110,6 +110,7 @@ ISceneNode* SetupScene(std::string name, Camera* cam){
 AntTweakBar* SetupAntTweakBar(PhotonRenderingView* rv, IRenderer* renderer,
                       IKeyboard* keyboard, IMouse* mouse){
     AntTweakBar* atb = new AntTweakBar();
+    atb->ToggleEnabled();
     keyboard->KeyEvent().Attach(*atb);
     mouse->MouseMovedEvent().Attach(*atb);
     mouse->MouseButtonEvent().Attach(*atb);

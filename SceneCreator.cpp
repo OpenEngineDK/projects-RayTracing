@@ -88,7 +88,7 @@ namespace OpenEngine {
         sceneRoot->AddNode(cornell);
 
         geomTrans->SetScale(Vector<3, float>(40, 40, 40));
-        geomTrans->SetPosition(Vector<3, float>(1, -7, -3));
+        geomTrans->SetPosition(Vector<3, float>(1, -7, -2));
         geomTrans->SetRotation(Quaternion<float>(0.0f, 0.5f, 0.0f));
         sceneRoot->AddNode(geomTrans);
         ISceneNode* dragon = LoadDragon();
