@@ -365,8 +365,8 @@ is + and the identity element is 0.
 \end{displaymath}
 
 Calculating the prefix-sum for $n$ elements on the CPU is trivial and
-can naively be done in $O(n)$ time by iterating over the data array
-from start to finish. A naive implementation in the GPU however would
+can naïvely be done in $O(n)$ time by iterating over the data array
+from start to finish. A naïve implementation in the GPU however would
 require each thread to sum up every previous value on it's own,
 yielding a time complexity of $O(n^2)$. Instead a dataparallel
 algorithm has to be devised that allows threads to cooperatively solve
@@ -513,10 +513,10 @@ however isn't the only part of the kd-tree creator where reductions
 are needed. It is also useful for calculating the bounding boxes of
 the kd-tree's nodes, used when performing median splits.
 
-In this section I will present a naive reduction algorithm and
+In this section I will present a naïve reduction algorithm and
 incrementally apply optimizations to it. The algorithm will use the
 binary operator \textbf{min} to find the smallest value from it's
-input list, but can be generalized to any reduction. The naive
+input list, but can be generalized to any reduction. The naïve
 algorithm is based on the above reduction and will have an efficient
 time complexity of $O(n)$, which is the best we can hope for. Instead
 of improving the time complexity the following optimizations will
@@ -537,9 +537,9 @@ The algorithm assumes that the length of the input list is a power of
 or the kernel itself can pad the data with the binary operators
 identity element, in our case $\infty$.
 
-\subsection{Naive implementation}
+\subsection{Naïve implementation}
 
-The naive algorithm, presented in \refalg{alg:naiveReduct}, is a
+The naïve algorithm, presented in \refalg{alg:naiveReduct}, is a
 straight forward implementation of the interleaved access pattern
 shown in \reffig{fig:segScan}. The algorithm uses the modulo operator
 to distinguish which threads are done and which should continue to
@@ -549,7 +549,7 @@ when needed. When the block has finished the reduction, the result
 is returned by the first thread.
 
 \begin{algorithm}
-  \caption{Naive reduction}
+  \caption{Naïve reduction}
   \label{alg:naiveReduct}
   \begin{algorithmic}
     \PROCEDURE{Reduce0}
