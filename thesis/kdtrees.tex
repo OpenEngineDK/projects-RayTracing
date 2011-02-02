@@ -8,12 +8,13 @@
 
 Before we in \refchapter{chp:rayTracing} discuss how the rays will
 traverse the hierarchical acceleration structure, we must first
-examine their structure.
+examine that structure.
 
 % Why KD tree compared to other structures
 
-As explained earlier in this thesis, I will be using kd-trees to
-accelerate ray tracing. This choice is based on several factors. 
+As mentioned earlier in this thesis, kd-trees was chosen as the data
+structure employed to accelerate ray tracing. This choice is based on
+several factors.
 
 % Cheap intersection / distance to tests. Havran p. 51
 
@@ -147,9 +148,9 @@ when accelerating sparse scenes.
       \drawTri{6,1}{4, 2}{4,0}
       
       % splits
-      \draw[color=green] (3,0) -- (3,4);
-      \draw[color=green] (0,1) -- (3,1);
-      \draw[color=green] (3,2) -- (6,2);
+      \draw (3,0) -- (3,4);
+      \draw (0,1) -- (3,1);
+      \draw (3,2) -- (6,2);
       
     \end{tikzpicture}
     \label{fig:binarySplit}
@@ -166,8 +167,8 @@ when accelerating sparse scenes.
       \drawTri{6,1}{4, 2}{4,0}
       
       % splits
-      \draw[color=red] (3,0) -- (3,4);
-      \draw[color=red] (0,1) -- (6,1);
+      \draw (3,0) -- (3,4);
+      \draw (0,1) -- (6,1);
       
     \end{tikzpicture}
     \label{fig:quadternarySplit}
@@ -199,13 +200,13 @@ to see why the choice fell on kd-trees as the acceleration structure.
 % algorithms efficiently on a SIMT architecture.
 
 In the rest of this chapter, we will first examine how kd-trees are
-built. In particular we will be studying different algorithms for
-choosing the splitting plane candidate and how to handle geometry
-intersecting the splitting plane. The latter part of this chapter
-deals with converting a sequential kd-tree construction algorithm into
-a dataparallel algorithm. Focus is split between upper tree nodes and
-lower tree nodes, once the number of geometric primitives per node
-goes below a certain threshold.
+built. In particular different algorithms for choosing the splitting
+plane candidate will be studied and how to handle geometry
+intersecting the splitting plane will be discussed. The latter part of
+this chapter deals with converting a sequential kd-tree construction
+algorithm into a dataparallel algorithm. Focus is split between upper
+tree nodes and lower tree nodes, once the number of geometric
+primitives per node goes below a certain threshold.
 
 \section{Building KD-trees}
 
@@ -244,14 +245,15 @@ new left and right axis aligned bounding box. Triangles are then
 distributed to each new bounding box by some decision algorithm and a
 new node is created that will contain references to it's 2 children.
 
-TODO bounding box needs to be recomputed
+\fixme{mention bounding box recomputing, probably not in this generel
+  case.}
 
 % Left balanced non pointer vs pointers
 
 In generel there are 2 ways a node can reference its child nodes. The
 first is \textit{balanced trees}, where children of a node can be
 addressed implicitly without the use of pointers. The reason for this
-is that nodes at teh same tree level are placed sequantially in
+is that nodes at the same tree level are placed sequantially in
 memory. The left and right child of node $n$ can then be indexed using
 $2n+1$ and $2n+2$. The parent of a node is indexed with $\lceil n/2
 \rceil - 1$.
@@ -276,8 +278,8 @@ To avoid balanced trees we can instead use pointers to reference the
 children. This allows for more flexibility when creating the tree.
 Unfortunatly it also means storing more data per node and in the case
 of slow memory access it could cause a memory latency
-bottleneck. However, in a survay of different techniques such as this,
-the added flexibility can be a benefit and in
+bottleneck. However, in a survay of different techniques such as this
+thesis, the added flexibility can be a benefit and in
 \refsection{sec:gpuEmptySpace} we shall see how this flexibility can
 be used to add empty space splitting, something that could not have
 been done as unobtrusive had the tree been balanced.
@@ -315,13 +317,14 @@ choose which dimensional spatial median to use. A \textit{round robin}
 fashion can be used, where the dimensions are cycled every iteration;
 ie. when creating the first node the plane will lie perpendicular to
 the x-axis, the children will then be split along the y-axis, in the
-next iteration the plane will split along the z-axis and so
-on. Another way of choosing the dimension is to split along the nodes
-bounding box' largest axis. This can be more costly than the round
-robin approach, since the entire bounding box will have to be
-calculated each iteration, but it will also produce the best results.
+next iteration the plane will split along the z-axis and then restart
+again at x. Another way of choosing the dimension is to split along
+the largest axis of the node's bounding box. This can be more costly
+than the round robin approach, since the entire bounding box will have
+to be calculated each iteration, but it will also produce the best
+results.
 
-The termination requirement for spatial median splitting is equally
+The termination requirement for spatial median splitting is equally as
 simple as choosing the splitting plane. If the number of triangles per
 node falls below a certain threshold, iteration stops.
 
@@ -348,13 +351,13 @@ kd-trees upper nodes, as is described in \refsection{sec:upperNodes}.
     \drawTri{5,2}{6,2}{5.5,0.5}
 
     % Split
-    \draw[color=red] (3,0) -- (3,4);
-    \draw[color=green] (5,0) -- (5,4);
+    \draw (3,0) -- (3,4);
+    \draw[dashed] (5,0) -- (5,4);
 
   \end{tikzpicture}
   \caption[An example of median splitting producing poor splits.]{An
-    example of how median splitting produces poor splits. The red line
-    is a median split. The green line is a more optimal splitting
+    example of how median splitting produces poor splits. The solid line
+    is a median split. The dashed one is a more optimal splitting
     plane, since it divides the large triangle from the small.}
   \label{fig:crapMedian}
 \end{figure}
@@ -379,24 +382,25 @@ where $C_N$ is the cost of traversing the node itself and is
 independent of the splitting plane, $C_L$ is the cost of traversing
 the left child node and $C_R$ is the cost of traversing the right
 child node. $A_n$ is the summed surface area of all primitives in node
-$n$. Choosing the best splitting plane is then simply using SAH to
-calculate the individual cost of all possible splitting planes and
-then choosing the one with lowest cost. Since the above cost
-evaluation does not take rays into account, SAH assumes that rays are
-uniformly distributed, infinite lines.
+$n$. Choosing the best splitting plane amounts to applying SAH to all
+possible splitting planes and then choosing the one with lowest
+cost. Since the above cost evaluation does not take rays into account,
+SAH assumes that rays are uniformly distributed, infinite lines.
 
 SAH can also automatically determine when to stop splitting. Assuming
-that the cost of a leaf is given as $C_{leaf} = |T| * C_i$, where
-$|T|$ is the number of triangles and $C_i$ is the cost of intersecting
-a triangle. SAH's termination criteria is then $C_{leaf} < C_N$.
+that the cost of intersecting a leaf is given as $C_{leaf} = |T| *
+C_i$, where $|T|$ is the number of triangles and $C_i$ is the cost of
+intersecting a triangle. SAH's termination criteria is then $C_{leaf}
+< C_N$, i.e. SAH terminates when the cost of intersecting a leaf
+becomes less than the cost of most optimal splitting plane.
 
 % Globlly optimal is infeasable for complex scenes and instead a local
 % greedy approximation is used.
 
-Calculating a globally optimal solution is infeasable, except for
-trivially simple scenes. A \textit{local greedy approximation} is used
-instead, where it is assumed that the created child nodes are
-leafs.
+Calculating a globally optimal solution using SAH is infeasable,
+except for trivially simple scenes. A \textit{local greedy
+  approximation} is used instead, where it is assumed that the created
+child nodes are leafs.
 
 Inspite of all the assumptions made by SAH, which in practice do not
 hold, it is still considered one of the best heuristics and produces
@@ -423,7 +427,7 @@ association in the resulting left and right child nodes change.
 The obvious choice is to use the 6 planes defined by the triangles
 axis aligned bounding box. While this is a simple and fast solution,
 it can create a bloated tree, since triangles do not necessarily
-overlap a nodes bounding box, simply because it's own bounding box
+overlap a node's bounding box, simply because its own bounding box
 does. An example can be seen on \reffig{fig:aabbSplit}
 
 \begin{figure}
@@ -444,7 +448,7 @@ does. An example can be seen on \reffig{fig:aabbSplit}
 \end{figure}
 
 Another problem with this approach is that bounding boxes of small
-nodes may be completely contained inside the geometries bounding box
+nodes may be completely contained inside the geometry's bounding box
 and thus none of the planes are actually useful split
 candidates. \reffig{fig:aabbContained} demonstrates this.
 
@@ -459,9 +463,9 @@ candidates. \reffig{fig:aabbContained} demonstrates this.
     \draw (1,1) -- (3,1) -- (3,2) -- (1,2) -- (1,1);
 
   \end{tikzpicture}
-  \caption[A tree node's bounding box contained in a triangle bouding
-    box.]{The kd-tree node's bounding box completely contained inside
-    the triangles bounding box.}
+  \caption[A tree node's bounding box contained in a triangle's
+    bounding box.]{The kd-tree node's bounding box completely
+    contained inside the triangles bounding box.}
   \label{fig:aabbContained}
 \end{figure}
 
@@ -543,10 +547,10 @@ allowing the ray to skip over the triangles above.
 \end{figure}
 
 
-Unfortunatly how large a percentage of a node that should be empty
-before empty sapce splitting can cut it away is highly scene specific,
+Unfortunatly, how large a percentage of a node that should be empty
+before empty space splitting can cut it away is highly scene specific,
 making this optimization less usefull in the general case. Like \zhou{}
-I have found that it performing an empty space split is optimal when a
+I have found that performing an empty space split is optimal when a
 bounding box is more than 25\% empty along one of the axes.
 
 % Dynamic empty space threshold, favor early out in the top of the tree.
@@ -664,7 +668,8 @@ themselves are not tested for inclusion, but their bounding boxes are.
                    median splitting on the nodes.}
 
                  \STATE{}
-                 \COMMENTIT{Perform empty space splitting.}
+                 \COMMENTIT{Perform Empty Space Splitting.}
+                 \COMMENTIT{See \refalg{alg:emptySpaceSplitting}.}
                  \STATE{...}
                  \STATE{}
 
@@ -772,6 +777,7 @@ these.
                      $emptyAddr$.}
                  \ENDFOR
 
+                 \STATE{}
                  \COMMENTIT{Compute the addresses to move the triangles to.}
                  \STATE{...}
                  \COMMENTIT{Split the triangles.}
