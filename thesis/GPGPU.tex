@@ -50,7 +50,7 @@ execution. This presents a problem in cases where the $n$'th thread
 depends on information from all previous $n-1$ threads, fx when
 splitting data or calculating the minimum or maximum values of $N$
 vertices. NVIDIA's CUDA remedies this somewhat by providing
-synchronization commands, but since these will only synchronize a
+synchronization commands, but since these can only synchronize a
 subset of the running threads, the overall problem remains the same.
 
 % Why not use GPU/CPU solutions
@@ -65,10 +65,11 @@ CPU. However, the following quote comes to mind:
   performed on the host or on the device.
 }{CUDABPG}
 
-So once it has decided to use the graphics card, one cannot simply
-transfer data back to the CPU in order to perform some operation and
-then transfer it back the GPU. The overhead would in many cases be too
-large to see any performance increase at all.
+So once it has been decided to use the graphics card, one cannot
+simply transfer data back to the CPU in order to perform some
+operation and then transfer it back the GPU. The transfer overhead
+would in many cases be too large to see any performance increase at
+all.
 
 %% Fortunatly Sengupta et al. has come up with a solution to the
 %% scattering problem, which will be discussed further in
@@ -79,21 +80,21 @@ large to see any performance increase at all.
 
 Finding effective GPGPU solutions to the above mentioned problems is
 the motivation for this chapter, which is structured as follows.
-First we shall take a look at the how threads and memory is organized
-on the graphics card. Understanding this will be critical in
-developing GPGPU efficient solutions. Then a section will present new
-GPGPU scan primitives, which will help us to perform data scattering
-and reductions on dataparallel hardware. I will then be discussing a
-couple interesting optimization techniques on the GPGPU, while
+First we shall take a look at how threads and memory are organized in
+CUDA. Understanding this will be critical in developing GPGPU
+efficient solutions. Then a section will present the GPGPU scan
+primitives, which will help us to perform data scattering and
+reductions on dataparallel hardware. I will then be discussing a
+couple of interesting optimization techniques on the GPGPU, while
 applying them to a reduction case study.
 
 
 
 \section{The Architecture of the GPGPU}
 
-To understand the architecture of the GPGPU, we must first understand the
-relationship and layout of threads and then the different kinds of
-memory available to threads.
+Understand the architecture of the GPGPU requires us to first
+understand the relationship and layout of threads and then the
+different kinds of memory available these threads.
 
 \subsection{The Thread Hierarchy}
 
@@ -102,11 +103,11 @@ memory available to threads.
 
 The graphics card is able to handle execution of more than a million
 threads sequentially. Simply considering a graphics application
-running at a 1440x900 resolution should convince anyone of this. While
-above I have argued that all of these threads are executed
-independently of each other, NVIDIA's CUDA architecture does place
-these threads in a hierarchy, which provides programmers with some
-control over thread execution.
+running at a resolution of 1440x900 where each fragment is shaded
+should convince anyone of this. While above I have argued that all of
+these threads are executed independently of each other, NVIDIA's CUDA
+architecture does place these threads in a hierarchy, which provides
+programmers with some control over thread execution.
 
 % warps
 
@@ -136,10 +137,10 @@ threads will evaluate to false and execute the alternate statement $x
 \leftarrow 32 - threadID$. Since the warp can only perform one
 distinct instruction at a time, it will have to first execute $x
 \leftarrow threadID$, leaving the last 16 threads idle. It next
-executes the else branch, meaning the first 16 threads are left
+executes the else branch, meaning the first 16 threads are now left
 idling. While this example shows how branching can hurt performance,
 when all threads in a warp do not take the same execution path,
-knowning that all threads in the warp always are synchronized can also
+knowning that all threads in a warp are always synchronized can also
 be very beneficial, as will be shown in
 \refsection{sec:loopUnrolling}.
 
@@ -166,7 +167,7 @@ element. Without the thread index this would not be possible.
 Blocks are themselves arranged into the uppermost part of the thread
 hierarchy, a 2 dimensional \textit{grid}. The amount of data being
 processed usually defines how large the grid will be. Just like a
-thread can access it's index og id, it can also lookup it's block
+thread can access it's index or id, it can also lookup it's block
 index inside the grid through the built-in \textit{blockDim}. A 2
 dimensional thread hierarchy can be seen on
 \reffig{fig:threadLayout}. The kernels in this thesis will usually
@@ -193,10 +194,10 @@ available through CUDA can be described.
 CUDA provides the programmer with 3 overall types of memory:
 \textit{global memory}, which can be accessed by any thread at any
 time and persist across kernel launches, \textit{shared memory}, which
-is shared across all threads in a block and persists as long as a
+is shared across all threads in a block and persists as long as that
 block is active, and finally \textit{registers}, which are local to
-each thread and only exists as long as it's thread. In the following
-a section is devoted to each memory space.
+each thread and only exists as long as it's thread. In the following a
+section is devoted to each memory space.
 
 \subsubsection{Global Memory}
 
@@ -205,32 +206,36 @@ a section is devoted to each memory space.
 Global memory, or \textit{device memory}, is the slowest form of
 memory on CUDA devices. As mentioned above it persists across kernel
 launches and is therefore perfect for storing input data to kernels
-and their results. To avoid making lots of memory transaction to and
-from global memory, a warp will try to coalesce it's threads memory
-access into as few transactions as possible. How well transactions are
-coalesced depends on the \textit{compute capability} of the used
-graphics card, with newer graphics cards being more flexible. Suffice
-it to say here that it is preferable to access memory sequantially,
-ie. the $n$'th thread in a warp accesses the $n$ data element.
+and their results. To avoid making lots of memory transactions to and
+from global memory, a warp will try to coalesce it's threads' global
+memory access into as few transactions as possible. How well
+transactions are coalesced depends on the \textit{compute capability}
+of the used graphics card, with newer graphics cards being more
+flexible. Suffice it to say here that it is preferable to access
+global memory sequentially, ie. the $n$'th thread in a warp accesses
+the $n$ data element.
 
 % Coalesced memory access, float4 instead of float3
 % The alignment requirement can be forced: stuct __align__(8) {
 
-Another restiction on coalescence is that data accessed must be of
-size 1, 2, 4, 8 or 16, otherwise memory transactions will be broken up
+Another restiction on coalescence is that data accessed must be
+\fixme{aligned to}of
+size 1, 2, 4, 8 or 16 bytes, otherwise memory transactions will be broken up
 into multiple requests. Due to this it is actually more efficient to
-use the CUDA built-in struct \textit{float4} than \textit{float3}.
+use the CUDA built-in struct \textit{float4} than \textit{float3} when
+accessing global memory.
 
-Requirements for coalescence on hardware of a specific compute
-capability is described in Appendix G of \citebook{CUDAPG}.
+For more information on coalescence see Appendix G in
+\citebook{CUDAPG}, where the coalescence requirements for hardware of
+a specific compute capability is described.
 
 % hiding latency
 
-The scheduler can also help with hiding latency from a global memory
+The scheduler will also help with hiding latency from a global memory
 access. If one warp is stalled while waiting for data, another
 resident warp that is ready to execute can be scheduled
 instead. Utilization of the graphics hardware is therefore heavily
-dependent on number of resident warps and maximizing this can be
+dependent on the number of resident warps and maximizing these can be
 important. Especially if memory accesses are scattered, like they will
 be when ray tracing a hierarchical structure.
 
@@ -240,7 +245,7 @@ be when ray tracing a hierarchical structure.
 
 Textures also reside in device memory space. Textures are read only
 but provide a fast texture cache, optimized for 2D spatial data
-locality. This makes texture access faster than pure global memory
+locality. This can make texture access faster than pure global memory
 access, as a device memory read is only performed on a cache miss. On
 current generation hardware, global memory can use shared memory as a
 cache, so textures will not be used in this project.
@@ -251,7 +256,7 @@ cache, so textures will not be used in this project.
 % Allows threads to share data
 
 Shared memory resides on the multiprocessors and is much faster than
-global memory. It is shared by threads across their block, which
+global memory. It is shared by all threads in the same block, which
 allows them to share data.
 
 % Used to overcome the limitations of global memory.
@@ -266,8 +271,8 @@ back to global memory.
 % Can be used as global cache on never CUDA architectures isntead of
 % textures and shared mem. nice we laike
 
-As mentioned above, on newer architecture multiprocessor memory can be
-used as a cache for global memory.
+As mentioned above, on newer architectures multiprocessor memory can
+be used implicitly as a cache for global memory.
 
 % TODO? Bank conflicts, nothing is ever as good as it seems.
 
@@ -297,7 +302,7 @@ bounds. The first tells the compiler the maximum number of threads per
 block that the kernel will ever be invoked with. The second argument
 tells the compiler how many blocks should be resident on the
 multiprocessor. The compiler can then use this information to derive
-upper bounds for the registers per thread.
+upper bounds for the registers available per thread.
 
 % TODO? example
 
@@ -308,13 +313,13 @@ upper bounds for the registers per thread.
 But the compiler cannot always simply reduce the number of registers
 to fit inside the launch bounds. If 20 register are needed to hold 20
 distinct values, then those values have to be stored somewhere else,
-if the programmer demands that only 16 registers be used. In that case
+when a programmer demands that only 16 registers be used. In that case
 the compiler can use \textit{local memory}, which resides in device
 memory and thus has the same high latency and low bandwith as global
 memory. Forcing a few registers into local memory to gain occupancy
-can be beneficial though, and since all threads will access local
-memory at the same time, there is a high probability that local memory
-access can be coalesced.
+can be beneficial though, and since all non-idling threads will access
+local memory at the same time, there is a high probability that local
+memory access can be coalesced.
 
 Kernel variables that the compiler will most likely place in local
 memory are:
@@ -347,10 +352,10 @@ knowledge derived from all threads preceding it. An example taken from
 \citebook{Sengupta:2007} is the calculation of a \textit{prefix-sum},
 which is a special case of \textit{exclusive scan}. Exclusive scan
 takes as input a data array, $[a_0, a_1, a_2, ...]$, and a binary
-operator, $\oplus$, with an identity element. The result of exclusive
-scan is then a new array with values $[0, a_0, a_0 \oplus a_1, a_0
-  \oplus a_1 \oplus a_2, ...]$. For prefix-sum the operator is + and
-the identity element is 0.
+operator, $\oplus$, with an identity element, $i$. The result of
+exclusive scan is then a new array with values $[i, a_0, a_0 \oplus
+  a_1, a_0 \oplus a_1 \oplus a_2, ...]$. For prefix-sum the operator
+is + and the identity element is 0.
 
 \begin{displaymath}
   \begin{array}{r r r r r r r r r}
@@ -360,18 +365,19 @@ the identity element is 0.
 \end{displaymath}
 
 Calculating the prefix-sum for $n$ elements on the CPU is trivial and
-can naively be done in $O(n)$ time. A naive implementation in the GPU
-however would require each thread to sum up every previous value on
-it's own, yielding a time complexity of $O(n^2)$. Instead a
-dataparallel algorithm has to be devised that allows threads
-cooperatively solve the problem and doing that as efficiently as the
-CPU, ie in $O(n)$ time.
+can naively be done in $O(n)$ time by iterating over the data array
+from start to finish. A naive implementation in the GPU however would
+require each thread to sum up every previous value on it's own,
+yielding a time complexity of $O(n^2)$. Instead a dataparallel
+algorithm has to be devised that allows threads to cooperatively solve
+the problem and doing that as efficiently as the CPU, ie in $O(n)$
+time.
 
 
 % Algorithm
 
 Sengupta et al.\citebook{Sengupta:2007}'s work-efficient prefix-sum
-requires to passes over the data, one called \textit{reduce} and
+requires two passes over the data, one called \textit{reduce} and
 another called \textit{down-sweep}. The algorithm is depicted on
 \reffig{fig:segScan}. The figure shows scan being applied to an array
 containing 8 elements. Cells with the same colors represent threads
@@ -417,7 +423,7 @@ the prefix-sum is vital to splitting data arrays on the GPU. Imagine
 an array of triangles that have been split by a splitting plane and
 must now be sorted into a new array, with all triangles in front of
 the plane sorted to the left and the triangles behind it sorted to the
-left. 
+right. 
 
 \begin{displaymath}
   \begin{array} {r r r r r r r}
@@ -436,41 +442,44 @@ nodes, so being able to do this efficiently on the GPGPU is imperative
 to creating kd-trees efficiently.
 
 Obviously the individual threads in a split kernel will have no idea
-where to move the triangle, since that depends on all previous
-threads. But by first computing the prefix-sum of the side array,
+which address to move the triangle to, since that depends on every
+other thread, e.g. $t_0$ must move its data to entry 3, which it can
+only do if it knows that it holds the first $r$ and that there are 3
+$l$'s. However, by first computing the prefix-sum of the side array,
 while adopting the convention that $r = 0$ and $l = 1$, splitting the
-triangles become quite easy. Taking the example above the prefix-sum
+triangles become quite easy. Taking the above example the prefix-sum
 becomes
 
 \begin{displaymath}
   \begin{array} {r r r r r r r}
+    side: & [0 & 1 & 0 & 1 & 1 & 0]\\
     prefix\text{-}sum: & [0 & 0 & 1 & 1 & 2 & 3]
   \end{array}
 \end{displaymath}
 
 and the total number of triangles moved left, $nf$, can be found by
-adding the last element in prefix-sum with the last element in sides,
-which yields $nf = 3 + 0 = 3$.
+adding the last element in $side$ with the last element in $prefix-sum$,
+which yields $nf \leftarrow 0 + 3 = 3$.
 
 The observant reader will have noticed that the prefix-sum actually
 calculates the addresses where the triangles on the left side should
 be moved to. All that remains is then to calculate the addresses of
-the triangles moved right. This is done using $right = threadId -
+the triangles moved right. This is done using $right \leftarrow threadId -
 prefix + nf$.
 
 \begin{displaymath}
   \begin{array} {r r r r r r r}
-    right: & [4 & 5 & 5 & 6 & 6 & 6]
+    right: & [3 & 4 & 4 & 5 & 5 & 5]
   \end{array}
 \end{displaymath}
 
 The address that a thread should move it's triangle to is then simply
-$address = side == l ? prefix : right$ and becomes
+$address \leftarrow side = l$ ? $prefix$ : $right$ and becomes
 
 
 \begin{displaymath}
   \begin{array} {r r r r r r r}
-    address: & [4 & 0 & 5 & 1 & 2 & 6]
+    address: & [3 & 0 & 4 & 1 & 2 & 5]
   \end{array}
 \end{displaymath}
 
@@ -502,17 +511,18 @@ In the previous section we saw that it is important to be able to
 perform reductions efficiently on the GPU. Calculating the prefix-sum
 however isn't the only part of the kd-tree creator where reductions
 are needed. It is also useful for calculating the bounding boxes of
-kd-nodes, used when performing median splits.
+the kd-tree's nodes, used when performing median splits.
 
 In this section I will present a naive reduction algorithm and
 incrementally apply optimizations to it. The algorithm will use the
-binary operator min to find the smallest value from it's input list,
-but can be generalized to any reduction. The naive algorithm will have
-an efficient time complexity of $O(n)$, which is the best we can hope
-for. Instead of improving this time complexity the following
-optimizations will instead focus on making better use of the GPU by
-hiding latency, using faster memory where available and reduce the
-number of calculations made.
+binary operator \textbf{min} to find the smallest value from it's
+input list, but can be generalized to any reduction. The naive
+algorithm is based on the above reduction and will have an efficient
+time complexity of $O(n)$, which is the best we can hope for. Instead
+of improving the time complexity the following optimizations will
+instead focus on making better use of the GPU by hiding latency, using
+faster memory where available and reduce the number of calculations
+made.
 
 % Works on individual blocks, must be run twice if input is too large
 % for one block to handle.
@@ -562,7 +572,7 @@ is returned by the first thread.
 
 \subsection{Coalesced Memory Access}
 
-Ofcourse there are several inefficiencies to correct in
+Of course there are several inefficiencies to correct in
 \refalg{alg:naiveReduct}. To start with we will focus on global memory
 access and update it to allow the warp to perform memory accesses
 coalesced. Since we're interested in a global reduction it won't
@@ -645,7 +655,7 @@ still accessing data sequentially, this change preserves coalescence.
 \subsection{Using Registers}
 
 Shared memory is quite fast, but registers are even faster. Inspecting
-the statement \MIN{$values[id]$}{$values[id + offset]$}, we can see
+the statement \MIN{$sValues[id]$}{$sValues[id + offset]$}, we can see
 that the $id$'th thread will always acces the value stored in
 $sValues[id]$ and is the only thread writting to that cell. This
 provides us with the possibility to use a register to store this value
@@ -698,22 +708,22 @@ of the threads in our warps will loop the same amount of times, the
 warps still incur an overhead by having to perform the
 indirection. Secondly unrolling removes the overhead of updating the
 $offset$ variable, which is a quite significant portion of the work
-performed by the kernel when the loop body is as small as
-ours. Thirdly we can take advantage of warp synchronization and remove
-explicit synchronization invocations when offset becomes less than the
-warpsize.
+performed by the kernel when the body inside the loop is this
+small. Thirdly we can take advantage of warp synchronization and
+remove explicit synchronization invocations when offset becomes less
+than the warpsize.
 
 % Then move the first up to where data is loaded into shared mem. And
 % move the last reduction down where the final result is written.
 
 After having unrolled the loop, it is now also possible to move thread
 0's last reduction, \MIN{$rValue$}{$sValues[1]$}, down to where the
-  result is output. We are also able to inline the first reduction
-  where the data is copied from global memory to shared memory,
-  reducing the shared memory requirements by
-  half. \refalg{alg:unrollReduct} shows the inlining of the first and
-  final reduction. Unrolling the loop is quite straightforward, but
-  takes a lot of space and have therefore been omitted here. 
+result is output. We are also able to inline the first reduction where
+the data is copied from global memory to shared memory, reducing the
+shared memory requirements by half per
+block. \refalg{alg:unrollReduct} shows the inlining of the first and
+final reduction. Unrolling the loop is quite straightforward, but
+takes a lot of space and have therefore been omitted here.
 
 % Left as an exercise to the reader :)
 
