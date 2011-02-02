@@ -73,17 +73,19 @@ caustics can be simulated.
 
 \begin{figure}
   \centering
-  
   \subfloat[A cubemapped reflecting dragon.]{
     \includegraphics[width=6cm]{cubemappedDragon}
     \label{fig:cubeDragon}
   }
-
-  \subfloat[A ray traced reflecting dragon. Notice the self reflecting
-  on the back and inside the mouth.]{
+  \hspace{10pt}
+  \subfloat[A ray traced reflecting dragon. Notice the self reflection
+    on the back and inside the mouth.]{
     \includegraphics[width=6cm]{semiReflectingDragon}
     \label{fig:rayReflectingDragon}
   }
+  \caption[Cubemapping vs raytracing for reflections.]{An example of
+    the difference between using cubemapping or raytracing for
+    reflections.}
   \label{fig:reflectingDragons}
 \end{figure}
 
@@ -97,7 +99,6 @@ caustics can be simulated.
 %%     \includegraphics[height=5cm]{WhiskeyGlass}
 %%     \label{fig:PhotonGlass}
 %%   }
-
 %%   \subfloat[A glass of whiskey from a cutscene in StarCraft 2,
 %%     rendered with OpenGL. A reasonable approximation to refraction can
 %%     be seen on the glass sides, but the missing caustics leave the
