@@ -43,7 +43,7 @@ to the ray tracer and implementation details to each specific
 optimization will therefore be discussed alongside the theory. The
 optimized ray tracer will use the short-stack optimization from \horn,
 a packet scheme inspired by Wald et al.\citebook{Wald:2001:IRCRT} and
-an optimization inspired by empty space splitting, that utilizes the
+an optimization inspired by empty space maximizing, that utilizes the
 extra node bounding volume data computed while creating the tree.
 
 Finally I will briefly discuss shading and how reflections are
@@ -851,11 +851,11 @@ rays.
 
 \subsection{Skipping Leaf Nodes}
 
-% Inspired by empty space splitting and combines BVH and KD tree
+% Inspired by empty space maximizing and combines BVH and KD tree
 
 The final ray tracer optimization presented in this thesis is inspired
-by the early out option provided by empty space splitting and combines
-the simple traversal of kd-trees with the bvh-tree's rigorous
+by the early out option provided by empty space maximization and
+combines the simple traversal of kd-trees with the bvh-tree's rigorous
 intersection checks.
 
 Since in a kd-tree the only information available to the ray is the
@@ -872,12 +872,12 @@ a lot of empty space that spatial median splitting and empty space
 maximization doesn't register. An example of this is the great hall in
 the Sponza scene on the frontpage.
 
-Empty space splitting has shown us that providing an early out option
-for rays that would otherwise get sidetracked can increase performance
-substantially and that also applies to this case. Since the leafs
-bounding box is known from the tree creation phase, it can be used to
-quickly skip false leaf nodes and save a ray lots of triangle
-intersection testing.
+Empty space maximization has shown us that providing an early out
+option for rays that would otherwise get sidetracked can increase
+performance substantially and that also applies to this case. Since
+the leafs bounding box is known from the tree creation phase, it can
+be used to quickly skip false leaf nodes and save a ray lots of
+triangle intersection testing.
 
 This optimization is not possible with the kd-tree alone and will thus
 not be a solution to static geometry, where the kd-tree is only

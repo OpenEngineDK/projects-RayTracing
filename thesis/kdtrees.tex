@@ -284,7 +284,7 @@ of slow memory access it could cause a memory latency
 bottleneck. However, in a survay of different techniques such as this
 thesis, the added flexibility can be a benefit and in
 \refsection{sec:gpuEmptySpace} we shall see how this flexibility can
-be used to add empty space splitting, something that could not have
+be used to add empty space maximizing, something that could not have
 been done as unobtrusive had the tree been balanced.
 
 
@@ -303,7 +303,7 @@ leaf.
 % Different splitting planes heuristics.
 
 In the following section 2 algorithms that solves this problem is
-presented and then extended with empty space splitting.
+presented and then extended with empty space maximizing.
 
 
 \subsubsection{Spatial Median}
@@ -510,16 +510,16 @@ the \textit{seperating axis theorem}, as described by Möller in
 \citebook{Moller:2005}.
 
 
-\subsubsection{Empty Space Splitting}
+\subsubsection{Empty Space Maximizing}
 
 An effective optimization to kd-trees is \textit{empty space
-  maximization} or empty space splitting. The idea behind the
-optimization is to cut away large empty parts of the scene, by placing
-empty leaf nodes in the upper parts of the tree. This will provide the
-rays with an early out option, skipping a large portion of the
-geometry. An example can be seen in \reffig{fig:emptySpaceExample},
-where the gray shaded node has been created as an empty space node,
-allowing the ray to skip over the triangles above.
+  maximization}. The idea behind the optimization is to cut away large
+empty parts of the scene, by placing empty leaf nodes in the upper
+parts of the tree. This will provide the rays with an early out
+option, skipping a large portion of the geometry. An example can be
+seen in \reffig{fig:emptySpaceExample}, where the gray shaded node has
+been created as an empty space node, allowing the ray to skip over the
+triangles above.
 
 \begin{figure}
   \centering
@@ -551,8 +551,8 @@ allowing the ray to skip over the triangles above.
   \end{tikzpicture}
 
   \vspace{3mm}
-  \parbox{6cm}{\caption[Empty Space Splitting.]{An example of empty
-      space splitting. The grey ball shaded area represents an empty
+  \parbox{6cm}{\caption[Empty space maximization.]{An example of empty
+      space maximizing. The grey ball shaded area represents an empty
       node and allows the ray to leap across it and skip intersection
       tests with the 5 triangles above.}\label{fig:emptySpaceExample}}
 \end{figure}
@@ -679,8 +679,8 @@ themselves are not tested for inclusion, but their bounding boxes are.
                    median splitting on the nodes.}
 
                  \STATE{}
-                 \COMMENTIT{Perform Empty Space Splitting.}
-                 \COMMENTIT{See \refalg{alg:emptySpaceSplitting}.}
+                 \COMMENTIT{Perform empty space maximization.}
+                 \COMMENTIT{See \refalg{alg:emptySpaceMaximizing}.}
                  \STATE{...}
                  \STATE{}
 
@@ -749,7 +749,7 @@ these.
 
 
 
-\subsubsection{Empty space splitting}\label{sec:gpuEmptySpace}
+\subsubsection{Empty space maximizing}\label{sec:gpuEmptySpace}
 
 % Plugable solution, add the new nodes after the ones in nextlist.
 
@@ -757,7 +757,7 @@ these.
 
 \begin{algorithm}
   \caption{Calculate Empty Space Maximization}
-  \label{alg:emptySpaceSplitting}
+  \label{alg:emptySpaceMaximizing}
   \begin{algorithmic}
     \PROCEDURE{CreateUpperNodes}
                {\VAR{activeList}:list \textit{\color{gray}//list of kd-nodes not processed yet}}
@@ -771,7 +771,7 @@ these.
                  \STATE{...}
 
                  \STATE{}
-                 \COMMENTIT{Perform empty space splitting.}
+                 \COMMENTIT{Perform empty space maximization.}
                  \DECLARE{$emptySplits, emptyAddr$}{list}
                  \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
                  \ASSIGN{$emptySplits[i]$}{$0$}

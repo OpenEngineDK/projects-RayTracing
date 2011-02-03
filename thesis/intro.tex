@@ -309,7 +309,7 @@ hierachical datatstructure, even on the GPU.
 The kd-tree used for accelerating ray tracing will be based on the
 implementation described by \zhou.  Improvements to the quality of the
 tree include which algorithm to use when determining where to split
-the scene and \textit{empty space splitting}, which facilitates an
+the scene and \textit{empty space maximization}, which facilitates an
 early out option for the ray tracer.
 
 The thesis will also look at alternate ways of assigning triangles to
@@ -330,7 +330,7 @@ phase.
 Optimizations to the ray tracer will be inspired by the work done by
 \horn , but also include investigation of optimal ray/triangle
 intersection algorithms, an improvement inspired by empty space
-splitting during kd-tree creation and simply structuring the rays in a
+maximization during kd-tree creation and simply structuring the rays in a
 manner that favors SIMD execution.
 
 
