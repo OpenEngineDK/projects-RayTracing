@@ -147,14 +147,14 @@ namespace OpenEngine {
         splitScheme->name = "Splitting Scheme";        
         splitScheme->AddEnum("Box", TriangleMap::BOX);
         splitScheme->AddEnum("Divide", TriangleMap::DIVIDE);
-        splitScheme->AddEnum("Split", TriangleMap::SPLIT);
+//splitScheme->AddEnum("Split", TriangleMap::SPLIT);
         values.push_back(splitScheme);
 
         RWValueCall<TriangleMapWrapper, bool> *emptySplit
             = new RWValueCall<TriangleMapWrapper, bool>
             (*triangleMap, &TriangleMapWrapper::IsSplittingEmptySpace,
              &TriangleMapWrapper::SplitEmptySpace);
-        emptySplit->name = "Empty space splits";
+        emptySplit->name = "Maximize empty space";
         values.push_back(emptySplit);
 
         RWValueCall<TriangleMapWrapper, bool> *propagateAabbs
