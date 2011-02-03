@@ -18,11 +18,12 @@ ray tracing entirely on the GPU.
 \begin{figure}
   \centering
   \includegraphics[width=8cm]{GFLOPS}
-  \caption[Comparison of floating point operations per second on GPU's
-    and CPU's.]{A comparison of the development of floating point
-    operations per second on GPU's and CPU's. \\The figure is borrowed
-    from Chapter 1 in \citebook{CUDAPG}.}
-  \label{fig:gflops}
+  
+  \parbox{9cm}{\caption[Comparison of floating point operations per
+      second on GPU's and CPU's.]{A comparison of the development of
+      floating point operations per second on GPU's and CPU's. \\The
+      figure is borrowed from Chapter 1 in
+      \citebook{CUDAPG}.}\label{fig:gflops}}
 \end{figure}
 
 % What is different form CPUs
@@ -392,11 +393,11 @@ yielding the final reduced value.
 \begin{figure}
   \centering
   \includegraphics[width=4cm]{SegmentedScan}
-  \caption[Multi-block segmented scan communication.]{An example of
-    multi-block segmented scan communication. Cells with the same
-    shading belong to the same block. \\The figure is borrowed from
-    \citebook{Sengupta:2007}.}
-  \label{fig:segScan}
+
+  \parbox{5cm}{\caption[Multi-block segmented scan communication.]{An
+      example of multi-block segmented scan communication. Cells with
+      the same shading belong to the same block. \\The figure is
+      borrowed from \citebook{Sengupta:2007}.}\label{fig:segScan}}
 \end{figure}
 
 During down-sweep the data is pumped back out into the array, reusing
