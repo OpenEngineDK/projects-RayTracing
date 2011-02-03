@@ -832,7 +832,7 @@ these.
                   \ENDFOR
                   \ASSIGN{$splittingPlaneList[i] \leftarrow p$}{Split candidate with minimal weighted area}
                   \ASSIGN{$SAH$}{$p.weightedArea / i.summedArea + C_N$}
-                  \ASSIGN{$leafList[i]$}{$SAH > C_{leaf}$}
+                  \ASSIGN{$leafList[i]$}{$SAH < C_{leaf}$}
                 \ENDFOR
               }
   \end{algorithmic}
@@ -880,14 +880,14 @@ these.
                     \ASSIGN{$bmp_R$}{$i.triangles \cap s.right$}
                     \ASSIGN{$C_R$}{$\parallel bmp_R \parallel$}
                     \ASSIGN{$largestSubtree$}{\MAX{$C_L$}{$C_R$}}
-                    \ASSIGN{$relation$}{\MIN{$C_L$}{$C_R$} / $largestSubtree$}
+                    \ASSIGN{$smallestSubtree$}{\MIN{$C_L$}{$C_R$}}
                     \IF{$largestSubtree < p.largestSubtree$ \textbf{or} \\
-                      $(largestSubtree = p.largestSubtree$ \textbf{and} $relation < p.relation)$}
+                      $(largestSubtree = p.largestSubtree$ \textbf{and} $smallestSubtree < p.smallestSubtree$}
                       \ASSIGN{$p$}{$s$}
                     \ENDIF
                   \ENDFOR
                   \ASSIGN{$splittingPlaneList[i]$}{$p$}
-                  \ASSIGN{$leafList[i]$}{$p.largestSubtree > max_{tris}$}
+                  \ASSIGN{$leafList[i]$}{$(p.largestSubtree + p.largestSubtree) / 2 + C_N < C_{leaf}$}
                 \ENDFOR
               }
   \end{algorithmic}

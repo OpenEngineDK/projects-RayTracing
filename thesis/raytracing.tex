@@ -823,10 +823,11 @@ The calculations needed to transform sequential thread ids into
 packeted ray ids are quite simple, \refalg{alg:packet}, but the
 performance benefits of coherent rays and data fetches are enourmous.
 
-It should be noted that rays reflected multiple times may eventually
-diverge and no longer be spatially coherent, but this is no more of a
-problem than with the sequential approach and the screen packets will
-still speed up primary rays.
+It should be noted that there exists a possibility that rays reflected
+multiple times may eventually diverge completely and no longer be
+spatially coherent, but this is no more of a problem than with the
+sequential approach and the screen packets will still speed up primary
+rays.
 
 \begin{algorithm}
   \caption{Converting a thread id to a ray id.}
@@ -866,11 +867,10 @@ is a simple example of this. Extending the ray, $R(t) = t
 intersect leaf node 2. Unfortunatly, when using kd-trees, the only
 information available to the ray is that the node is split along the
 y-axis at position 3, which means it needs to check everything below
-$y=3$ for intersection. 
-
-\fixme{Problem when the ray travels through a lot of empty space that
-  empty space splitting doesn't pick up on, such as sponza. Then it
-  goes boom!}
+$y=3$ for intersection. This is a problem when the ray travels through
+a lot of empty space that spatial median splitting and empty space
+maximization doesn't register. An example of this is the great hall in
+the Sponza scene on the frontpage.
 
 Empty space splitting has shown us that providing an early out option
 for rays that would otherwise get sidetracked can increase performance
