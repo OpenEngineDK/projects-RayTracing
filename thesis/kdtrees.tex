@@ -627,10 +627,45 @@ themselves are not tested for inclusion, but their bounding boxes are.
 
 \section{Adopting the algorithms for GPGPUs}
 
-% Needs to exploit the dataparallel nature of GPGPU's
+% Needs to exploit the dataparallel nature of GPGPU's A GPGPU needs as
+% many of its multiprocessors occupied as possibly for optimal
+% performance.
 
-% A GPGPU needs as many of its multiprocessors occupied as possibly
-% for optimal performance.
+The generel kd-tree construction method presented in
+\refalg{alg:kdTreeCreator} recursively constructs \textit{one} tree
+node at a time in a \textit{depth-first} manor. In order to
+efficiently utilize the GPGPU as many of it's multiprocessors as
+possible must be fully occupied, this means \refalg{alg:kdTreeCreator}
+restructured to work on multiple nodes at a time. Fortunatly this is
+exactly what \zhou did by changing the kd-tree constructor to work on
+a list of nodes and recursively create the tree in
+\textit{breadth-first} order, as outlines in
+\refalg{alg:bfsKDTreeCreator}.
+
+\begin{algorithm}
+  \caption{BFS Recursive kd-tree constructor}
+  \label{alg:bfsKDTreeCreator}
+  \begin{algorithmic}
+    \PROCEDURE{ConstructKDTree}
+              {$activeNodes$ : Node List  \textit{\color{gray}//list of kd-nodes not processed yet}}
+              {$nextNodes$ : Node List}
+              {\PARALLELFOR{$node$ \textbf{in} $activeNodes$}
+                 \IF{IsLeaf($node$)}
+                   \ASSIGN{$node$}{Leaf($node$)}
+                 \ELSE
+                   \COMMENTIT{Determine the splitting plane.}
+                   \ASSIGN{$plane$}{DeterminePlane($node$)}
+                   \ASSIGN{$(node_L, node_R)$}{Split($node, p$)}
+                   \COMMENTIT{Associate the geometry with a node and add it to the next list.}
+                   \ASSIGN{$node_L.geometry$}{AssociateGeometry($node.geometry, node_L$)}
+                   \STATE{$nextNodes$.Add($node_L$)}
+                   \ASSIGN{$node_R.geometry$}{AssociateGeometry($node.geometry, node_R$)}
+                   \STATE{$nextNodes$.Add($node_R$)}
+                 \ENDIF
+               \ENDFOR}
+  \end{algorithmic}
+\end{algorithm}
+
 
 % Use GPU for computations and let CPU handle minor book keeping.
 
@@ -643,10 +678,10 @@ themselves are not tested for inclusion, but their bounding boxes are.
 % the cost computation over triangles. 
 
 % SAH assumes that each split results in 2 leaf nodes, which is
-% practically always wrong at high level nodes, therefore
-% \citebook{1409079} suggests splitting along the spatial median of the
-% nodes longest axis. To do this a preprocess pass is required to
-% compute tight AABB's for each triangle.
+% practically always wrong at high level nodes, therefore \zhou{}
+% suggests splitting along the spatial median of the nodes longest
+% axis. To do this a preprocess pass is required to compute tight
+% AABB's for each triangle.
 
 % Creating the KD-tree in BFS will optimize GPU performance at lower
 % tree levels, as there would be thousands of nodes created at the
@@ -657,21 +692,20 @@ themselves are not tested for inclusion, but their bounding boxes are.
   \label{alg:kdUpperNodeCreator}
   \begin{algorithmic}
     \PROCEDURE{CreateUpperNodes}
-               {\VAR{activeList}:list \textit{\color{gray}//list of kd-nodes not processed yet}}
-               {\VAR{leafList,nextList}:list}{
+               {\VAR{activeNodes} : Node List}
+               {\VAR{leafs,nextNodes} : Node List}{
 
                  \COMMENTIT{First split all triangles into segments.}
-                 \DECLARE{$segmentList$}{list}
-                 \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
-                   \STATE{Split all triangles contained in node $i$
-                     into fixed sized segments and those in
-                     $segmentList$.}
+                 \DECLARE{$segmentList$}{List}
+                 \PARALLELFOR{$node$ \textbf{in} $activeNodes$}
+                   \STATE{Split all triangles contained in $node$ into
+                     fixed sized segments and those in $segmentList$.}
                  \ENDFOR
                  \STATE{}
                  \COMMENTIT{Then compute each triangles bounding box
                    using reduction as described in
                    \refsection{sec:reduce}.}
-                 \PARALLELFOR{segment \VAR{s} \textbf{in} segmentList}
+                 \PARALLELFOR{$segment$ \textbf{in} $segmentList$}
                    \STATE{Reduce the individual segments.}
                  \ENDFOR
                  \STATE{Using segmented reduction as described in
@@ -685,24 +719,21 @@ themselves are not tested for inclusion, but their bounding boxes are.
                  \STATE{}
 
                  \COMMENTIT{Compute the addresses to move the triangles to.}
-                 \DECLARE{$splitSide, splitAddr$}{list}
-                 \PARALLELFOR{segment \VAR{s} \textbf{in} segmentList}
-                   \ASSIGN{$triangles$}{$s$.triangles}
-                   \PARALLELFOR{triangle \VAR{t} \textbf{in} triangles}
+                 \DECLARE{$splitSide, splitAddr$}{List}
+                 \PARALLELFOR{$segment$ \textbf{in} $segmentList$}
+                   \PARALLELFOR{$triangle$ \textbf{in} $segment.triangles$}
                    \STATE{Associate each triangle to its owner nodes
                      children, with respect the owner node's splitting
                      plane. Store the information in $splitSide$.}
                    \ENDFOR
                  \ENDFOR
-                 \STATE{Using Scan compute the prefix-sum of
-                   $splitSide$ and store it in $splitAddr$.}
+                 \ASSIGN{$splitAddr$}{\textbf{Prefix-Sum}($splitSide$)}
 
                  \STATE{}
 
                  \COMMENTIT{Split the triangles.}
-                 \PARALLELFOR{segment \VAR{s} \textbf{in} segmentList}
-                   \ASSIGN{$triangles$}{$s$.triangles}
-                   \PARALLELFOR{triangle \VAR{t} \textbf{in} triangles}
+                 \PARALLELFOR{$segment$ \textbf{in} $segmentList$}
+                   \PARALLELFOR{$triangle$ \textbf{in} $segment.triangles$}
                      \STATE{Split the triangles to have triangles
                        associated with the same node placed
                        sequentially. Triangles belonging to leaf nodes
@@ -713,15 +744,15 @@ themselves are not tested for inclusion, but their bounding boxes are.
                  \STATE{}
 
                  \COMMENTIT{Split nodes.}
-                 \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
+                 \PARALLELFOR{$node$ \textbf{in} $activeList$}
                    \STATE{Split the nodes into child
                      nodes. $splitSide$ and $splitAddr$ is used to
                      directly calculate the child nodes triangle index
                      and range.}
                    \IF{$node.child$.size < $minimumSize$}
-                     \STATE{$leafList$.Add($node.child$)}
+                     \STATE{$leaf$.Add($node.child$)}
                    \ELSE
-                     \STATE{$nextList$.Add($node.child$)}
+                     \STATE{$nextNodes$.Add($node.child$)}
                    \ENDIF
                  \ENDFOR
   }
@@ -760,8 +791,8 @@ these.
   \label{alg:emptySpaceMaximizing}
   \begin{algorithmic}
     \PROCEDURE{CreateUpperNodes}
-               {\VAR{activeList}:list \textit{\color{gray}//list of kd-nodes not processed yet}}
-               {\VAR{leafList,nextList}:list}{
+               {\VAR{activeNodes} : Node List}
+               {\VAR{leafs,nextNodes} : Node List}{
 
                  \COMMENTIT{First split all triangles into segments.}
                  \STATE{...}
@@ -773,16 +804,16 @@ these.
                  \STATE{}
                  \COMMENTIT{Perform empty space maximization.}
                  \DECLARE{$emptySplits, emptyAddr$}{list}
-                 \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
+                 \PARALLELFOR{$node$ \textbf{in} $activeList$}
                  \ASSIGN{$emptySplits[i]$}{$0$}
-                   \FOREACH{side $s$}{$i$}
-                     \IF{$i$ has more than $C_e$ empty space on side $s$}
+                   \FOREACH{$side$}{$node.boundingBox$}
+                     \IF{$node$ has more than $C_e$ empty space on $side$}
                        \ASSIGN{$emptySplits[i]$}{$emptySplits[i] + 1$}
                      \ENDIF
                    \ENDFOR
                  \ENDFOR
                  \ASSIGN{$emptyAddr$}{\textbf{Prefix-Sum}($emptySplits$)}
-                 \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
+                 \PARALLELFOR{$node$ \textbf{in} $activeList$}
                    \STATE{Cut of empty space and place new nodes
                      sequentially at addresses specified in
                      $emptyAddr$.}
@@ -816,8 +847,8 @@ these.
   \label{alg:calcSAHCost}
   \begin{algorithmic}
     \PROCEDURE{ComputeSAHCost}
-              {$activeList$ : list}
-              {$splittingPlaneList, leafList$ : list}{
+              {$activeNodes$ : Node List}
+              {$splittingPlanes$ : Plane List, $leafs$ : Boolean List}{
                 \COMMENTIT{Calculate SAH for each split candidate and
                   return the split candidate with minimal SAH.}
                 \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
@@ -830,9 +861,9 @@ these.
                     \ASSIGN{$A_R$}{summed surface area of $bmp_R$}
                     \ASSIGN{$weightedArea$}{$C_L * A_L + C_R * A_R$}
                   \ENDFOR
-                  \ASSIGN{$splittingPlaneList[i] \leftarrow p$}{Split candidate with minimal weighted area}
+                  \ASSIGN{$splittingPlanes[i] \leftarrow p$}{Split candidate with minimal weighted area}
                   \ASSIGN{$SAH$}{$p.weightedArea / i.summedArea + C_N$}
-                  \ASSIGN{$leafList[i]$}{$SAH < C_{leaf}$}
+                  \ASSIGN{$leafs[i]$}{$SAH < C_{leaf}$}
                 \ENDFOR
               }
   \end{algorithmic}
@@ -866,8 +897,8 @@ these.
   \label{alg:calcBalancedCost}
   \begin{algorithmic}
     \PROCEDURE{ComputeBalancedSplit}
-              {$activeList$ : list}
-              {$splittingPlaneList, leafList$ : list}{
+              {$activeNodes$ : Node List}
+              {$splittingPlanes$ : Plane List, $leafs$ : Boolean List}{
                 \COMMENTIT{Compute the relation between left and right
                   triangles for each split candidate and return the
                   candidate with best relation and presumably lowest
@@ -886,8 +917,8 @@ these.
                       \ASSIGN{$p$}{$s$}
                     \ENDIF
                   \ENDFOR
-                  \ASSIGN{$splittingPlaneList[i]$}{$p$}
-                  \ASSIGN{$leafList[i]$}{$(p.largestSubtree + p.largestSubtree) / 2 + C_N < C_{leaf}$}
+                  \ASSIGN{$splittingPlanes[i]$}{$p$}
+                  \ASSIGN{$leafs[i]$}{$(p.largestSubtree + p.largestSubtree) / 2 + C_N < C_{leaf}$}
                 \ENDFOR
               }
   \end{algorithmic}
