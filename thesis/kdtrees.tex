@@ -581,6 +581,7 @@ themselves are not tested for inclusion, but their bounding boxes are.
 
 % What to do with the triangles caught in the splitting plane.
 
+\fixme{afventer møde med Trier}
 
 
 \subsubsection{Triangle splitting}
@@ -634,11 +635,11 @@ themselves are not tested for inclusion, but their bounding boxes are.
 The generel kd-tree construction method presented in
 \refalg{alg:kdTreeCreator} recursively constructs \textit{one} tree
 node at a time in a \textit{depth-first} manor. In order to
-efficiently utilize the GPGPU as many of it's multiprocessors as
-possible must be fully occupied, this means \refalg{alg:kdTreeCreator}
-restructured to work on multiple nodes at a time. Fortunatly this is
-exactly what \zhou did by changing the kd-tree constructor to work on
-a list of nodes and recursively create the tree in
+efficiently utilize the GPGPU, as many of it's multiprocessors as
+possible must be fully occupied. This means \refalg{alg:kdTreeCreator}
+must be restructured to work on multiple nodes at a time. Fortunatly
+this is exactly what \zhou{} did by changing the kd-tree constructor to
+work on a list of nodes and recursively create the tree in
 \textit{breadth-first} order, as outlines in
 \refalg{alg:bfsKDTreeCreator}.
 
@@ -666,13 +667,33 @@ a list of nodes and recursively create the tree in
   \end{algorithmic}
 \end{algorithm}
 
+% Creating the KD-tree in BFS will optimize GPU performance at lower
+% tree levels, as there would be thousands of nodes created at the
+% same time.
 
-% Use GPU for computations and let CPU handle minor book keeping.
+For the first levels of the tree this approach will still not fully
+exploit the graphics hardware, as only a couple of nodes are created
+per pass. But at lower levels, where thousands of nodes are created at
+a time, breadth-first creation allows full utilization of the
+hardware.
 
-% Handles structures of arrays better than arrays of structures
-% chapter 33 \citebook{GPUGEMS2} and coalescence
+To remedy this the tree construction will be split into 2 phases, an
+upper and a lower phase. During the upper tree creation phase the
+splitting plane position decision is parallized over all geometric
+primitives, of which there can be hundreds of thousands. When creating
+the lower tree there will be thousands of nodes, and computations can
+effectively be structured as in \refalg{alg:bfsKDTreeCreator}.
 
-\subsection{Upper Tree Nodes}\label{sec:upperNodes}
+
+% The structure of the rest of the chapter.
+
+In the rest of this section I will first discuss the creation of the
+upper parts of the tree and and how empty space maximization can be
+added to this phase. I will then present and motivate 3 different
+methods for creating the lower parts of the tree, including the SAH
+method found in \zhou{}.
+
+\subsection{Upper Tree Creation}\label{sec:upperNodes}
 
 % At upper tree level nodes exploit data parallelism by parallising
 % the cost computation over triangles. 
@@ -680,12 +701,9 @@ a list of nodes and recursively create the tree in
 % SAH assumes that each split results in 2 leaf nodes, which is
 % practically always wrong at high level nodes, therefore \zhou{}
 % suggests splitting along the spatial median of the nodes longest
-% axis. To do this a preprocess pass is required to compute tight
-% AABB's for each triangle.
+% axis.
 
-% Creating the KD-tree in BFS will optimize GPU performance at lower
-% tree levels, as there would be thousands of nodes created at the
-% same time.
+% Use GPU for computations and let CPU handle minor book keeping.
 
 \begin{algorithm}
   \caption{KD-Tree upper node creator}
@@ -836,7 +854,7 @@ these.
 % Propagating aabb's downwards
 
 
-\subsection{Lower Tree Nodes}
+\subsection{Lower Tree Creation}
 
 % Example of how to store splitting planes as bitmaps
 
