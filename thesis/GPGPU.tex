@@ -460,13 +460,13 @@ becomes
 
 and the total number of triangles moved left, $nf$, can be found by
 adding the last element in $side$ with the last element in $prefix-sum$,
-which yields $nf \leftarrow 0 + 3 = 3$.
+which yields $nf = 0 + 3 = 3$.
 
 The observant reader will have noticed that the prefix-sum actually
 calculates the addresses where the triangles on the left side should
 be moved to. All that remains is then to calculate the addresses of
-the triangles moved right. This is done using $right \leftarrow threadId -
-prefix + nf$.
+the triangles moved right. This is done using $right_i = threadId_i -
+prefix_i + nf$.
 
 \begin{displaymath}
   \begin{array} {r r r r r r r}
@@ -475,7 +475,7 @@ prefix + nf$.
 \end{displaymath}
 
 The address that a thread should move it's triangle to is then simply
-$address \leftarrow side = l$ ? $prefix$ : $right$ and becomes
+$address_i = side_i == l$ ? $prefix_i$ : $right_i$ and becomes
 
 
 \begin{displaymath}
