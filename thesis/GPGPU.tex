@@ -219,12 +219,12 @@ the $n$ data element.
 % Coalesced memory access, float4 instead of float3
 % The alignment requirement can be forced: stuct __align__(8) {
 
-Another restiction on coalescence is that data accessed must be
-\fixme{aligned to}of
-size 1, 2, 4, 8 or 16 bytes, otherwise memory transactions will be broken up
-into multiple requests. Due to this it is actually more efficient to
-use the CUDA built-in struct \textit{float4} than \textit{float3} when
-accessing global memory.
+Another restriction on global memory is that data accessed must be of
+size 1, 2, 4, 8 or 16 bytes, otherwise memory transactions will be
+broken up into multiple requests with an interleaved access pattern
+that hinders coallescence. Due to this it is actually more efficient
+to use the CUDA built-in struct \textit{float4} than \textit{float3}
+when accessing global memory.
 
 For more information on coalescence see Appendix G in
 \citebook{CUDAPG}, where the coalescence requirements for hardware of

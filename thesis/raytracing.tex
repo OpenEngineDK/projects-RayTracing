@@ -621,19 +621,19 @@ short-stack is marked in green in \refalg{alg:ShortStack}.
               {$t_{min}$ : Number}{
     \ASSIGN{$t_{min}$}{$0$}
     \WHILE{$t_{min} < \infty$}
-      \IF{$\color{green}stack.IsEmpty$}
+      \IF{$stack$.IsEmpty}
         \ASSIGN{$node$}{$tree.root$}
         \ASSIGN{$t_{next}$}{$\infty$}
       \ELSE
-        \color{green}\ASSIGN{$(node, t_{next})$}{stack.pop}
+        \ASSIGN{$(node, t_{next})$}{$stack$.Pop}
       \ENDIF
       \COMMENTIT{Traverse the tree until a leaf node is reached}
       \WHILE{$node \neq LEAF$}
         \ASSIGN{$t_{split}$}{($node.splitValue - ray.origin[node.axis]) / ray.direction[node.axis]$}
         \IF{$t_{min} < t_{split}$}
           \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
-          \IF{$\color{green}t_{split} < t_{next}$}
-            \color{green}\STATE{stack.push($upperChild, t_{next}$)}
+          \IF{$t_{split} < t_{next}$}
+            \STATE{stack.push($upperChild, t_{next}$)}
           \ENDIF
           \ASSIGN{$t_{next}$}{min$(t_{split}, t_{next})$}
         \ELSE
