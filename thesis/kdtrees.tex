@@ -405,7 +405,8 @@ becomes less than the cost of most optimal splitting plane.
 Calculating a globally optimal solution using SAH is infeasable,
 except for trivially simple scenes. A \textit{local greedy
   approximation} is used instead, where it is assumed that the created
-child nodes are leafs.
+child nodes are leafs. The makes the costs $C_L$ and $C_R$ equal to
+the amount of primitives contained in the left and right child node.
 
 Inspite of all the assumptions made by SAH, which in practice do not
 hold, it is still considered one of the best heuristics and produces
@@ -641,7 +642,7 @@ must be restructured to work on multiple nodes at a time. Fortunatly
 this is exactly what \zhou{} did by changing the kd-tree constructor to
 work on a list of nodes and recursively create the tree in
 \textit{breadth-first} order, as outlines in
-\refalg{alg:bfsKDTreeCreator}.
+\refalg{alg:bfsKDTreeCreator}. 
 
 \begin{algorithm}
   \caption{BFS Recursive kd-tree constructor}
@@ -671,19 +672,18 @@ work on a list of nodes and recursively create the tree in
 % tree levels, as there would be thousands of nodes created at the
 % same time.
 
-For the first levels of the tree this approach will still not fully
-exploit the graphics hardware, as only a couple of nodes are created
-per pass. But at lower levels, where thousands of nodes are created at
-a time, breadth-first creation allows full utilization of the
-hardware.
+At the lower levels, where thousands of nodes are created at a time,
+breadth-first creation allows full utilization of the hardware. But
+for the first levels of the tree this approach will still not fully
+exploit the graphics hardware, as only a couple of nodes are active
+per pass.
 
 To remedy this the tree construction will be split into 2 phases, an
 upper and a lower phase. During the upper tree creation phase the
 splitting plane position decision is parallized over all geometric
 primitives, of which there can be hundreds of thousands. When creating
-the lower tree there will be thousands of nodes, and computations can
+the lower tree, there will be thousands of nodes and computations can
 effectively be structured as in \refalg{alg:bfsKDTreeCreator}.
-
 
 % The structure of the rest of the chapter.
 
@@ -692,6 +692,7 @@ upper parts of the tree and and how empty space maximization can be
 added to this phase. I will then present and motivate 3 different
 methods for creating the lower parts of the tree, including the SAH
 method found in \zhou{}.
+
 
 \subsection{Upper Tree Creation}\label{sec:upperNodes}
 

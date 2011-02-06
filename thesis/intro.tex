@@ -257,14 +257,15 @@ artists need to quickly be able to rearrange the scene.
 
 To speed up ray tracing, several data structures have been
 developed. This thesis will focus on the \textit{kd-tree}, a
-\textit{binary space partition} tree that recursively subdivides the
-geometry by splitting it with axis aligned splitting planes. One such
-subdivision can be seen on \reffig{fig:binarySplit}. In order to
-facilitate dynamic scenes, the data structure also needs to be
-dynamic, which in the case of the kd-tree will mean completely
-rebuilding it. Because of this the algorithm for creating the kd-tree
-needs to be very fast, and might have to sacrifice tree quality for
-speed. It is this compromise that will be studied in this theses.
+\textit{binary space partition} tree that recursively subdivides
+$k$-dimensional geometry by splitting it with axis aligned splitting
+planes. One such subdivision can be seen on
+\reffig{fig:binarySplit}. In order to facilitate dynamic scenes, the
+data structure also needs to be dynamic, which in the case of the
+kd-tree will mean completely rebuilding it. Because of this the
+algorithm for creating the kd-tree needs to be very fast, and might
+have to sacrifice tree quality for speed. It is this compromise that
+will be studied in this theses.
 
 
 % Why do it on the GPU, yes why indeed? Leaves the CPU free to do

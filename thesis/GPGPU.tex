@@ -578,7 +578,7 @@ Of course there are several inefficiencies to correct in
 access and update it to allow the warp to perform memory accesses
 coalesced. Since we're interested in a global reduction it won't
 matter in which order values are compared. This allows the interleaved
-access pattern to be exchanged with a sequential pattern, which will
+access pattern to be exchanged with a sequential one, which will
 allow the warp to perform coalesced memory access.
 
 %% Also better warp utilization as most threads are active and we get
