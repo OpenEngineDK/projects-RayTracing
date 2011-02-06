@@ -21,11 +21,13 @@ several factors.
 
 % Cheap intersection / distance to tests. Havran p. 51
 
-One of them is the ease with which the signed distance from a ray to a
-kd-trees axis aligned splitting plane can be computed. The splitting
-plane can be described by an axis, $d \in \{x, y, z\}$, and it's
-position along that axis, $N_d$. The signed distance from any ray,
-$R(t) = O + tD$, to the splitting plane is then simply calculated as
+One of them is the ease with which the signed distance, $t$, from a
+ray to a kd-trees axis aligned splitting plane can be computed. In
+\refsection{sec:hierarchicalTraversal} we shall see that this distance
+is essential to traversing the tree. An axis aligned splitting plane
+is described by an axis, $d \in \{x, y, z\}$, and it's position along
+that axis, $N_d$. The signed distance from any ray, $R(t) = O + tD$,
+to the splitting plane is then simply calculated as
 
 \begin{displaymath}
   t = \frac{N_d - O_d}{D_d}
@@ -38,6 +40,8 @@ by $ax + by + cz + d = 0$ has a much more complex distance function.
 \begin{displaymath}
   t = \frac{a O_x + b O_y + c O_z + d}{a D_x + b D_y + c D_z}
 \end{displaymath}
+
+\fixme{Drop bounding volumes?}
 
 It becomes even more complex when bounding volumes are used. An axis
 aligned bounding box can be described by 2 points, $V_{min}$ and
@@ -134,9 +138,12 @@ above given examples.
 % scenes / empty space partitioning)
 
 Binary trees, such as kd- and bsp trees, are also more flexible than
-quadtress or octrees. An example can be seen on
+\textit{quadtress} or \textit{octrees}, which subdivides the geometry
+with 2 or 3 planes respectively per node. An example can be seen on
 \reffig{fig:binQuadSplit}. This flexibility can be extremely important
 when accelerating sparse scenes.
+
+\fixme{include trees in the bsp/quad figure}
 
 \begin{figure}
   \centering

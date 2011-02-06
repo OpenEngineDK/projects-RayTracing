@@ -9,11 +9,13 @@
 
 Because of the evergrowing demand for new effects and more detail in
 computer games and other 3D graphics applications, GPU's have seen a
-massive increase in power over the last decade, as evidenced by
-\reffig{fig:gflops}. A similar figure comparing the theoretical
-throughput of GPU's and CPU's can be seen in \citebook{CUDAPG}. With
-this in mind it is easy to understand why one would want to perform
-ray tracing entirely on the GPU.
+massive increase in computational power over the last decade. This is
+evidenced by \reffig{fig:gflops}, which compares the computational
+development of NVIDIA GPU's with that of Intel CPU's. A similar figure
+comparing the theoretical throughput of GPU's and CPU's can be seen in
+\citebook{CUDAPG}. These figures illustrate the potential performance
+gain associated with GPU implementations compared to CPU
+implementations.
 
 \begin{figure}
   \centering
@@ -28,27 +30,28 @@ ray tracing entirely on the GPU.
 
 % What is different form CPUs
 
-Utilizing all this power effectively, however, is not straightforward
-and in order to create algorithms on the GPU that run faster than their
-CPU counterparts, we need to understand how the GPU works.
+Utilizing all this computational power and throughput effectively,
+however, is not straightforward and in order to create algorithms on
+the GPU that run faster than their CPU counterparts, we need to
+understand how the GPU works.
 
 The reason behind the difference in theoretical throughput seen in
 \reffig{fig:gflops}, is that the CPU is designed for handling all
 kinds of problems, with a large cache at it's disposal and efficient
 handling of control flow. The GPU on the other hand is designed for
 high throughput of small, arithmetically intense, \textit{dataparallel
-  programs}\footnote{Each processor performs the same instruction
-  concurrently on multiple data elements.} called \textit{kernels},
-which is exactly what is required of a graphics card processing
-thousands of independent vertices and performing the same shading on
-hundreds of thousands of color fragments.
+  programs}\footnote{Each instruction is concurrently applied on
+  multiple data elements.} called \textit{kernels}, which is exactly
+what is required of a graphics card processing thousands of
+independent vertices and performing the same shading on hundreds of
+thousands of color fragments.
 
 Since the graphics card is designed to perform vertex and fragment
 processing independently of their respective neighbouring threads,
 this also means that when programming the graphics card, no
 assumptions can be made about which thread is where in it's
 execution. This presents a problem in cases where the $n$'th thread
-depends on information from all previous $n-1$ threads, fx when
+depends on information from all previous $n-1$ threads, e.g. when
 splitting data or calculating the minimum or maximum values of $N$
 vertices. NVIDIA's CUDA remedies this somewhat by providing
 synchronization commands, but since these can only synchronize a
@@ -84,18 +87,20 @@ the motivation for this chapter, which is structured as follows.
 First we shall take a look at how threads and memory are organized in
 CUDA. Understanding this will be critical in developing GPGPU
 efficient solutions. Then a section will present the GPGPU scan
-primitives, which will help us to perform data scattering and
-reductions on dataparallel hardware. I will then be discussing a
-couple of interesting optimization techniques on the GPGPU, while
-applying them to a reduction case study.
-
-
+primitive, which is useful on dataparallel hardware, e.g. when the
+address where the result of a threads should be written to is based on
+the result of each previous thread, also known as \textit{data
+  scattering}. I will then be discussing a couple of interesting
+optimization techniques on the GPGPU, while applying them to a case
+study.
 
 \section{The Architecture of the GPGPU}
 
 Understand the architecture of the GPGPU requires us to first
 understand the relationship and layout of threads and then the
 different kinds of memory available these threads.
+
+\fixme{describe multiprocessors.}
 
 \subsection{The Thread Hierarchy}
 
@@ -340,11 +345,11 @@ memory are:
 
 % Motivate
 
-As explained above it can be quite hard to perform reductions and
-scattering operations on dataparallel hardware. In this section I will
-outline a solution to this problem presented by Sengupta et
-al\citebook{Sengupta:2007} and give an example of why this primitive
-is important when constructing spatial data structures.
+As explained above it can be quite hard to perform scattering on
+dataparallel hardware. In this section I will outline a solution to
+this problem presented by Sengupta et al\citebook{Sengupta:2007} and
+give an example of why this primitive is important when constructing
+spatial data structures.
 
 % Prefix sum
 
@@ -492,17 +497,6 @@ we wanted.
 
 
 
-
-
-% NVIDIA mentioned 3 optimization points
-
-% Structures of arrays vs arrays of structs. Usefull when fx
-% sorting. CUDPP article/forum. Plus cache performance.
-
-% Unrolling loops, even when it means more work. Preprocess lower
-% nodes yields nearly a 50% speedup from this.
-
-
 \section{Optimization Techniques: Reduction}\label{sec:reduce}
 
 % Motivation: Reduction was important in the previous step and will be
@@ -514,16 +508,18 @@ however isn't the only part of the kd-tree creator where reductions
 are needed. It is also useful for calculating the bounding boxes of
 the kd-tree's nodes, used when performing median splits.
 
-In this section I will present a naïve reduction algorithm and
-incrementally apply optimizations to it. The algorithm will use the
-binary operator \textbf{min} to find the smallest value from it's
-input list, but can be generalized to any reduction. The naïve
-algorithm is based on the above reduction and will have an efficient
-time complexity of $O(n)$, which is the best we can hope for. Instead
-of improving the time complexity the following optimizations will
-instead focus on making better use of the GPU by hiding latency, using
-faster memory where available and reduce the number of calculations
-made.
+In this section I will present a naïve \textit{reduction} algorithm
+and incrementally apply optimizations to it. A reduction is the
+processing of data in some order and building a return value. This
+reduction example will use the binary operator \textbf{min}, with
+identity element $\infty$, to find the smallest value from it's input
+list, but can be generalized to any binary operator with an identity
+element. The naïve algorithm is based on the above reduction and will
+have an efficient time complexity of $O(n)$, which is the best we can
+hope for. Instead of improving the time complexity the following
+optimizations will instead focus on making better use of the GPU by
+hiding latency, using faster memory where available and reduce the
+number of calculations made.
 
 % Works on individual blocks, must be run twice if input is too large
 % for one block to handle.
@@ -536,7 +532,7 @@ output, until a single result is found.
 The algorithm assumes that the length of the input list is a power of
 2. If that is not the case then either the data could be preprocessed
 or the kernel itself can pad the data with the binary operators
-identity element, in our case $\infty$.
+identity element.
 
 \subsection{Naïve implementation}
 

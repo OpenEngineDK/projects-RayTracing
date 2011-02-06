@@ -21,6 +21,7 @@
 \chapterquote{Focus is a matter of deciding what things you're not
   going to do.}{John Carmack}
 
+\fixme{refere til appendix med kodebeskrivelse et sted.}
 
 %% \section{Old intro}
 
@@ -90,7 +91,7 @@
 
 %% \fxfatal{time complexity?}
 
-%% % Why use the GPU? Offloading. The CPU can do a lot of other things
+%% % Why use the GU? Offloading. The CPU can do a lot of other things
 %% % while the GPU crunch away at those KD trees. Om nom nom nom
 %% % nom.... Games already make heavy use of the CPU for game logics,
 %% % networking and AI, they need to offload graphics to the another
@@ -165,20 +166,20 @@ last one and a half decade has been \textit{rasterization}. In
 rasterization a geometric primitives vertex attributes, such as their
 position, normal and color, is mapped into a
 \textit{raster}\footnote{A flat, 2D grid.} and subsequently
-\textit{shaded}. This technique is so popular in the game industry
-that processing units where created specifically for rasterization,
-the \textit{Graphics Processing Unit} or \textit{GPU} for short. Due
-to the industry's everincreasing demand for more detailed models and
-effects, the GPU's have seen a massive increase in both computational
-power and throughput over the last decade, as evidenced by
-\reffig{fig:gflops}. Unfortunatly, even with all this power certain
-aspects of rendering are still not easily solved by
-rasterization. \textit{Reflection} and \textit{refraction} effects on
-non-flat surfaces are notoriously hard to recreate, due to the
-divergence of spatially close light- and reflection rays at the points
-in which they intersect the geometry. Reflections of complex objects
-can be approximated by \textit{environment mapping} or \textit{cube
-  mapping}, a short describtion can be found on
+\textit{shaded}\footnote{TODO:describe shaded.}. This technique is so
+popular in the game industry that processing units where created
+specifically for rasterization, the \textit{Graphics Processing Unit}
+or \textit{GPU} for short. Due to the industry's everincreasing demand
+for more detailed models and effects, the GPU's have seen a massive
+increase in both computational power and throughput over the last
+decade, as evidenced by \reffig{fig:gflops}. Unfortunatly, even with
+all this power certain aspects of rendering are still not easily
+solved by rasterization. \textit{Reflection} and \textit{refraction}
+effects on non-flat surfaces are notoriously hard to recreate, due to
+the divergence of spatially close light- and reflection rays at the
+points in which they intersect the geometry. Reflections of complex
+objects can be approximated by \textit{environment mapping} or
+\textit{cube mapping}, a short describtion can be found on
 \reffig{fig:cubemap}. The trouble with cubemapping is that the scene
 will have to be rendered another 6 times for each cubemap, increasing
 the cost of rendering by up to 6 times. Another short coming of
@@ -190,12 +191,12 @@ it is only the surrounding environment that is rendered onto the map.
   \includegraphics{Cube_mapped_reflection_example}
   
   \vspace{3mm}
-  \parbox{7cm}{\caption[Cube mapping visualized.]{A visualization of
+  \parbox{9.5cm}{\caption[Cube mapping visualized.]{A visualization of
       cube mapping. The environment is rendered onto the sides of the
       cube and then mapped onto the sphere. The mapping is performed
       by using the calculated reflection vector as a texture
-      coordinate.}\label{fig:cubemap}}
-%TODO image curtesy of http://en.wikipedia.org/wiki/Reflection_mapping
+      coordinate.\\Image from
+      http://en.wikipedia.org/wiki/Reflection\_mapping}\label{fig:cubemap}}
 \end{figure}
 
 % Ray tracing and comparing it to rasterization
@@ -257,15 +258,17 @@ artists need to quickly be able to rearrange the scene.
 
 To speed up ray tracing, several data structures have been
 developed. This thesis will focus on the \textit{kd-tree}, a
-\textit{binary space partition} tree that recursively subdivides
-$k$-dimensional geometry by splitting it with axis aligned splitting
-planes. One such subdivision can be seen on
+\textit{binary space partition} tree which recursively subdivides
+$k$-dimensional geometry by splitting it with \textit{axis aligned
+  splitting planes}. One such subdivision can be seen on
 \reffig{fig:binarySplit}. In order to facilitate dynamic scenes, the
 data structure also needs to be dynamic, which in the case of the
 kd-tree will mean completely rebuilding it. Because of this the
 algorithm for creating the kd-tree needs to be very fast, and might
 have to sacrifice tree quality for speed. It is this compromise that
 will be studied in this theses.
+
+\fixme{Describe tree quality}
 
 
 % Why do it on the GPU, yes why indeed? Leaves the CPU free to do
@@ -302,12 +305,16 @@ kd-tree construction, how optimizations to the tree structure affects
 ray tracing performance and if the time spend on those optimizations
 is returned when ray tracing.
 
+\fixme{Uddybe optimeringsmetoderne og måske referer til de sektioner
+  hvor de vil opstå. Beskrive sammenhængen mellem 2 og 3 og at det er
+  den der er fokus!}
+
 During this I will look at the usefulness of hierachical traversal on
 the GPU, given that a binary data structure is not easy for the GPU to
 handle and breaks thread coalescence, which is important for fast
 memory access. An exhaustive ray tracer, which will intersect every
 rays with every triangle, will be used to motivate the use of a
-hierachical datatstructure, even on the GPU.
+hierachical datatstructure, even on the dataparallel hardware.
 
 The kd-tree used for accelerating ray tracing will be based on the
 implementation described by \zhou.  Improvements to the quality of the
@@ -364,14 +371,15 @@ section.
 
 % Understanding the GPGPU
 
-A chapter will then introduce the GPGPU architecture. Here I will
-describe CUDA's thread and memory model. I will then go on to describe
-a new primitive as proposed by Sengupta et
+A chapter will then introduce the GPGPU\footnote{General Purpose
+  Graphics Processor Unit. A programable graphics processor.}
+architecture. Here I will describe CUDA's thread and memory model. I
+will then go on to describe a new primitive as proposed by Sengupta et
 al.\citebook{Sengupta:2007}, which will be helpful for performing
 scattering and compaction on wide SIMT architectures. Finally this
-section will focus on optimization techniques specific to CUDA, which
-will be applied incrementally in a case study of a \textit{reduction}
-example.
+section will focus on optimization techniques specific to CUDA. These
+will be applied incrementally in a case study of a global minima
+algorithm.
 
 % kd-trees
 

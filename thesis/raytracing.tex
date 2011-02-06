@@ -51,6 +51,9 @@ calculated.
 
 \section{Ray/Triangle Intersection}
 
+\fixme{Move ray/triangle intersection further down this chapter until
+  after the ray tracing algorithms have been described?}
+
 The inherent diverging behaviour of each ray makes them hard to
 parallize efficiently on the graphics card, since data access will be
 nearly impossible to coallesce. The solution is to have enough active
@@ -344,7 +347,7 @@ $t_{min}$, to the intersected primitive.
 The downside to the exhaustive approach is that for $n$ rays and $m$
 triangles the time complexity becomes $O(nm)$.
 
-\section{Hierarchical Ray Tracing}
+\section{Hierarchical Ray Tracing}\label{sec:hierarchicalTraversal}
 
 % Time complexity of O(n log m)
 
