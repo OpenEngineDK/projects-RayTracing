@@ -64,6 +64,9 @@ namespace OpenEngine {
 
         cam->SetPosition(Vector<3, float>(-4.5f, 3.0f, 4.5f));
         cam->LookAt(Vector<3, float>(-0.8f, -1.0f, 0.0f));
+        
+        //cam->SetPosition(Vector<3, float>(0.0f, 2.0f, 9.5f));
+        //cam->LookAt(Vector<3, float>(0.0f, 0.0f, 0.0f));
     }
 
     void SceneCreator::CreateSponza(Scene::ISceneNode *sceneRoot, Display::Camera *cam, 
@@ -117,17 +120,28 @@ namespace OpenEngine {
     MeshNode* SceneCreator::CreateCornellBox() {
         MeshPtr box = MeshCreator::CreateCube(10, 1, Vector<3,float>(1.0f, 1.0f, 1.0f), true);
         
+        IDataBlockPtr color = Float4DataBlockPtr(new DataBlock<4, float>(box->GetGeometrySet()->GetSize()));
+        for (unsigned int i = 0; i < color->GetSize(); ++i)
+            color->SetElement(i, Vector<4, float>(1.0, 1.0, 1.0, 1.0));
+        
+        box->GetGeometrySet()->AddAttributeList("color", color);
+
         IDataBlockPtr colors = box->GetGeometrySet()->GetColors();
         Vector<4,float> red(1.0f, 0.0f, 0.0f, 1.0f);
-        Vector<4,float> blue(0.0f, 0.0f, 0.8f, 1.0f);
         colors->SetElement(8, red);
         colors->SetElement(9, red);
         colors->SetElement(10, red);
         colors->SetElement(11, red);
+        Vector<4,float> blue(0.0f, 0.0f, 0.8f, 1.0f);
         colors->SetElement(12, blue);
         colors->SetElement(13, blue);
         colors->SetElement(14, blue);
         colors->SetElement(15, blue);
+        // Vector<4,float> transparent(0.0f, 0.0f, 0.8f, 0.0f);
+        // colors->SetElement(16, transparent);
+        // colors->SetElement(17, transparent);
+        // colors->SetElement(18, transparent);
+        // colors->SetElement(19, transparent);
         
         return new MeshNode(box);
     }
@@ -137,7 +151,7 @@ namespace OpenEngine {
         
         IDataBlockPtr color = Float4DataBlockPtr(new DataBlock<4, float>(box->GetGeometrySet()->GetSize()));
         for (unsigned int i = 0; i < color->GetSize(); ++i)
-            color->SetElement(i, Vector<4, float>(1.0, 1.0, 1.0, 0.4));
+            color->SetElement(i, Vector<4, float>(1.0, 1.0, 1.0, 1.0));
         
         box->GetGeometrySet()->AddAttributeList("color", color);
         
@@ -164,36 +178,6 @@ namespace OpenEngine {
         geom->AddAttributeList("color", color);        
 
         return duckRes->GetSceneNode();
-        
-        //IDataBlockPtr color = Float4DataBlockPtr(new DataBlock<4, float>(box->GetGeometrySet()->GetSize()));
-
-        /*        
-        GeometrySetPtr dragonGeom = dragon->GetMesh()->GetGeometrySet();
-        IDataBlockPtr color = dragonGeom->GetDataBlock("color");
-        if (color != NULL){
-            *color *= 0.0f;
-            *color += Vector<3, float>(0.0f, 165.0f/255.0f, 101.0f/255.0f);
-        }else{
-            color = Float4DataBlockPtr(new DataBlock<4, float>(dragonGeom->GetSize()));
-            Vector<4, float> jadeGreen(0.0f, 0.647, 0.396f, 0.5f);
-            Vector<4, float> bakersChocolate(0.36f, 0.2, 0.09f, 1.0f);
-            Vector<4, float> lightChocolate(0.667f, 0.49f, 0.361f, 1.0f);
-            for (unsigned int i = 0; i < color->GetSize(); ++i)
-                color->SetElement(i, jadeGreen);
-            
-            dragonGeom = GeometrySetPtr(new GeometrySet(dragonGeom->GetDataBlock("vertex"),
-                                                        dragonGeom->GetDataBlock("normal"),
-                                                        IDataBlockList(), color));
-            Mesh* dragonMesh = new Mesh(dragon->GetMesh()->GetIndices(),
-                                        dragon->GetMesh()->GetType(),
-                                        dragonGeom, dragon->GetMesh()->GetMaterial());
-            dragon = new MeshNode(MeshPtr(dragonMesh));
-        }
-
-        //duckRes->Unload();
-
-        return dragon;
-        */        
     }
 
     ISceneNode* SceneCreator::LoadBunny() {
