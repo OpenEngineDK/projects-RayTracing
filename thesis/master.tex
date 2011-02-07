@@ -97,13 +97,6 @@
 
 }
 
-\newcommand{\shadowgraphics}[2]{
-  \begin{tikzpicture}
-    \node[rounded corners=1mm, drop shadow] {\includegraphics[#1]{#2}};
-  \end{tikzpicture}
-}
-
-
 \begin{document}
 
 \begin{titlepage}
@@ -119,8 +112,6 @@
               Master's Thesis
               \vspace*{20pt}
               \\
-%              \includegraphics[width=12cm,clip=true,trim=0cm 0cm 0cm
-%              47pt]{sponzaShadow}
               \begin{tikzpicture}[y=1cm, x=1cm]
                 \draw (6,7.5) node {\includegraphics[width=12cm]{sponzaInShadow}};
                 \draw (2,1.5) node {\includegraphics[width=4cm]{opaqueDragon}};

@@ -24,7 +24,7 @@ implementations.
   \parbox{9cm}{\caption[Comparison of floating point operations per
       second on GPU's and CPU's.]{A comparison of the development of
       floating point operations per second on GPU's and CPU's. \\The
-      figure is borrowed from Chapter 1 in
+      figure is from Chapter 1 in
       \citebook{CUDAPG}.}\label{fig:gflops}}
 \end{figure}
 
@@ -43,8 +43,10 @@ high throughput of small, arithmetically intense, \textit{dataparallel
   programs}\footnote{Each instruction is concurrently applied on
   multiple data elements.} called \textit{kernels}, which is exactly
 what is required of a graphics card processing thousands of
-independent vertices and performing the same shading on hundreds of
-thousands of color fragments.
+independent vertices and performing the same color calculations or
+\textit{shading} on hundreds of thousands of
+\textit{fragments}\footnote{All data needed to generate the color of
+  geometry.}.
 
 Since the graphics card is designed to perform vertex and fragment
 processing independently of their respective neighbouring threads,
@@ -70,10 +72,9 @@ CPU. However, the following quote comes to mind:
 }{CUDABPG}
 
 So once it has been decided to use the graphics card, one cannot
-simply transfer data back to the CPU in order to perform some
-operation and then transfer it back the GPU. The transfer overhead
-would in many cases be too large to see any performance increase at
-all.
+simply transfer data back to the CPU for processing and then transfer
+it back the GPU. The transfer overhead would in many cases outweigh
+the performance increase gained by using the GPU in the first place.
 
 %% Fortunatly Sengupta et al. has come up with a solution to the
 %% scattering problem, which will be discussed further in
@@ -96,35 +97,44 @@ study.
 
 \section{The Architecture of the GPGPU}
 
-Understand the architecture of the GPGPU requires us to first
+Understand the architecture of CUDA requires us to first
 understand the relationship and layout of threads and then the
 different kinds of memory available these threads.
 
-\fixme{describe multiprocessors.}
+CUDA's architecture is based on \textit{multiprocessors}. A
+multiprocessor is able to execute hundreds of threads
+concurrently. Managing these threads is made easier by a
+multiprocessors \textit{SIMT}\footnote{Single-Instruction,
+  Multiple-Thread} architecture, in which a single instruction in a
+program is relayed to several threads in parallel. A multiprocessor is
+equipped with fast, but limited local memory that is used by the
+threads currently executing. These multiprocessors enable the graphics
+card to handle execution of more than a million threads sequentially.
 
-\subsection{The Thread Hierarchy}
+
+%% Simply considering a graphics application running at a resolution of
+%% 1440x900 where each fragment is shaded should convince anyone of this.
+
+%% While I have above argued that all of these threads are executed
+%% independently of each other, NVIDIA's CUDA architecture does place
+%% these threads in a hierarchy, which provides programmers with some
+%% control over thread execution.
+
+\subsection{The Thread Hierarchy}\label{sec:threadHierarchy}
 
 % Grid, blocks, warps and threads. We will only deal with the one
 % dimensional case.
-
-The graphics card is able to handle execution of more than a million
-threads sequentially. Simply considering a graphics application
-running at a resolution of 1440x900 where each fragment is shaded
-should convince anyone of this. While above I have argued that all of
-these threads are executed independently of each other, NVIDIA's CUDA
-architecture does place these threads in a hierarchy, which provides
-programmers with some control over thread execution.
 
 % warps
 
 At the lowest level threads are scheduled and executed completely
 parallel in small groups called \textit{warps}\footnote{The term
   originates from weaving, the first parallel thread
-  technology.\citebook{CUDAPG}}, usually with a warpsize of 32. While
-threads in a warp have their own instruction counter and register
-state, and therefore logically can branch independently of
-neighbouring threads, a warp can only execute one specific instruction
-at a time. The following example should help clarify this.
+  technology.\citebook{CUDAPG}}, usually with a warpsize of 32. A
+thread in a warp has its own instruction counter and register state,
+and can therefore branch independently of neighbouring
+threads. However, a warp can only execute one specific instruction at
+a time. The following example should help clarify this.
 
 \begin{algorithmic}
   \IF{threadID < 16}
@@ -155,18 +165,19 @@ be very beneficial, as will be shown in
 % blocks
 
 Warps are then organized into 3 dimensional \textit{blocks}. Blocks
-are expected to reside on the same multiprocessor, which provides them
-with a limit as to how many threads they can contain. On current GPU's
-the limit can be up to 1024 threads per block. Having threads executed
-on the same multiprocessor comes with a few benefits. It is possible
-to force synchronized execution of entire blocks at specific points in
-the kernels. Threads can then cooperate through fast memory local to
-the multiprocessor and use it to share data. Threads can lookup their
-\textit{thread index} inside a block through the 3 dimensional
-\textit{threadIdx} CUDA built-in variable. Being able to lookup a
-threads id is important for working with data. In the one dimensional
-case the $n$'th thread will usually process the $n$'th data
-element. Without the thread index this would not be possible.
+are expected to reside on the same multiprocessor, which providesa
+limit as to how many threads a block can contain. On current GPU's the
+limit can be up to 1024 threads per block or multiprocessor. Having
+threads executed on the same multiprocessor comes with a few
+benefits. It is possible to force synchronized execution of entire
+blocks at specific points in the kernels. Threads can then cooperate
+through the multiprocessor's fast local memory and use it to share
+data. Threads can lookup their \textit{thread index} inside a block
+through the 3 dimensional \textit{threadIdx} CUDA built-in
+variable. Being able to lookup a threads id is important for working
+with data. In the one dimensional case the $n$'th thread will usually
+process the $n$'th data element. Without the thread index this would
+not be possible.
 
 % grid
 
@@ -184,8 +195,7 @@ calculated as $id \leftarrow blockDim.x * blockIdx.x + threadIdx.x$.
   \centering
   \includegraphics[width=8cm]{ThreadLayout}
   \caption[CUDA's thread hierarchy.]{A figure of CUDA's thread
-    hierarchy.\\ The figure is borrowed from Chapter 2 in
-    \citebook{CUDAPG}.}
+    hierarchy.\\ The figure is from Chapter 2 in \citebook{CUDAPG}.}
   \label{fig:threadLayout}
 \end{figure}
 
@@ -249,12 +259,13 @@ be when ray tracing a hierarchical structure.
 % will not be using textures, since global memory also has cache as of
 % 2.0 hardware.
 
-Textures also reside in device memory space. Textures are read only
-but provide a fast texture cache, optimized for 2D spatial data
-locality. This can make texture access faster than pure global memory
-access, as a device memory read is only performed on a cache miss. On
-current generation hardware, global memory can use shared memory as a
-cache, so textures will not be used in this project.
+\textit{Textures} also reside in device memory space. Textures are
+read only 1D, 2D or 3D data arrays, but provide a fast texture cache
+optimized for 2 dimensional spatial data locality. This can make
+texture access faster than pure global memory access, as a device
+memory read is only performed on a cache miss. On current generation
+hardware, global memory can use shared memory as a cache, so textures
+will not be used in this project.
 
 \subsubsection{Shared Memory}
 
@@ -347,7 +358,7 @@ memory are:
 
 As explained above it can be quite hard to perform scattering on
 dataparallel hardware. In this section I will outline a solution to
-this problem presented by Sengupta et al\citebook{Sengupta:2007} and
+this problem as presented by Sengupta et al\citebook{Sengupta:2007} and
 give an example of why this primitive is important when constructing
 spatial data structures.
 
