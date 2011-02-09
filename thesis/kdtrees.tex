@@ -477,8 +477,8 @@ cost. Since the above cost evaluation does not take rays into account,
 SAH assumes that rays are uniformly distributed, infinite lines.
 
 SAH can also automatically determine when to stop splitting. Assuming
-that the cost of intersecting a leaf is given as $C_{leaf} = |T| *
-C_i$, where $|T|$ is the number of triangles and $C_i$ is the cost of
+that the cost of intersecting a leaf is given as $C_{leaf} = \|T\| *
+C_i$, where $\|T\|$ is the number of triangles and $C_i$ is the cost of
 intersecting a triangle. SAH's termination criteria is then $C_{leaf}
 < C_N$, i.e. SAH terminates when the cost of intersecting a leaf
 becomes less than the cost of most optimal splitting plane.
@@ -1010,7 +1010,7 @@ to work on a list of nodes and recursively create the tree in
     \PROCEDURE{ConstructKDTree}
               {$activeNodes$ : Node List  \textit{\color{gray}//list of kd-nodes not processed yet}}
               {$nextNodes$ : Node List}
-              {\PARALLELFOR{$node$ \textbf{in} $activeNodes$}
+              {\PARALLELFOR{$node$}{$activeNodes$}
                  \IF{IsLeaf($node$)}
                    \ASSIGN{$node$}{Leaf($node$)}
                  \ELSE
@@ -1068,7 +1068,7 @@ that produces lower trees with varying construction speed and quality.
     \PROCEDURE{ConstructKDTree}
               {$Triangles$ : Triangle List}
               {$root$ : Node}{
-                \PARALLELFOR{$t$ \textbf{in} $Triangles$}
+                \PARALLELFOR{$t$}{$Triangles$}
                   \STATE{Compute axis aligned bounding box for $t$.}
                 \ENDFOR
                 \STATE{}
@@ -1129,10 +1129,9 @@ can be seen in \refalg{alg:kdUpperNodeCreator}.
     \PROCEDURE{CreateUpperNodes}
                {\VAR{activeNodes} : Node List}
                {\VAR{leafs,nextNodes} : Node List}{
-
                  \COMMENTIT{First split all triangles into segments.}
                  \DECLARE{$segmentList$}{List}
-                 \PARALLELFOR{$node$ \textbf{in} $activeNodes$}
+                 \PARALLELFOR{$node$}{$activeNodes$}
                    \STATE{Split all triangles contained in $node$ into
                      fixed sized segments and store those in $segmentList$.}
                  \ENDFOR
@@ -1140,7 +1139,7 @@ can be seen in \refalg{alg:kdUpperNodeCreator}.
                  \COMMENTIT{Then compute each triangles bounding box
                    using reduction as described in
                    \refsection{sec:reduce}.}
-                 \PARALLELFOR{$segment$ \textbf{in} $segmentList$}
+                 \PARALLELFOR{$segment$}{$segmentList$}
                    \STATE{Compute the bounding box of the triangles in
                      each segment.}
                  \ENDFOR
@@ -1158,10 +1157,10 @@ can be seen in \refalg{alg:kdUpperNodeCreator}.
                    triangles to by comparing them to the splitting
                    plane.}
                  \DECLARE{$associateSide, associateAddr$}{List}
-                 \PARALLELFOR{$segment$ \textbf{in} $segmentList$}
-                   \PARALLELFOR{$triangle$ \textbf{in} $segment.triangles$}
+                 \PARALLELFOR{$segment$}{$segmentList$}
+                   \PARALLELFOR{$triangle$}{$segment.triangles$}
                      \ASSIGN{$associateSide[triangle.id]$}{AssociateLeft($segment.node$, $triangle$)}
-                     \ASSIGN{$associateSide[triangle.id + |triangles|]$}{AssociateRight($segment.node$, $triangle$)}
+                     \ASSIGN{$associateSide[triangle.id + \|triangles\|]$}{AssociateRight($segment.node$, $triangle$)}
                    \ENDFOR
                  \ENDFOR
                  \ASSIGN{$associateAddr$}{\textbf{Prefix-Sum}($associateSide$)}
@@ -1169,7 +1168,7 @@ can be seen in \refalg{alg:kdUpperNodeCreator}.
                  \STATE{}
 
                  \COMMENTIT{Split nodes.}
-                 \PARALLELFOR{$node$ \textbf{in} $activeList$}
+                 \PARALLELFOR{$node$}{$activeList$}
                    \STATE{Split the nodes into child
                      nodes. $associateSide$ and $associateAddr$ is
                      used to directly calculate the child nodes
@@ -1184,8 +1183,8 @@ can be seen in \refalg{alg:kdUpperNodeCreator}.
                  \STATE{}
 
                  \COMMENTIT{Move the triangles.}
-                 \PARALLELFOR{$segment$ \textbf{in} $segmentList$}
-                   \PARALLELFOR{$triangle$ \textbf{in} $segment.triangles$}
+                 \PARALLELFOR{$segment$}{$segmentList$}
+                   \PARALLELFOR{$triangle$}{$segment.triangles$}
                      \STATE{Move the triangles to have triangles
                        associated with the same node placed
                        sequentially.}
@@ -1270,7 +1269,7 @@ to determine where to place the splitting plane.
 
 With the splitting plane decided for each node, the triangle/node
 association can be computed by any of the methods described in
-\refsection{sec:splittingSchemes}. An array of size $2 * |triangles|$,
+\refsection{sec:splittingSchemes}. An array of size $2 * \|triangles\|$,
 $associateSide$, is used to store triangle/node
 associations. Computing the prefix-sum of $associateSide$ will then
 produce the addresses that each triangle should be moved to, in order
@@ -1305,7 +1304,7 @@ spanned by a child node.
                 \ASSIGN{$left.triangleIndex$}{$associateAddr[parent.triangleIndex]$}
                 \ASSIGN{$leftEndAddr$}{$associateAddr[parent.triangleIndex + parent.triangleRange]$}
                 \ASSIGN{$left.triangleIndex$}{$leftEndAddr - left.triangleIndex$}
-                \ASSIGN{$right.triangleIndex$}{$associateAddr[parent.triangleIndex + |triangles|]$}
+                \ASSIGN{$right.triangleIndex$}{$associateAddr[parent.triangleIndex + \|triangles\|]$}
                 \ASSIGN{$rightEndAddr$}{$associateAddr[parent.triangleIndex + parent.triangleRange]$}
                 \ASSIGN{$right.triangleIndex$}{$rightEndAddr - right.triangleIndex$}
               }
@@ -1363,7 +1362,7 @@ box provides a loose upper bound on the geometry.
                  \IF{$performEmptySpaceMaximization$}
                  \DECLARE{$emptySplitNodes, emptyAddr$}{List}
                  \DECLARE{$emptySides$}{Plane List}
-                 \PARALLELFOR{$node$ \textbf{in} $activeList$}
+                 \PARALLELFOR{$node$}{$activeList$}
                  \ASSIGN{$emptySplits[i]$}{$0$}
                    \FOREACH{$side$}{$node.boundingBox$}
                      \IF{$node$ has more than $C_e$ empty space on $side$}
@@ -1373,7 +1372,7 @@ box provides a loose upper bound on the geometry.
                    \ENDFOR
                  \ENDFOR
                  \ASSIGN{$emptyAddr$}{\textbf{Prefix-Sum}($emptySplitNodes$)}
-                 \PARALLELFOR{$node$ \textbf{in} $activeList$}
+                 \PARALLELFOR{$node$}{$activeList$}
                    \STATE{Cut of empty space and place new nodes
                      sequentially at addresses specified in
                      $emptyAddr$. Then rewire parent nodes to point to
@@ -1407,7 +1406,8 @@ empty space between the tight bounding box and the loose bounding box
 on a given side is above a certain threshold, then that side is added
 to the $emptySides$ list. Each empty split results in two new nodes,
 one node that refers to the empty space and one node linking the
-parent node with its child node. This is depicted in \reffig{TODO}.
+parent node with its child node. This is depicted in
+\reffig{fig:emptySpaceExample}.
 
 Once the amount of empty splits per node has been decided, where to
 place those nodes is computed by calculating the prefix-sum of
@@ -1470,18 +1470,23 @@ is quite simple and only requires a few kernels.
 % Example of how to store splitting planes as bitmaps
 
 \begin{algorithm}
-  \caption{Calculating splitting planes.}
+  \caption{Preprocess Lower Nodes.}
   \label{alg:calcSplittingPlanes}
   \begin{algorithmic}
-    \PROCEDURE{calcSplittingPlanes}
-              {}
-              {}{
-                \STATE{hat}
+    \PROCEDURE{PreprocessLowerNodes}
+              {$upperLeafs$ : Node List}
+              {$splittingPlanes$ : Plane List}{
+                \PARALLELFOR{$node$}{$upperLeafs$}
+                  \STATE{hat}
+                \ENDFOR
               }
   \end{algorithmic}
 \end{algorithm}
 
+
 \subsubsection{SAH Tree}
+
+% Adds surface area computation to the preprocess
 
 \begin{algorithm}
   \caption{Calculate SAH cost}
@@ -1492,19 +1497,19 @@ is quite simple and only requires a few kernels.
               {$splittingPlanes$ : Plane List, $leafs$ : Boolean List}{
                 \COMMENTIT{Calculate SAH for each split candidate and
                   return the split candidate with minimal SAH.}
-                \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
-                  \FOREACH{split candidate $s$}{$i.splitCandidates$}
-                    \ASSIGN{$bmp_L$}{$i.triangles \cap s.left$}
+                \PARALLELFOR{$node$}{$activeNodes$}
+                  \FOREACH{split candidate $s$}{$node.splitCandidates$}
+                    \ASSIGN{$bmp_L$}{$node.triangles \cap s.left$}
                     \ASSIGN{$C_L$}{$\parallel bmp_L \parallel$}
                     \ASSIGN{$A_L$}{summed surface area of $bmp_L$}
-                    \ASSIGN{$bmp_R$}{$i.triangles \cap s.right$}
+                    \ASSIGN{$bmp_R$}{$node.triangles \cap s.right$}
                     \ASSIGN{$C_R$}{$\parallel bmp_R \parallel$}
                     \ASSIGN{$A_R$}{summed surface area of $bmp_R$}
                     \ASSIGN{$weightedArea$}{$C_L * A_L + C_R * A_R$}
                   \ENDFOR
-                  \ASSIGN{$splittingPlanes[i] \leftarrow p$}{Split candidate with minimal weighted area}
-                  \ASSIGN{$SAH$}{$p.weightedArea / i.summedArea + C_N$}
-                  \ASSIGN{$leafs[i]$}{$SAH < C_{leaf}$}
+                  \ASSIGN{$splittingPlanes[node] \leftarrow p$}{Split candidate with minimal weighted area}
+                  \ASSIGN{$SAH$}{$p.weightedArea / node.summedArea + C_N$}
+                  \ASSIGN{$leafs[node]$}{$SAH < C_{leaf}$}
                 \ENDFOR
               }
   \end{algorithmic}
@@ -1544,12 +1549,12 @@ is quite simple and only requires a few kernels.
                   triangles for each split candidate and return the
                   candidate with best relation and presumably lowest
                   subtrees.}
-                \PARALLELFOR{node \VAR{i} \textbf{in} activeList}
+                \PARALLELFOR{$node$}{$activeList$}
                   \ASSIGN{$p$}{$noSplitCandidate$}
-                  \FOREACH{split candidate $s$}{$i.splitCandidates$}
-                    \ASSIGN{$bmp_L$}{$i.triangles \cap s.left$}
+                  \FOREACH{split candidate $s$}{$node.splitCandidates$}
+                    \ASSIGN{$bmp_L$}{$node.triangles \cap s.left$}
                     \ASSIGN{$C_L$}{$\parallel bmp_L \parallel$}
-                    \ASSIGN{$bmp_R$}{$i.triangles \cap s.right$}
+                    \ASSIGN{$bmp_R$}{$node.triangles \cap s.right$}
                     \ASSIGN{$C_R$}{$\parallel bmp_R \parallel$}
                     \ASSIGN{$largestSubtree$}{\MAX{$C_L$}{$C_R$}}
                     \ASSIGN{$smallestSubtree$}{\MIN{$C_L$}{$C_R$}}
@@ -1558,8 +1563,8 @@ is quite simple and only requires a few kernels.
                       \ASSIGN{$p$}{$s$}
                     \ENDIF
                   \ENDFOR
-                  \ASSIGN{$splittingPlanes[i]$}{$p$}
-                  \ASSIGN{$leafs[i]$}{$(p.largestSubtree + p.largestSubtree) / 2 + C_N < C_{leaf}$}
+                  \ASSIGN{$splittingPlanes[node]$}{$p$}
+                  \ASSIGN{$leafs[node]$}{$(p.largestSubtree + p.largestSubtree) / 2 + C_N < C_{leaf}$}
                 \ENDFOR
               }
   \end{algorithmic}
