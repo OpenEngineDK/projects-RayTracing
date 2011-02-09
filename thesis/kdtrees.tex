@@ -376,6 +376,9 @@ the amount of triangles it is associated with.
 
 \subsection{Choosing the Splitting Plane}\label{sec:splittingPlane}
 
+\fixme{does this section describe clipping well enough? That false
+  primitives can accumulate over successive splits?}
+
 % All the brilliance in KD-tree construction comes down to choosing
 % the splitting plane and deciding when to stop.
 
@@ -1206,16 +1209,16 @@ nodes, $nextNodes$, that needs to be processed in the next iteration.
 The nodes are placed in one large array with the structure shown in
 \reffig{fig:nodeStructure}. The already processed nodes are placed in
 one sequential chunk from index 0 an up. The currently active nodes
-are located right after them. The child nodes created by \refalg{} is
-then placed after the active nodes, with the leaf nodes to the left
-and next set of active nodes to the right. This preserves the
-invariant that the $n$ currently active nodes, if any, are always the
-$n$ last nodes in the array after an iteration of the construction
-algorithm. This is a desirable property as it means I do not need to
-maintain a list of indices to active nodes, but instead I can describe
-the list $activeNodes$ by a range and an index into the node
-list. This also improves coalescence when subsequent threads can
-access nodes sequentially.
+are located right after them. The child nodes created by
+\refalg{alg:kdUpperNodeCreator} are then placed after the active
+nodes, with the leaf nodes to the left and next set of active nodes to
+the right. This preserves the invariant that the $n$ currently active
+nodes, if any, are always the $n$ last nodes in the array after an
+iteration of the construction algorithm. This is a desirable property
+as it means I do not need to maintain a list of indices to active
+nodes, but instead I can describe the list $activeNodes$ by a range
+and an index into the node list. This also improves coalescence when
+subsequent threads can access nodes sequentially.
 
 
 \begin{figure}
@@ -1465,9 +1468,112 @@ trees with and without this optimization.
 \subsection{Lower Tree Creation}\label{sec:lowerNodes}
 
 Compared with the upper tree creation phase, the lower tree creation
-is quite simple and only requires a few kernels. 
+is quite simple and only requires a few kernels. Since there can be
+thousands of nodes at the lower node phase, parallization can
+effectively be done over nodes instead of primitives. 
 
-% Example of how to store splitting planes as bitmaps
+\zhou{} proposes that the Surface Area Heuristic is used when deciding
+which splitting plane to use and that the set of splitting candidates
+is precomputed. Precomputing the splitting candidates instead of
+clipping them after each new split can cause false primitives to
+accumulate in nodes over successive splits, as described in
+\refsection{sec:splittingPlane}. \zhou's reasoning is
+
+\quotebook{While clipping is effective for large nodes by preventing
+  false postives from accumulating over future splits, our experiments
+  indicate that clipping rarely improves ray tracing
+  performance.}{1409079}
+
+Later in this section I will propose two simplifications to the
+standard SAH approach. These simplifications may both produce
+acceleration structures of lower quality than the computationally
+heavy SAH, but they make up for this by being much faster.
+
+\subsubsection{Lower Tree Splitting Planes}
+
+% Explain the Plane struct
+
+Before splitting any nodes however, the splitting plane structure used
+in the lower node phase must be explained. To efficiently compute the
+size of a nodes triangle set and sorting a nodes triangles in one
+instruction, I adopt \zhou's novel approach of storing the triangle
+set of a node, $n$ as an index, $i$, and a bit mask, $b$. If the
+$k$'th bit in $b$ is set, this means that the $i+k$'th triangle in the
+list of all triangles is associated with the node. Recall from earlier
+that a node stored the reference to its associated triangles as an
+index, $i$ and a range, $r$. The bit mask corrosponding to $r$ would
+then simply have all it's first $r$ bits set. A more thorough example
+is given in \reffig{fig:bitmap}.
+
+\newcommand{\nodeBitmap}[5]{
+  \begin{tabular}{c}
+    #1 \\ 
+    \begin{tikzpicture}[y=0.4cm, x=.4cm,font=\sffamily]
+      \draw (0,0) -- (4,0);
+      \draw (0,1) -- (4,1);
+      \draw (0,0) -- (0,1);
+      \draw (1,0) -- (1,1);
+      \draw (2,0) -- (2,1);
+      \draw (3,0) -- (3,1);
+      \draw (4,0) -- (4,1);
+      
+      #2
+      #3
+      #4
+      #5
+    \end{tikzpicture}
+  \end{tabular}
+}
+
+\begin{figure}
+  \centering
+  \subfloat[]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+      \draw (0,0) -- (0,6) -- (8,6) -- (8,0) -- (0,0);
+
+      \drawTri{0,0}{2,0}{1,1}
+      \drawAabb{0,0}{0,1}{2,1}{2,0}
+      \drawTri{3,1}{6,1}{6,4}
+      \drawAabb{3,1}{3,4}{6,4}{6,1}
+      \drawTri{7,6}{8,6}{8,5}
+      \drawAabb{7,6}{8,6}{8,5}{7,5}
+      \drawTri{2,5}{3,3}{4,4}
+      \drawAabb{2,5}{2,3}{4,3}{4,5}
+
+      \draw (0,4) -- (8,4);
+    \end{tikzpicture}
+  }
+  \subfloat[]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
+        level/.style={sibling distance=50mm/#1}]
+      \node [node] {\nodeBitmap{0}
+        {\drawTri{0.2,0.3}{0.5,0.6}{0.8,0.3}}
+        {\drawTri{1.2, 0.8}{1.5, 0.2}{1.8, 0.5}}
+        {\drawTri{2.2,0.2}{2.8,0.2}{2.8,0.8}}
+        {\drawTri{3.2, 0.8}{3.8, 0.8}{3.8, 0.2}}}
+      child {node [leaf] {\nodeBitmap{1}
+          {\drawTri{0.2,0.3}{0.5,0.6}{0.8,0.3}}
+          {\drawTri{1.2, 0.8}{1.5, 0.2}{1.8, 0.5}}
+          {\drawTri{2.2,0.2}{2.8,0.2}{2.8,0.8}}{}}}
+      child {node [leaf] {\nodeBitmap{2}{}
+          {\drawTri{1.2, 0.8}{1.5, 0.2}{1.8, 0.5}}{}
+          {\drawTri{3.2, 0.8}{3.8, 0.8}{3.8, 0.2}}}};
+    \end{tikzpicture}
+  }
+  \caption[A description of storing triangles as bit masks.]{A
+    description of storing triangles as bit masks. The bit masks are
+    represented by a grid containing triangles. If a grid cell
+    contains a triangle, then that bit is set. Node 0 contains all
+    triangles, as evidenced by its bit mask. Node 0 is then split
+    along the splitting plane drawn in the scene, which has left
+    triangle mask $[1,1,1,0]$ and right mask $[0,1,0,1]$. The result
+    of splitting is leafs 1 and 2, whose triangle set is the result of
+    a bitwise $and$ between Node 0's bit mask and the left and right
+    bitmask respectively.}
+  \label{fig:bitmap}
+\end{figure}
+
+% Example of how to store splitting planes as bitmasks
 
 \begin{algorithm}
   \caption{Preprocess Lower Nodes.}
@@ -1477,14 +1583,32 @@ is quite simple and only requires a few kernels.
               {$upperLeafs$ : Node List}
               {$splittingPlanes$ : Plane List}{
                 \PARALLELFOR{$node$}{$upperLeafs$}
-                  \STATE{hat}
+                  \PARALLELFOR{$triangle$}{$node.Triangles$}
+                    \ASSIGN{$aabb_p$}{GetAabb($triangle$)}
+                    \COMMENTIT{Create the splitting plane sets along the x-axis.}
+                    \DECLARE{$x_{low}, x_{high}$}{Plane}
+                    \FOREACH{$triangle$}{$node.Triangles$}
+                      \ASSIGN{$aabb_t$}{GetAabb($triangle$)}
+                      \ASSIGN{$x_{low}.left[triangle]$}{$aabb_t.min.x <= aabb_p.min.x$}
+                      \ASSIGN{$x_{low}.right[triangle]$}{$aabb_p.min.x < aabb_t.max.x$}
+                      \ASSIGN{$x_{high}.left[triangle]$}{$aabb_t.min.x <= aabb_p.max.x$}
+                      \ASSIGN{$x_{high}.right[triangle]$}{$aabb_p.max.x < aabb_t.max.x$}
+                    \ENDFOR
+                    \STATE{$splittingPlanes$.Add($x_{low}$)}
+                    \STATE{$splittingPlanes$.Add($x_{high}$)}
+                    \STATE{...}
+                    \COMMENTIT{Perform similar plane constructions for the y and z axis.}
+                    \STATE{...}
+                  \ENDFOR
                 \ENDFOR
               }
   \end{algorithmic}
 \end{algorithm}
 
+% Using shared memory
 
-\subsubsection{SAH Tree}
+
+\subsubsection{SAH Tree Construction}
 
 % Adds surface area computation to the preprocess
 
@@ -1525,7 +1649,7 @@ is quite simple and only requires a few kernels.
 % new surface area by the reduction in BB volume.
 
 
-\subsubsection{Balanced Tree}
+\subsubsection{Balanced Tree Construction}
 
 % SAH is slow, so explore alternatives.
 
@@ -1572,6 +1696,6 @@ is quite simple and only requires a few kernels.
 
 % Explain
 
-\subsubsection{No Tree}
+\subsubsection{No Tree Construction}
 
 
