@@ -597,49 +597,129 @@ the \textit{seperating axis theorem}, as described by Möller in
 
 \subsubsection{Empty Space Maximizing}\label{sec:emptySpace}
 
-An effective optimization to kd-trees is \textit{empty space
-  maximization}. The idea behind the optimization is to cut away large
-empty parts of the scene, by placing empty leaf nodes in the upper
-parts of the tree. This will provide rays traversing the tree with an
-early out option, skipping a large portion of the geometry. An example
-can be seen in \reffig{fig:emptySpaceExample}, where the gray shaded
-node has been created as an empty space node, allowing the ray to skip
-over the triangles above.
+An effective optimization to the quality of kd-trees is \textit{empty
+  space maximization}. The idea behind the optimization is to cut away
+large empty parts of the scene. This is done by placing empty leaf
+nodes in the upper parts of the tree. The empty nodes will provide rays
+traversing the tree with an early out option, skipping a large portion
+of the geometry. 
+
+\reffig{fig:noEmptySpaceExample} shows a simple scene without empty
+space cut away and its corrosponding kd-tree. Without empty space
+maximization the ray entering the scene from the lower left cornor is
+forced to perform intersection test with every triangle in leaf node
+1. In contrast the kd-tree in\reffig{fig:emptySpaceExample} has been
+created with empty space maximization enabled and the ray entering the
+scene now ends up in leaf 4. Leaf 4 is empty and allows the ray to
+advance forward while skipping every triangle in leaf 1.
 
 \begin{figure}
   \centering
-  \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+  \subfloat[A simple scene without empty space cut away.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+      
+      % AABB
+      \draw (0,0) -- (10,0) -- (10,8) -- (0,8) -- (0,0);
+      
+      % Tris
+      \drawTri{9,0}{10,2}{6,3}
+      \draw (8.33,1.66) node {5};
+      \drawTri{7,8}{7,4}{9,4}
+      \draw (7.67,5.33) node {6};
+      
+      \drawTri{0,8}{0,6}{2,8}
+      \draw (0.6,7.3) node {0};
+      \drawTri{1,7}{0,6}{2,6}
+      \draw (1,6.5) node {1};
+      \drawTri{1,7}{3,6}{3,8}
+      \draw (2.4,7) node {2};
+      \drawTri{5,7}{3,6}{3,8}
+      \draw (3.6,7) node {3};
+      \drawTri{5,7}{3,6}{6,6}
+      \draw (5,6.5) node {4};
+      
+      % Splits
+      \draw (6,0) -- (6,8);
+      
+      % Ray
+      \drawRay{0,0}{3,2}
+      
+    \end{tikzpicture}
+    \label{fig:noEmptySpaceScene}
+  }
+  \hspace{5mm}
+  \subfloat[The tree corrosponding to the scene in \reffig{fig:noEmptySpaceScene}.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
+        level/.style={sibling distance=20mm/#1}]
+      \node [node] {$\begin{array}{c}0\\x:6\end{array}$}
+        child {node [leaf] {$\begin{array}{c}4\\\{0,1,2,3,4\}\end{array}$}}
+        child {node [leaf] {$\begin{array}{c}2\\\{5, 6\}\end{array}$}};
+    \end{tikzpicture}
+    \label{fig:noEmptySpaceTree}
+  }
+  
+  \caption[Scene without empty space maximization.]{A kd-tree
+    constructed around a simple scene. The kd-tree doesn't use the
+    empty space maximization optimization.}
+  \label{fig:noEmptySpaceExample}
+\end{figure}
 
-    % AABB
-    \draw (0,0) -- (10,0) -- (10,8) -- (0,8) -- (0,0);
-
-    % Tris
-    \drawTri{9,0}{10,2}{6,3}
-    \drawTri{7,8}{7,4}{9,4}
-
-    \drawTri{0,8}{0,6}{2,8}
-    \drawTri{1,7}{0,6}{2,6}
-    \drawTri{1,7}{3,6}{3,8}
-    \drawTri{5,7}{3,6}{3,8}
-    \drawTri{5,7}{3,6}{6,6}
-
-    % Splits
-    \draw[color=green] (6,0) -- (6,8);
-    \draw[color=green] (0,6) -- (6,6);
-
-    % Empty space
-    \draw[ball color=gray, color=green, shading=ball,gray] (0,0) -- (0,6) -- (6,6) -- (6,0) -- (0,0);
-
-    % Ray
-    \drawRay{0,0}{6,4}
-
-  \end{tikzpicture}
-
-  \vspace{3mm}
-  \parbox{6cm}{\caption[Empty space maximization.]{An example of empty
-      space maximizing. The grey ball shaded area represents an empty
-      node and allows the ray to leap across it and skip intersection
-      tests with the 5 triangles above.}\label{fig:emptySpaceExample}}
+\begin{figure}
+  \centering
+  \subfloat[The scene from \reffig{fig:noEmptySpaceScene} with empty space cut away.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+      
+      % AABB
+      \draw (0,0) -- (10,0) -- (10,8) -- (0,8) -- (0,0);
+      
+      % Tris
+      \drawTri{9,0}{10,2}{6,3}
+      \draw (8.33,1.66) node {5};
+      \drawTri{7,8}{7,4}{9,4}
+      \draw (7.67,5.33) node {6};
+      
+      \drawTri{0,8}{0,6}{2,8}
+      \draw (0.6,7.3) node {0};
+      \drawTri{1,7}{0,6}{2,6}
+      \draw (1,6.5) node {1};
+      \drawTri{1,7}{3,6}{3,8}
+      \draw (2.4,7) node {2};
+      \drawTri{5,7}{3,6}{3,8}
+      \draw (3.6,7) node {3};
+      \drawTri{5,7}{3,6}{6,6}
+      \draw (5,6.5) node {4};
+      
+      % Splits
+      \draw (6,0) -- (6,8);
+      \draw (0,6) -- (6,6);
+      
+      % Empty space
+      \draw[ball color=gray, color=green, shading=ball,gray] (0,0) -- (0,6) -- (6,6) -- (6,0) -- (0,0);
+      
+      % Ray
+      \drawRay{0,0}{6,4}
+      
+    \end{tikzpicture}
+    \label{fig:emptySpaceScene}
+  }
+  \hspace{5mm}
+  \subfloat[The tree from \reffig{fig:noEmptySpaceTree} with the empty space nodes 3 and 4 injected.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
+        level/.style={sibling distance=40mm/#1}]
+      \node [node] {$\begin{array}{c}0\\x:6\end{array}$}
+        child {node [node] {$\begin{array}{c}3\\y:6\end{array}$}
+            child {node [leaf] {$\begin{array}{c}1\\\{0,1,2,3,4\}\end{array}$}}
+            child {node [leaf] {$\begin{array}{c}4\\\emptyset\end{array}$}}
+        }
+        child {node [leaf] {$\begin{array}{c}2\\\{5, 6\}\end{array}$}};
+    \end{tikzpicture}
+    \label{fig:emptySpaceTree}
+  }
+  
+  \caption[Empty space maximization.]{An example of empty space
+    maximizing. The grey ball shaded area represents an empty node and
+    allows the ray to leap across it and skip intersection tests with
+    the 5 triangles above.}\label{fig:emptySpaceExample}
 \end{figure}
 
 
@@ -969,12 +1049,49 @@ in \refalg{alg:bfsKDTreeCreator}.
 
 % The structure of the rest of the chapter.
 
-In the rest of this section I will first discuss the creation of the
-upper parts of the tree and and how empty space maximization can be
-added to this phase. I will then present and motivate 3 different
-methods for creating the lower parts of the tree, including the SAH
-method found in \zhou{}.
+The overall construction of the tree is presented in
+\refalg{alg:constructKDTree}. First the axis aligned bounding boxes of
+each triangle is computed. Then the upper part of the tree is
+constructed iteratively until there are no more new nodes to
+process. How this is done is the topic of
+\refsection{sec:upperNodes}. Once the upper part of the tree is
+complete, the leaf nodes are processed and the sides of triangles'
+bounding boxes are stored as potential splitting planes. The lower
+part of the tree is then iteratively constructed, just as the upper
+part was. \refsection{sec:lowerNodes} details 3 different algorithms
+that produces lower trees with varying construction speed and quality.
 
+\begin{algorithm}
+  \caption{Construct kd-tree}
+  \label{alg:constructKDTree}
+  \begin{algorithmic}
+    \PROCEDURE{ConstructKDTree}
+              {$Triangles$ : Triangle List}
+              {$root$ : Node}{
+                \PARALLELFOR{$t$ \textbf{in} $Triangles$}
+                  \STATE{Compute axis aligned bounding box for $t$.}
+                \ENDFOR
+                \STATE{}
+                \DECLARE{$activeNodes, leafs, nextNodes$}{Node List}
+                \COMMENTIT{Upper node construction phase.}
+                \STATE{$activeNodes$.Add($rootNode$)}
+                \WHILE{$activeNodes$.NotEmpty}
+                  \STATE{$nextNodes$.Clear}
+                  \STATE{CreateUpperNodes($activeNodes$, $leafs$, $nextNodes$)}
+                  \STATE{swap($activeNodes$, $nextNodes$)}
+                \ENDWHILE
+                \STATE{}
+                \COMMENTIT{Lower node construction phase.}
+                \STATE{PreprocessLowerNodes($leafs$)}
+                \STATE{CreateLowerNodes($leafs$, $activeNodes$)}
+                \WHILE{$activeNodes$.NotEmpty}
+                  \STATE{$nextNodes$.Clear}
+                  \STATE{CreateUpperNodes($activeNodes$, $nextNodes$)}
+                  \STATE{swap($activeNodes$, $nextNodes$)}
+                \ENDWHILE
+              }
+  \end{algorithmic}
+\end{algorithm}
 
 \subsection{Upper Tree Creation}\label{sec:upperNodes}
 
@@ -1097,9 +1214,9 @@ invariant that the $n$ currently active nodes, if any, are always the
 $n$ last nodes in the array after an iteration of the construction
 algorithm. This is a desirable property as it means I do not need to
 maintain a list of indices to active nodes, but instead I can describe
-every active node by a range and an index into the node list. This
-also improves coalescence when subsequent threads can access nodes
-sequentially.
+the list $activeNodes$ by a range and an index into the node
+list. This also improves coalescence when subsequent threads can
+access nodes sequentially.
 
 
 \begin{figure}
@@ -1345,9 +1462,24 @@ empty space maximization can be turned on and off at will, which
 allows me to easily compare the quality and construction speed of
 trees with and without this optimization.
 
-\subsection{Lower Tree Creation}
+\subsection{Lower Tree Creation}\label{sec:lowerNodes}
+
+Compared with the upper tree creation phase, the lower tree creation
+is quite simple and only requires a few kernels. 
 
 % Example of how to store splitting planes as bitmaps
+
+\begin{algorithm}
+  \caption{Calculating splitting planes.}
+  \label{alg:calcSplittingPlanes}
+  \begin{algorithmic}
+    \PROCEDURE{calcSplittingPlanes}
+              {}
+              {}{
+                \STATE{hat}
+              }
+  \end{algorithmic}
+\end{algorithm}
 
 \subsubsection{SAH Tree}
 
