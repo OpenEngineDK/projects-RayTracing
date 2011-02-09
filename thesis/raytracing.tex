@@ -16,6 +16,9 @@
 \fixme{A generel for all algorithm showing the dataparallel aspect of
   ray tracing. Then move intersection back until after ray tracing}
 
+\fixme{Brifly mention how light and reflection is calculated. ref real
+time rendering}
+
 % Motivate!
 
 % An optimized ray tracer will be used to test wether or not more time
@@ -37,7 +40,8 @@ maximizing occupancy.
 The implementation of an exhaustive ray tracer, where each ray is
 tested against all triangles, will then briefly be discussed. In
 \refchapter{chp:results} it will be compared to the hierachical
-version to motivate the continued use of data structures on GPGPU's.
+version to motivate the continued use of data structures for dynamic
+geometry.
 
 Next the hierarchical ray tracer implementations and optimizations are
 presented. This section will cover how to traverse the kd-tree created
@@ -153,7 +157,7 @@ CUDA's vector primitives and can be seen in
 \citebook{MollerTrumbore97} was optimized for the CPU and therefore
 provided a lot of early out options as soon as the algorithm detected
 that the ray had missed the plane. Due to the SIMT architecture of
-GPGPUs, providing as many early out possibilities as
+GPUs, providing as many early out possibilities as
 \citebook{MollerTrumbore97} causes a branching overhead and results in
 reduced performance. This is understandable since only one ray needs
 to intersect its triangle in order for the entire warp to perform the
@@ -590,17 +594,17 @@ stack. This can save a lot of resources otherwise spend on traversing
 the tree, since the ray will now restart much closer to the leaf
 nodes.
 
-The memory model of the GPGPU however isn't flexible enough for this
-approach, which requires either dynamically allocating more memory if
-the stack is filled or pre-allocating a \textit{large enough} stack in
-local memory to handle any given kd-tree, something that could require
-quite large amounts of memory for huge scenes and might even require
-too much memory for practical use on todays graphics cards. The
-solution found by \horn{} was to use a \textit{short-stack}, a
-fixed-size, circular stack of $N$ elements, and then revert to using
-kd-restart if the stack underflows. In their research they found that
-a short-stack approach only visited 3\% more nodes compared to the
-unlimited stack CPU approach.
+CUDA's memory model, however, isn't flexible enough for this approach,
+which requires either dynamically allocating more memory if the stack
+is filled or pre-allocating a \textit{large enough} stack in local
+memory to handle any given kd-tree, something that could require quite
+large amounts of memory for huge scenes and might even require too
+much memory for practical use on todays graphics cards. The solution
+found by \horn{} was to use a \textit{short-stack}, a fixed-size,
+circular stack of $N$ elements, and then revert to using kd-restart if
+the stack underflows. In their research they found that a short-stack
+approach only visited 3\% more nodes compared to the unlimited stack
+CPU approach.
 
 % Only push usefull 'forward' nodes to the stack.
 
@@ -783,7 +787,7 @@ thread incoherence across warps and \aila{} concludes that
 
 While \horn's approach to packet tracing might not have yielded the
 intended increase in performance, the warp constructions likeness to
-SIMD means that the GPGPU is actually performing packet tracing.
+SIMD means that the GPU is actually performing packet tracing.
 Instead of 4 rays per instruction, as is the case with SIMD, a warp
 will trace rays in packets of 32 at a time on current hardware.
 
@@ -961,10 +965,3 @@ quickly be discussed under Future Work in \refchapter{chp:future}.
 %% % Like persistent threads, this is not an important optimazition
 %% % longterm, since global memory are being given a cache.
 
-
-
-\section{Shading}
-
-% Everything is paper thin and empty space
-
-\fixme{IS shading really needed?}

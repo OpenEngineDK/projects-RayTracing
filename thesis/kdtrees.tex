@@ -7,9 +7,11 @@
   ``good'' and a naïvely built kd-tree is often a factor of 2 or
   more.}{Ingo Wald and Vlastimil Havran}
 
+\fixme{Anden argumentation for kd-træet? Fjern distance tests?}
+
 % About KD-trees
 
-Before we in \refchapter{chp:rayTracing} discuss how the rays will
+Before we in \refchapter{chp:rayTracing} discuss how rays will
 traverse the kd-tree, we must first examine the structure of it and
 how it is created.
 
@@ -74,7 +76,6 @@ given on \reffig{fig:rayBoxIntersection}.
 
 \begin{figure}
   \centering
-%  \includegraphics[width=5cm]{RayBoxIntersection}
   \subfloat[Ray miss.]{
     \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
       % Planes
@@ -248,15 +249,86 @@ recursive kd-tree construction scheme.
 ConstructKDTree takes as arguments a list of triangles and an axis
 aligned bounding box defining the volume of the node. The algorithm
 then checks if the triangles and bounding box satisfy the requirements
-of beeing a leaf node. If so, then a leaf is produced and the
-recursion terminates. If not then a splitting plane, $plane$, needs to
-be determined and the bounding box is divided by $plane$, producing a
-new left and right axis aligned bounding box. Triangles are then
+of being a leaf node. If so, then a leaf is produced and the recursion
+terminates. If not, then a splitting plane, $plane$, needs to be
+determined and the bounding box is divided by $plane$, producing a new
+left and right axis aligned bounding box. Triangles are then
 distributed to each new bounding box by some decision algorithm and a
-new node is created that will contain references to it's 2 children.
+new node is created that will contain references to it's 2
+children. An example of an iteration of ConstructKDTree can be seen in
+\reffig{fig:kdIteration}.
 
-\fixme{mention bounding box recomputing, probably not in this generel
-  case.}
+\begin{figure}
+  \centering \subfloat[A simple scene and it's corrosponding
+    kd-tree. The entire scene is contained in the root node.]{
+    \begin{tikzpicture}[y=0.5cm, x=0.5cm,font=\sffamily]
+      \drawNode{0,0}{8,0}{8,6}{0,6}
+      
+      % Tris
+      \drawTri{0,6}{1,4}{2,5}
+      \draw (1,5) node{0};
+      \drawTri{4,6}{3,4}{2,5}
+      \draw (3,5) node{1};
+      \drawTri{4,2}{5,6}{6,4}
+    \draw (5,4) node{2};
+      \drawTri{8,0}{7,2}{6,1}
+      \draw (7,1) node{3};
+
+      %axes
+      \draw[->] (0,0) -- coordinate (x axis mid) (9,0);
+      \draw[->] (0,0) -- coordinate (y axis mid) (0,7);
+      %ticks
+      \foreach \x in {0,2,...,9}
+     		\draw (\x,1pt) -- (\x,-3pt)
+			node[anchor=north] {\x};
+    	\foreach \y in {0,2,...,7}
+     		\draw (1pt,\y) -- (-3pt,\y) 
+     			node[anchor=east] {\y}; 
+
+      \draw (13,3) node [leaf] (0){$\begin{array}{c}0\\\{0, 1, 2, 3\}\end{array}$};
+    \end{tikzpicture}
+    \label{fig:simpleScene0}
+  }
+
+  \subfloat[The same scene as in \reffig{fig:simpleScene0}. The
+    kd-tree has split the geometry down the middle and created 2 new
+    leaf nodes. The geometry has then been associated with these 2
+    leaf nodes.]{
+    \begin{tikzpicture}[y=0.5cm, x=0.5cm,font=\sffamily]
+      \drawNode{0,0}{8,0}{8,6}{0,6}
+      
+      % Tris
+      \drawTri{0,6}{1,4}{2,5}
+      \draw (1,5) node{0};
+      \drawTri{4,6}{3,4}{2,5}
+      \draw (3,5) node{1};
+      \drawTri{4,2}{5,6}{6,4}
+    \draw (5,4) node{2};
+      \drawTri{8,0}{7,2}{6,1}
+      \draw (7,1) node{3};
+
+      % Splits
+      \draw (4,0) -- (4,6);
+
+      %axes
+      \draw[->] (0,0) -- coordinate (x axis mid) (9,0);
+      \draw[->] (0,0) -- coordinate (y axis mid) (0,7);
+      %ticks
+      \foreach \x in {0,2,...,9}
+     		\draw (\x,1pt) -- (\x,-3pt)
+			node[anchor=north] {\x};
+      \foreach \y in {0,2,...,7}
+     		\draw (1pt,\y) -- (-3pt,\y) 
+     			node[anchor=east] {\y}; 
+
+      \draw (14,4) node [node] (0){$\begin{array}{c}0\\x:4\end{array}$}
+        child {node [leaf] (1) {$\begin{array}{c}1\\\{0, 1\}\end{array}$}}
+        child {node [leaf] (2) {$\begin{array}{c}2\\\{2, 3\}\end{array}$}};
+    \end{tikzpicture}
+  }
+  \caption{One iteration of the kd-tree construction algorithm.}
+  \label{fig:kdIteration}
+\end{figure}
 
 % Left balanced non pointer vs pointers
 
@@ -312,8 +384,6 @@ leaf.
 In the following section 2 algorithms that solves this problem is
 presented and then extended with empty space maximizing.
 
-
-\subsubsection{Balanced Subtrees}
 
 \subsubsection{Spatial Median}
 
@@ -520,7 +590,7 @@ the \textit{seperating axis theorem}, as described by Möller in
 \citebook{Moller:2005}.
 
 
-\subsubsection{Empty Space Maximizing}
+\subsubsection{Empty Space Maximizing}\label{sec:emptySpace}
 
 An effective optimization to kd-trees is \textit{empty space
   maximization}. The idea behind the optimization is to cut away large
@@ -581,43 +651,233 @@ bounding box is more than 25\% empty along one of the axes.
 
 % Implementation is 
 
-\subsection{Splitting Schemes}\label{sec:splittingGeom}
+\subsection{Triangle/Node Association Schemes}\label{sec:splittingSchemes}
 
-This section will look at alternatives to triangle splitting, namely
-\textit{triangle division}, where the triangle is not split by
-splitting planes, but divided onto each side, by simply adjusting it's
-bounding box, and \textit{box inclusion}, where the triangles
-themselves are not tested for inclusion, but their bounding boxes are.
+When a splitting plane has been chosen, the triangles in the split
+kd-tree node needs to be associated with the two newly created leaf
+nodes that they overlap. Triangles located entirely in front of the
+splitting plane are associated with the left child node and triangles
+entirely behind are associated with the right child node. The
+association schemes discussed in this section present different
+methods for handling the triangles intersected by the splitting
+plane. The scheme employed is important in dynamic schemes. On one
+hand a fast approximating association scheme may assign triangles to
+nodes that do not necessarily contain them, resulting in larger trees
+and slower ray tracing times. On the other hand a scheme rigorously
+checking every triangle and only assigning triangles to nodes that
+they definetly intersect will result in a smaller tree and faster ray
+tracing time, but results in more time being spend creating the
+acceleration structure.
+
+
+%% This section will look at alternatives to triangle splitting, namely
+%% \textit{triangle division}, where the triangle is not split by
+%% splitting planes, but divided onto each side, by simply adjusting it's
+%% bounding box, and \textit{box inclusion}, where the triangles
+%% themselves are not tested for inclusion, but their bounding boxes are.
 
 % What to do with the triangles caught in the splitting plane.
-
-\fixme{afventer møde med Trier}
 
 
 \subsubsection{Triangle splitting}
 
 % Normally ppl split.
 
+The most common approach when a triangle should be divided around a
+splitting plane, is to actually split the triangle up into new
+triangles. New triangles produced by triangle splitting will always be
+located entirely within the bounding box of the kd-node they are
+associated with. When performing triangle splitting there are 3 cases
+to look out for, as can be seen in \reffig{fig:splittingCases}.
+
+\begin{figure}
+  \centering
+  \subfloat[2 vertices to the left of the splitting plane.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+      \draw (0,0) -- (4,0) -- (4,4) -- (0,4) -- (0,0);
+      \drawTri{2,4}{0,0}{4,0}
+      \draw[dashed] (0,0) -- (3,2);
+      \draw (3,0) -- (3,4);
+    \end{tikzpicture}
+    \label{fig:splittingCase1}
+  }
+  \hspace{5mm}
+  \subfloat[1 vertex intersected by the splitting plane.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+      \draw (0,0) -- (4,0) -- (4,4) -- (0,4) -- (0,0);
+      \drawTri{2,4}{0,0}{4,0}
+      \draw (2,0) -- (2,4);
+    \end{tikzpicture}
+    \label{fig:splittingCase2}
+  }
+  \hspace{5mm}
+  \subfloat[2 vertices to the right of the splitting plane.]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
+      \draw (0,0) -- (4,0) -- (4,4) -- (0,4) -- (0,0);
+      \drawTri{2,4}{0,0}{4,0}
+      \draw[dashed] (4,0) -- (1,2);
+      \draw (1,0) -- (1,4);
+    \end{tikzpicture}
+    \label{fig:splittingCase3}
+  }
+
+  \vspace{3mm}
+  \parbox{10cm}{\caption{The 3 different triangle splitting cases. A dashed line
+      represents an additional split needed to keep representing
+      geometry as triangles.}\label{fig:splittingCases}}
+\end{figure}
+
+The first case in \reffig{fig:splittingCase1} illustrates the split
+when 2 vertices are located on the left of the splitting plane and one
+on the right. This case is mirrored by \reffig{fig:splittingCase3}
+where 2 of the vertices are located to the right of the splitting
+plane. In both of these cases a triangle split will produce three new
+triangles. In the last case in \reffig{fig:splittingCase2} one of the
+vertices is directly intersected by the splitting plane and splits the
+triangle perfectly into two new triangles. This last case however is
+highly unlikely and in generel a triangle split always produces 3 new
+triangles. 
+
+
 \subsubsection{Triangle dividing}
 
-% Spliting will almost always produce 3 triangles, whereas divide will
-% always produce only 2.
+\begin{figure}
+  \centering
+  \subfloat[One split.]{
+    \begin{tikzpicture}[y=0.7cm, x=0.7cm,font=\sffamily]
+      \draw (0,0) -- (4,0) -- (4,4) -- (0,4) -- (0,0);
+      \drawTri{2,4}{0,0}{4,0}
+      \draw[dashed] (0,0) -- (3,2);
+      \draw (3,0) -- (3,4);
+    \end{tikzpicture}
+  }
+  \subfloat[Two splits.]{
+    \begin{tikzpicture}[y=0.7cm, x=0.7cm,font=\sffamily]
+      \draw (0,0) -- (4,0) -- (4,4) -- (0,4) -- (0,0);
 
-% Adjusting area heuristic: When we no longer split geometry, SAH
-% becomes an even worse approximation. This can be fixed by an
-% adjusting area heuristic, where the diagonal of the geometric
-% primitives original bounding box is compared to the diagonal of the
-% reduced box and the primitives surface area is adjusted accordingly.
+      \drawTri{2,4}{0,0}{4,0}
+      
+      \draw (1,0) -- (1,4);
+      \draw (3,0) -- (3,4);
+
+      \draw[dashed] (1,2) -- (3,2);
+      \draw[dashed] (0,0) -- (3,2);
+      \draw[dashed] (1,0.667) -- (3,0);
+    \end{tikzpicture}
+  }
+  \subfloat[Three splits.]{
+    \begin{tikzpicture}[y=0.7cm, x=0.7cm,font=\sffamily]
+      \draw (0,0) -- (4,0) -- (4,4) -- (0,4) -- (0,0);
+      \drawTri{2,4}{0,0}{4,0}
+      
+      \draw (1,0) -- (1,4);
+      \draw (2,0) -- (2,4);
+      \draw (3,0) -- (3,4);
+
+      \draw[dashed] (1,2) -- (3,2);
+      \draw[dashed] (0,0) -- (3,2);
+      \draw[dashed] (1,0.667) -- (3,0);
+      \draw[dashed] (2,0.333) -- (1,0);
+      \draw[dashed] (2,0.333) -- (3,2);
+      \draw[dashed] (2,1.333) -- (1,2);
+    \end{tikzpicture}
+  }
+  \caption[Excessive splitting of a triangle.]{The triangle splitting
+    algorithm performing excessive splits on a triangle.}
+  \label{fig:excessiveSplitting}
+\end{figure}
+
+Splitting a triangle almost always produce 3 triangles and can lead to
+excessively many new triangles being created, as evidenced by
+\reffig{fig:excessiveSplitting}. The problem with excessive splitting
+is that each new triangle actually represents the original triangle
+and so on \reffig{fig:excessiveSplitting} we see nodes containing up
+to 6 triangles, all representing the exact same original and
+cluttering up the tree with unnecessary geometry. A more preferable
+situation is seen in \reffig{fig:dividing}, where each node only
+contains one reference to the original triangle.
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[y=0.7cm, x=0.7cm,font=\sffamily]
+    \draw (0,0) -- (4,0) -- (4,4) -- (0,4) -- (0,0);
+    \drawTri{2,4}{0,0}{4,0}
+    
+    \draw (1,0) -- (1,4);
+    \draw (2,0) -- (2,4);
+    \draw (3,0) -- (3,4);
+  \end{tikzpicture}
+  
+  \vspace{3mm}
+  \parbox{5cm}{\caption[Dividing a triangle.]{Dividing a triangle
+      among the nodes owning it. Notice that each node only contains
+      one reference to the original triangle.}\label{fig:dividing}}
+\end{figure}
+
+This is the central idea behind \textit{dividing triangles}. Instead
+of splitting a triangle around the splitting plane and creating new
+triangles, I associated the original triangle with the new
+nodes. Wether or not to associate a triangle and node is decided by
+performing a \textit{triangle/bounding box overlap} test, as described
+in Möller\citebook{Moller:2005}. If the triangle overlaps the child
+node's bounding box after the split, then it will be associated with
+that node, otherwise the triangle is excluded from the node.
 
 
 \subsubsection{Box Inclusion}
 
 % Simpler than splitting.
 
-% Inspired by the small node step in Zhou
+Performing the triangle/bounding box overlap test can be a
+computationally heavy task. A cheaper splitting scheme is to test a
+triangle's axis aligned bounding volume with the axis aligned bounding
+volume of the node. Given that an axis aligned bounding volume, $v$,
+can be described by its minimum and maximum value along each axis, I
+define it as $v = \{v_{min}, v_{max}\} \in \{R^3, R^3\} $. Performing
+the intersection test between the triangle's bounding volume, $t$, and
+the node's, $n$, then becomes $n_{min} < v_{max} \wedge v_{min} <
+n_{max}$.
+
+\begin{figure}
+  \centering
+  \subfloat[]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm] 
+      \drawTri{1,1}{2,4}{4,3}
+      \drawAabb{1,1}{1,4}{4,4}{4,1}
+      
+      \draw (0,0) -- (0,3) -- (3,3) -- (3,0) -- (0,0);
+      \draw (3,0) -- (3,3) -- (6,3) -- (6,0) -- (3,0);
+    \end{tikzpicture}
+  }
+  \subfloat[hut]{
+    \begin{tikzpicture}[y=0.5cm, x=.5cm]
+      \drawTri{1,2}{2,5}{4,4}
+      \drawAabb{1,2}{1,5}{4,5}{4,2}
+
+      \draw (0,0) -- (0,3) -- (3,3) -- (3,0) -- (0,0);
+      \draw (3,0) -- (3,3) -- (6,3) -- (6,0) -- (3,0);
+    \end{tikzpicture}
+    \label{fig:falseBoxInclusion}
+  }
+  \caption{Box inclusion examples.}
+  \label{fig:boxInclusion}
+\end{figure}
 
 % Naturally increases amount of \textit{false primitives} in the tree, but is
 % very cheap.
+
+\refFig{fig:boxInclusion} shows two examples of a node being split
+down the middle. In both examples the triangle will be associated with
+both new nodes, as the triangles bounding box overlaps both nodes. But
+in \reffig{fig:falseBoxInclusion} we clearly see that the triangle
+itself does not overlap the right node's bounding box. This
+illustrates the drawback to only testing a triangle's bounding box and
+how box inclusion will produce false positives. Triangles that do not
+intersect a nodes bounding box can be associated with that node and
+become a false primitive, which will increase the size of the tree and
+slow down ray tracing time. However, box inclusion makes up for this
+by performing fast node/triangle association, cutting down on the time
+spend constructing the tree.
 
 % Also has an increased change of looping during construction in
 % combination with a small max lower size. Fx fairy forest loops using
@@ -636,22 +896,27 @@ themselves are not tested for inclusion, but their bounding boxes are.
 
 
 
-\section{Adopting the algorithms for GPGPUs}
+\section{Adopting the Algorithms for CUDA}
 
-% Needs to exploit the dataparallel nature of GPGPU's A GPGPU needs as
+% Needs to exploit the dataparallel nature of GPU's A GPU needs as
 % many of its multiprocessors occupied as possibly for optimal
 % performance.
+
+Having explored the different methods for deciding which splitting
+plane to use and how to associate geometry with a node in the kd-tree,
+it is time to look at the actual implementation of a kd-tree
+construction algorithm on the GPU.
 
 The generel kd-tree construction method presented in
 \refalg{alg:kdTreeCreator} recursively constructs \textit{one} tree
 node at a time in a \textit{depth-first} manor. In order to
-efficiently utilize the GPGPU, as many of it's multiprocessors as
+efficiently utilize the GPU, as many of it's multiprocessors as
 possible must be fully occupied. This means \refalg{alg:kdTreeCreator}
 must be restructured to work on multiple nodes at a time. Fortunatly
-this is exactly what \zhou{} did by changing the kd-tree constructor to
-work on a list of nodes and recursively create the tree in
+this is exactly what \zhou{} did by changing the kd-tree constructor
+to work on a list of nodes and recursively create the tree in
 \textit{breadth-first} order, as outlines in
-\refalg{alg:bfsKDTreeCreator}. 
+\refalg{alg:bfsKDTreeCreator}.
 
 \begin{algorithm}
   \caption{BFS Recursive kd-tree constructor}
@@ -685,14 +950,17 @@ At the lower levels, where thousands of nodes are created at a time,
 breadth-first creation allows full utilization of the hardware. But
 for the first levels of the tree this approach will still not fully
 exploit the graphics hardware, as only a couple of nodes are active
-per pass.
+per pass, leaving the multiprocessors underutilized.
 
 To remedy this the tree construction will be split into 2 phases, an
-upper and a lower phase. During the upper tree creation phase the
-splitting plane position decision is parallized over all geometric
-primitives, of which there can be hundreds of thousands. When creating
-the lower tree, there will be thousands of nodes and computations can
-effectively be structured as in \refalg{alg:bfsKDTreeCreator}.
+upper and a lower phase. A node is said to belong to the upper part of
+the tree if the number of triangles associated with it is above a
+given threshold. In this thesis I will be using the thresholds 32 and
+64. During the upper tree creation phase the choice of splitting plane
+is parallized over all geometric primitives, of which there can be
+hundreds of thousands. When creating the lower tree, there will be
+thousands of nodes and computations can effectively be structured as
+in \refalg{alg:bfsKDTreeCreator}.
 
 % The structure of the rest of the chapter.
 
@@ -708,12 +976,29 @@ method found in \zhou{}.
 % At upper tree level nodes exploit data parallelism by parallising
 % the cost computation over triangles. 
 
+At the uppermost levels of the kd-tree there won't be many nodes that
+our computations can be parallized over. But each node can be
+associated with thousands of geometric primitives and parallising the
+choice of splitting plane across the geometry will utilize the GPU
+effectively.
+
 % SAH assumes that each split results in 2 leaf nodes, which is
 % practically always wrong at high level nodes, therefore \zhou{}
 % suggests splitting along the spatial median of the nodes longest
 % axis.
 
-% Use GPU for computations and let CPU handle minor book keeping.
+The issue is then which algorithm to use when choosing the splitting
+plane. SAH is a computationally heavy algorithm, since it compares
+every possibly splitting plane with every triangle associated with the
+node. SAH also assumes that each split results in 2 leaf nodes, which
+for the upper parts of the tree is almost always wrong. This makes SAH
+an undesirable algorithm for choosing the splitting plane in the upper
+parts of tree, where we need to be able to efficiently decide on which
+splitting plane to use. Instead \zhou{} proposes to use spatial median
+splitting with empty space maximization.
+
+The entire algorithm for constructing the upper parts of the kd-tree
+can be seen in \refalg{alg:kdUpperNodeCreator}.
 
 \begin{algorithm}
   \caption{KD-Tree upper node creator}
@@ -727,18 +1012,19 @@ method found in \zhou{}.
                  \DECLARE{$segmentList$}{List}
                  \PARALLELFOR{$node$ \textbf{in} $activeNodes$}
                    \STATE{Split all triangles contained in $node$ into
-                     fixed sized segments and those in $segmentList$.}
+                     fixed sized segments and store those in $segmentList$.}
                  \ENDFOR
                  \STATE{}
                  \COMMENTIT{Then compute each triangles bounding box
                    using reduction as described in
                    \refsection{sec:reduce}.}
                  \PARALLELFOR{$segment$ \textbf{in} $segmentList$}
-                   \STATE{Reduce the individual segments.}
+                   \STATE{Compute the bounding box of the triangles in
+                     each segment.}
                  \ENDFOR
                  \STATE{Using segmented reduction as described in
-                   \zhou{}, reduce each nodes bounding box. Perform 
-                   median splitting on the nodes.}
+                   \zhou{} to compute each nodes bounding box. Perform 
+                   spatial median splitting on the nodes.}
 
                  \STATE{}
                  \COMMENTIT{Perform empty space maximization.}
@@ -746,13 +1032,12 @@ method found in \zhou{}.
                  \STATE{...}
                  \STATE{}
 
-                 \COMMENTIT{Compute the addresses to move the triangles to.}
+                 \COMMENTIT{Compute the addresses to move the triangles to by comparing them to the splitting plane.}
                  \DECLARE{$splitSide, splitAddr$}{List}
                  \PARALLELFOR{$segment$ \textbf{in} $segmentList$}
                    \PARALLELFOR{$triangle$ \textbf{in} $segment.triangles$}
-                   \STATE{Associate each triangle to its owner nodes
-                     children, with respect the owner node's splitting
-                     plane. Store the information in $splitSide$.}
+                     \ASSIGN{$splitSide[triangle.id]$}{AssociateLeft($segment.node.splittingPlane$, $triangle$)}
+                     \ASSIGN{$splitSide[triangle.id + maxTriangles]$}{AssociateRight($segment.node.splittingPlane$, $triangle$)}
                    \ENDFOR
                  \ENDFOR
                  \ASSIGN{$splitAddr$}{\textbf{Prefix-Sum}($splitSide$)}
@@ -789,13 +1074,43 @@ method found in \zhou{}.
 
 % Go over the algorithm
 
+The algorithm takes a list of non processed nodes, $activeNodes$ as
+input and returns a list of leaf nodes, $leafs$, and a list of new
+nodes, $nextNodes$, that needs to be processed in the next iteration.
+
+% Use GPU for computations and let CPU handle minor book keeping.
+
+As described in \refsection{sec:reduce}, our reduction algorithm
+assumes that the length of the input list is a power of 2. Triangles
+associated with a node are therefore split into segments with a
+fixed-size that is a power of 2. Having fixed-size segments will also
+make it easy to choose a kernels block size, so that each segment is
+processed by one block. A segment contains information about which
+triangles it contains, which node its triangles are associated with
+and if there are not enough triangles to fill it, then it also stores
+how many triangles it actually contains.
+
+Performing two reductions to the triangles in the segments, once with
+operator \textbf{min} and identity element $\infty$ and then with
+operator \textbf{max} and identity element $-\infty$, yields the
+bounding boxes of each segment. Performing a segmented reduction on
+the list of segments, as describe on Algorithm 3 in \zhou, will
+compute a tight bounding box for each node in activeList. This
+bounding box can then be used by the spatial median splitting method
+to determine where to place the splitting plane.
+
+With the splitting plane decided for each node, the triangle/node
+association can be calculated
+
 % Explain that splitSide has the convention adopted in prefix-sum
 % section where left is 0 and right 1.
 
-Instead of reducing the sizes of child nodes, as done in \zhou{} I
-propose a method for calculating them directly. This leads to lots
-of uncoalesced lookups, so argue if the GPU is able to properly hide
-these.
+
+
+%% Instead of reducing the sizes of child nodes, as done in \zhou{} I
+%% propose a method for calculating them directly. This leads to lots
+%% of uncoalesced lookups, so argue if the GPU is able to properly hide
+%% these.
 
 
 
@@ -808,7 +1123,7 @@ these.
 
 
 
-\subsubsection{Empty space maximizing}\label{sec:gpuEmptySpace}
+\subsubsection{Adding empty space maximizing}\label{sec:gpuEmptySpace}
 
 % Plugable solution, add the new nodes after the ones in nextlist.
 

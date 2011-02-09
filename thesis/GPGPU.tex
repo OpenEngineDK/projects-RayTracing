@@ -1,4 +1,4 @@
-\chapter{Understanding the GPGPU}\label{chp:GPGPU}
+\chapter{Understanding CUDA}\label{chp:GPGPU}
 
 \chapterquote{Hardware: The parts of a computer system that can be
   kicked.}{Jeff Pesis}
@@ -165,19 +165,20 @@ be very beneficial, as will be shown in
 % blocks
 
 Warps are then organized into 3 dimensional \textit{blocks}. Blocks
-are expected to reside on the same multiprocessor, which providesa
+are expected to reside on the same multiprocessor, which provides a
 limit as to how many threads a block can contain. On current GPU's the
-limit can be up to 1024 threads per block or multiprocessor. Having
-threads executed on the same multiprocessor comes with a few
-benefits. It is possible to force synchronized execution of entire
-blocks at specific points in the kernels. Threads can then cooperate
-through the multiprocessor's fast local memory and use it to share
-data. Threads can lookup their \textit{thread index} inside a block
-through the 3 dimensional \textit{threadIdx} CUDA built-in
-variable. Being able to lookup a threads id is important for working
-with data. In the one dimensional case the $n$'th thread will usually
-process the $n$'th data element. Without the thread index this would
-not be possible.
+limit can be up to 1024 threads per block or multiprocessor. The size
+of blocks is chosen before a kernel is launched and all blocks will
+have the same size Having threads executed on the same multiprocessor
+comes with a few benefits. It is possible to force synchronized
+execution of entire blocks at specific points in the kernels. Threads
+can then cooperate through the multiprocessor's fast local memory and
+use it to share data. Threads can lookup their \textit{thread index}
+inside a block through the 3 dimensional \textit{threadIdx} CUDA
+built-in variable. Being able to lookup a threads id is important for
+working with data. In the one dimensional case the $n$'th thread will
+usually process the $n$'th data element. Without the thread index this
+would not be possible.
 
 % grid
 
