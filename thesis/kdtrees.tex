@@ -600,11 +600,11 @@ the \textit{seperating axis theorem}, as described by Möller in
 An effective optimization to kd-trees is \textit{empty space
   maximization}. The idea behind the optimization is to cut away large
 empty parts of the scene, by placing empty leaf nodes in the upper
-parts of the tree. This will provide the rays with an early out
-option, skipping a large portion of the geometry. An example can be
-seen in \reffig{fig:emptySpaceExample}, where the gray shaded node has
-been created as an empty space node, allowing the ray to skip over the
-triangles above.
+parts of the tree. This will provide rays traversing the tree with an
+early out option, skipping a large portion of the geometry. An example
+can be seen in \reffig{fig:emptySpaceExample}, where the gray shaded
+node has been created as an empty space node, allowing the ray to skip
+over the triangles above.
 
 \begin{figure}
   \centering
@@ -1037,7 +1037,9 @@ can be seen in \refalg{alg:kdUpperNodeCreator}.
                  \STATE{...}
                  \STATE{}
 
-                 \COMMENTIT{Compute the addresses to move the triangles to by comparing them to the splitting plane.}
+                 \COMMENTIT{Compute the addresses to move the
+                   triangles to by comparing them to the splitting
+                   plane.}
                  \DECLARE{$associateSide, associateAddr$}{List}
                  \PARALLELFOR{$segment$ \textbf{in} $segmentList$}
                    \PARALLELFOR{$triangle$ \textbf{in} $segment.triangles$}
@@ -1082,10 +1084,53 @@ The algorithm takes a list of non processed nodes, $activeNodes$ as
 input and returns a list of leaf nodes, $leafs$, and a list of new
 nodes, $nextNodes$, that needs to be processed in the next iteration.
 
-% Use GPU for computations and let CPU handle minor book keeping.
-
 % Explain the overall strcuture, how the last n nodes are active
 % nodes?
+
+The nodes are placed in one large array with the structure shown in
+\reffig{fig:nodeStructure}. The already processed nodes are placed in
+one sequential chunk from index 0 an up. The currently active nodes
+are located right after them. The child nodes created by \refalg{} is
+then placed after the active nodes, with the leaf nodes to the left
+and next set of active nodes to the right. This preserves the
+invariant that the $n$ currently active nodes, if any, are always the
+$n$ last nodes in the array after an iteration of the construction
+algorithm. This is a desirable property as it means I do not need to
+maintain a list of indices to active nodes, but instead I can describe
+every active node by a range and an index into the node list. This
+also improves coalescence when subsequent threads can access nodes
+sequentially.
+
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[y=0.5cm, x=0.5cm]
+    \draw[dashed] (0,1) -- (2,1);
+    \draw[dashed] (0,0) -- (0,1);
+    \draw[dashed] (0,0) -- (2,0);
+    \draw (4,0.5) node {Processed nodes};
+    \draw[dashed] (6,1) -- (8,1);
+    \draw[dashed] (6,0) -- (8,0);
+    \draw (8,1) -- (8,0);
+
+    \draw (8,1) -- (22,1);
+    \draw (8,0) -- (22,0);
+
+    \draw (11,0.5) node {Active nodes};
+    \draw (14,1) -- (14,0);
+
+    \draw (15.5,0.5) node {Leafs};
+    \draw (17,1) -- (17,0);
+
+    \draw (19.5,0.5) node {Next nodes};
+    \draw (22,1) -- (22,0);
+
+  \end{tikzpicture}
+  \caption{The structure of the kd-trees nodes in memory.}
+  \label{fig:nodeStructure}
+\end{figure}
+
+% Use GPU for computations and let CPU handle minor book keeping.
 
 As described in \refsection{sec:reduce}, our reduction algorithm
 assumes that the length of the input list is a power of 2. Triangles
@@ -1169,7 +1214,17 @@ $associateAddr$ and the algorithm has completed one iteration.
 
 % Plugable solution, add the new nodes after the ones in nextlist.
 
-% A good threshold. Did I make it vary and how did that go?
+To experiment with empty space maximization it needs to be implemented
+as a plugable solution, which can be turned on and off at will. This
+has been achieved with the design found in
+\refalg{alg:emptySpaceMaximizing}, which injects new nodes created by
+empty space maximizing into the tree. In order to perform empty space
+maximizing a \textit{loose bounding box} needs to be propagated down
+the tree. A loose bounding box is calculated by splitting a parents
+bounding box with its splitting plane and propagated downwards to the
+nodes two child nodes. Since the geometry inside a child might not
+touch all sides of a parents bounding box, this propagated bounding
+box provides a loose upper bound on the geometry.
 
 \begin{algorithm}
   \caption{Calculate Empty Space Maximization}
@@ -1188,26 +1243,33 @@ $associateAddr$ and the algorithm has completed one iteration.
 
                  \STATE{}
                  \COMMENTIT{Perform empty space maximization.}
-                 \DECLARE{$emptySplits, emptyAddr$}{list}
+                 \IF{$performEmptySpaceMaximization$}
+                 \DECLARE{$emptySplitNodes, emptyAddr$}{List}
+                 \DECLARE{$emptySides$}{Plane List}
                  \PARALLELFOR{$node$ \textbf{in} $activeList$}
                  \ASSIGN{$emptySplits[i]$}{$0$}
                    \FOREACH{$side$}{$node.boundingBox$}
                      \IF{$node$ has more than $C_e$ empty space on $side$}
-                       \ASSIGN{$emptySplits[i]$}{$emptySplits[i] + 1$}
+                       \ASSIGN{$emptySplitNodes[i]$}{$emptySplitNodes[i] + 2$}
+                       \STATE{$emptySides[node]$.Add($side$)}
                      \ENDIF
                    \ENDFOR
                  \ENDFOR
-                 \ASSIGN{$emptyAddr$}{\textbf{Prefix-Sum}($emptySplits$)}
+                 \ASSIGN{$emptyAddr$}{\textbf{Prefix-Sum}($emptySplitNodes$)}
                  \PARALLELFOR{$node$ \textbf{in} $activeList$}
                    \STATE{Cut of empty space and place new nodes
                      sequentially at addresses specified in
-                     $emptyAddr$.}
+                     $emptyAddr$. Then rewire parent nodes to point to
+                     new nodes.}
                  \ENDFOR
+                 \ENDIF
 
                  \STATE{}
-                 \COMMENTIT{Compute the addresses to move the triangles to.}
+                 \COMMENTIT{Compute the addresses to move the
+                   triangles to by comparing them to the splitting
+                   plane.}
                  \STATE{...}
-                 \COMMENTIT{Split the triangles.}
+                 \COMMENTIT{Move the triangles.}
                  \STATE{...}
 
                  \COMMENTIT{Split nodes.}
@@ -1218,8 +1280,70 @@ $associateAddr$ and the algorithm has completed one iteration.
 
 % Explain
 
+The algorithm in \refalg{alg:emptySpaceMaximizing} for performing
+empty space splitting is inserted right after the nodes new tight
+bounding boxes have been computed and before the new child nodes are
+created. If empty space maximization should be performed on one of the
+nodes in activeNodes can be checked in parallel. Each side of a node
+is then checked sequentially and if it is found that the amount of
+empty space between the tight bounding box and the loose bounding box
+on a given side is above a certain threshold, then that side is added
+to the $emptySides$ list. Each empty split results in two new nodes,
+one node that refers to the empty space and one node linking the
+parent node with its child node. This is depicted in \reffig{TODO}.
+
+Once the amount of empty splits per node has been decided, where to
+place those nodes is computed by calculating the prefix-sum of
+$emptySplitNodes$. Empty space maximization nodes are injected into to
+the list of nodes shown in \reffig{fig:nodeStructure} as describe on
+\reffig{fig:emptyNodeStructure}, which again preserves the invariant
+that the next batch of active nodes are located at the end of the
+list.
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[y=0.5cm, x=0.5cm]
+    \draw[dashed] (0,1) -- (2,1);
+    \draw[dashed] (0,0) -- (0,1);
+    \draw[dashed] (0,0) -- (2,0);
+    \draw (4,0.5) node {Processed nodes};
+    \draw[dashed] (6,1) -- (8,1);
+    \draw[dashed] (6,0) -- (8,0);
+    \draw (8,1) -- (8,0);
+
+    \draw (8,1) -- (29,1);
+    \draw (8,0) -- (29,0);
+
+    \draw (11,0.5) node {Active nodes};
+    \draw (14,1) -- (14,0);
+
+    \draw (17.5,0.5) node {Injected Nodes};
+    \draw (21,1) -- (21,0);
+
+    \draw (22.5,0.5) node {Leafs};
+    \draw (24,1) -- (24,0);
+
+    \draw (26.5,0.5) node {Next nodes};
+    \draw (29,1) -- (29,0);
+
+  \end{tikzpicture}
+  \caption{The structure of the kd-trees nodes in memory with empty
+    space maximization.}
+  \label{fig:emptyNodeStructure}
+\end{figure}
+
+
 % Propagating aabb's downwards
 
+With the addresses of the nodes produced by empty space maximization
+computed, a kernel can be launched that creates the actual empty space
+nodes and rewires the parent node to point to the empty space nodes
+instead of its current child node. 
+
+This construction is very flexible and all copmutations needed by
+empty space maximization can be turned on and off at will, which
+allows me to easily compare the quality and construction speed of
+trees with and without this optimization.
 
 \subsection{Lower Tree Creation}
 
