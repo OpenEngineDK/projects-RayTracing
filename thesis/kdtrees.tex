@@ -253,7 +253,7 @@ of being a leaf node. If so, then a leaf is produced and the recursion
 terminates. If not, then a splitting plane, $plane$, needs to be
 determined and the bounding box is divided by $plane$, producing a new
 left and right axis aligned bounding box. Triangles are then
-distributed to each new bounding box by some decision algorithm and a
+distributed to each new bounding box by an association algorithm and a
 new node is created that will contain references to it's 2
 children. An example of an iteration of ConstructKDTree can be seen in
 \reffig{fig:kdIteration}.
@@ -270,7 +270,7 @@ children. An example of an iteration of ConstructKDTree can be seen in
       \drawTri{4,6}{3,4}{2,5}
       \draw (3,5) node{1};
       \drawTri{4,2}{5,6}{6,4}
-    \draw (5,4) node{2};
+      \draw (5,4) node{2};
       \drawTri{8,0}{7,2}{6,1}
       \draw (7,1) node{3};
 
@@ -360,14 +360,19 @@ To avoid balanced trees we can instead use pointers to reference the
 children. This allows for more flexibility when creating the tree.
 Unfortunatly it also means storing more data per node and in the case
 of slow memory access it could cause a memory latency
-bottleneck. However, in a survay of different techniques such as this
-thesis, the added flexibility can be a benefit and in
-\refsection{sec:gpuEmptySpace} we shall see how this flexibility can
-be used to add empty space maximizing, something that could not have
-been done as unobtrusive had the tree been balanced.
+bottleneck. However, when experimenting with different techniques such
+as is done in this thesis, the added flexibility can be a benefit and
+in \refsection{sec:gpuEmptySpace} we shall see how this flexibility
+can be used to add empty space maximizing, something that could not
+have been done as unobtrusive had the tree been balanced.
 
+% Triangle references
 
-
+A kd-tree leaf node must be able to reference the triangles associated
+with it. In this thesis I have choosen the convention that triangles
+associated with a node must be placed sequentially in memory and
+therefore a leaf need only contain the index of its first triangle and
+the amount of triangles it is associated with.
 
 \subsection{Choosing the Splitting Plane}\label{sec:splittingPlane}
 
@@ -1033,40 +1038,39 @@ can be seen in \refalg{alg:kdUpperNodeCreator}.
                  \STATE{}
 
                  \COMMENTIT{Compute the addresses to move the triangles to by comparing them to the splitting plane.}
-                 \DECLARE{$splitSide, splitAddr$}{List}
+                 \DECLARE{$associateSide, associateAddr$}{List}
                  \PARALLELFOR{$segment$ \textbf{in} $segmentList$}
                    \PARALLELFOR{$triangle$ \textbf{in} $segment.triangles$}
-                     \ASSIGN{$splitSide[triangle.id]$}{AssociateLeft($segment.node.splittingPlane$, $triangle$)}
-                     \ASSIGN{$splitSide[triangle.id + maxTriangles]$}{AssociateRight($segment.node.splittingPlane$, $triangle$)}
+                     \ASSIGN{$associateSide[triangle.id]$}{AssociateLeft($segment.node$, $triangle$)}
+                     \ASSIGN{$associateSide[triangle.id + |triangles|]$}{AssociateRight($segment.node$, $triangle$)}
                    \ENDFOR
                  \ENDFOR
-                 \ASSIGN{$splitAddr$}{\textbf{Prefix-Sum}($splitSide$)}
-
-                 \STATE{}
-
-                 \COMMENTIT{Split the triangles.}
-                 \PARALLELFOR{$segment$ \textbf{in} $segmentList$}
-                   \PARALLELFOR{$triangle$ \textbf{in} $segment.triangles$}
-                     \STATE{Split the triangles to have triangles
-                       associated with the same node placed
-                       sequentially. Triangles belonging to leaf nodes
-                       are stored in their own list.}
-                   \ENDFOR
-                 \ENDFOR
+                 \ASSIGN{$associateAddr$}{\textbf{Prefix-Sum}($associateSide$)}
 
                  \STATE{}
 
                  \COMMENTIT{Split nodes.}
                  \PARALLELFOR{$node$ \textbf{in} $activeList$}
                    \STATE{Split the nodes into child
-                     nodes. $splitSide$ and $splitAddr$ is used to
-                     directly calculate the child nodes triangle index
-                     and range.}
-                   \IF{$node.child$.size < $minimumSize$}
+                     nodes. $associateSide$ and $associateAddr$ is
+                     used to directly calculate the child nodes
+                     triangle index and range.}
+                   \IF{$node.child$.size < $threshold$}
                      \STATE{$leaf$.Add($node.child$)}
                    \ELSE
                      \STATE{$nextNodes$.Add($node.child$)}
                    \ENDIF
+                 \ENDFOR
+
+                 \STATE{}
+
+                 \COMMENTIT{Move the triangles.}
+                 \PARALLELFOR{$segment$ \textbf{in} $segmentList$}
+                   \PARALLELFOR{$triangle$ \textbf{in} $segment.triangles$}
+                     \STATE{Move the triangles to have triangles
+                       associated with the same node placed
+                       sequentially.}
+                   \ENDFOR
                  \ENDFOR
   }
   \end{algorithmic}
@@ -1079,6 +1083,9 @@ input and returns a list of leaf nodes, $leafs$, and a list of new
 nodes, $nextNodes$, that needs to be processed in the next iteration.
 
 % Use GPU for computations and let CPU handle minor book keeping.
+
+% Explain the overall strcuture, how the last n nodes are active
+% nodes?
 
 As described in \refsection{sec:reduce}, our reduction algorithm
 assumes that the length of the input list is a power of 2. Triangles
@@ -1100,17 +1107,52 @@ bounding box can then be used by the spatial median splitting method
 to determine where to place the splitting plane.
 
 With the splitting plane decided for each node, the triangle/node
-association can be calculated
+association can be computed by any of the methods described in
+\refsection{sec:splittingSchemes}. An array of size $2 * |triangles|$,
+$associateSide$, is used to store triangle/node
+associations. Computing the prefix-sum of $associateSide$ will then
+produce the addresses that each triangle should be moved to, in order
+to be stored sequentially with the other triangles associated with the
+same new node as it is.
 
-% Explain that splitSide has the convention adopted in prefix-sum
-% section where left is 0 and right 1.
-
-
+\fixme{Example?}
 
 %% Instead of reducing the sizes of child nodes, as done in \zhou{} I
 %% propose a method for calculating them directly. This leads to lots
 %% of uncoalesced lookups, so argue if the GPU is able to properly hide
 %% these.
+
+With the new addresses of the triangles computed, the nodes must now
+be split into child nodes. For node $n$, the values in $associateAddr$
+can be used to calculate the triangle index and range of the child
+nodes, $left$ and $right$, as seen in \refalg{alg:childIndices}. The
+idea behind \refalg{alg:childIndices} is that using the parent nodes
+triangle index we are able to extract the triangle index of its left
+and right child nodes. Then by adding the parents triangle amount to
+its index, we can lookup the starting index of the next child nodes
+triangles. Subtracting these two values yields the range of triangles
+spanned by a child node.
+
+\begin{algorithm}
+  \caption{Compute child node triangle index and range}
+  \label{alg:childIndices}
+  \begin{algorithmic}
+    \PROCEDURE{ChildTriangleInformation}
+              {$parent, left, right$: Node, $associateAddr$ : List}
+              {$left$ : Node, $right$ : Node}{
+                \ASSIGN{$left.triangleIndex$}{$associateAddr[parent.triangleIndex]$}
+                \ASSIGN{$leftEndAddr$}{$associateAddr[parent.triangleIndex + parent.triangleRange]$}
+                \ASSIGN{$left.triangleIndex$}{$leftEndAddr - left.triangleIndex$}
+                \ASSIGN{$right.triangleIndex$}{$associateAddr[parent.triangleIndex + |triangles|]$}
+                \ASSIGN{$rightEndAddr$}{$associateAddr[parent.triangleIndex + parent.triangleRange]$}
+                \ASSIGN{$right.triangleIndex$}{$rightEndAddr - right.triangleIndex$}
+              }
+  \end{algorithmic}
+\end{algorithm}
+
+Finally the triangles are moved to their new location defined by
+$associateAddr$ and the algorithm has completed one iteration.
+
 
 
 
