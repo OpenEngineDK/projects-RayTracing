@@ -1473,7 +1473,7 @@ thousands of nodes at the lower node phase, parallization can
 effectively be done over nodes instead of primitives. 
 
 \zhou{} proposes that the Surface Area Heuristic is used when deciding
-which splitting plane to use and that the set of splitting candidates
+which splitting candidate to use and that the set of splitting candidates
 is precomputed. Precomputing the splitting candidates instead of
 clipping them after each new split can cause false primitives to
 accumulate in nodes over successive splits, as described in
@@ -1489,21 +1489,21 @@ standard SAH approach. These simplifications may both produce
 acceleration structures of lower quality than the computationally
 heavy SAH, but they make up for this by being much faster.
 
-\subsubsection{Lower Tree Splitting Planes}
+\subsubsection{Lower Tree Split Candidates}
 
 % Explain the Plane struct
 
 Before splitting any nodes however, the splitting plane structure used
 in the lower node phase must be explained. To efficiently compute the
-size of a nodes triangle set and sorting a nodes triangles in one
-instruction, I adopt \zhou's novel approach of storing the triangle
-set of a node, $n$ as an index, $i$, and a bit mask, $b$. If the
-$k$'th bit in $b$ is set, this means that the $i+k$'th triangle in the
-list of all triangles is associated with the node. Recall from earlier
-that a node stored the reference to its associated triangles as an
-index and a range, $r$. The bit mask corrosponding to $r$ would then
-simply have all it's first $r$ bits set. A more thorough example of
-how bit masks are used is given in \reffig{fig:bitmap}.
+size of a nodes triangle set and performing node/triangle association
+in one instruction, I adopt \zhou's novel approach of storing the
+triangle set of a node, $n$ as an index, $i$, and a bit mask, $b$. If
+the $k$'th bit in $b$ is set, this means that the $i+k$'th triangle in
+the list of all triangles is associated with the node. Recall from
+earlier that a node stored the reference to its associated triangles
+as an index and a range, $r$. The bit mask corrosponding to $r$ would
+then simply have all it's first $r$ bits set. A more thorough example
+of how bit masks are used is given in \reffig{fig:bitmap}.
 
 \newcommand{\nodeBitmap}[5]{
   \begin{tabular}{c}
@@ -1567,26 +1567,26 @@ how bit masks are used is given in \reffig{fig:bitmap}.
     triangles, as evidenced by its bit mask. Node 0 is then split
     along the splitting plane drawn in the scene, which has left
     triangle mask $[1,1,1,0]$ and right mask $[0,1,0,1]$. The result
-    of splitting is leafs 1 and 2, whose triangle set is the result of
-    a bitwise $and$ between Node 0's bit mask and the left and right
-    bitmask respectively.}
+    of splitting is leafs 1 and 2, whose triangle set is a bitwise
+    \textbf{AND} between Node 0's bit mask and the left and right bitmask
+    respectively.}
   \label{fig:bitmap}
 \end{figure}
 
 % Example of how to store splitting planes as bitmasks
 
-Since the splitting planes are local to the lower subtree, they too
-can benefit form the bit mask representation. The splitting plane
+Since the split candidates are local to the lower subtree, they too
+can benefit from the bit mask representation. The split candidate
 needs to store two triangle sets, the triangles to its left after a
 split and the triangles to its right. If these are stored as bit masks
-associating a triangle with a new node becomes trivial. I.e a new left
-child's triangle set would simply be the bitwise AND of its parent's
-triangle set with the splitting plane's left triangle
+associating a triangle with a new node becomes trivial. E.g. a new
+left child's triangle set would simply be the bitwise \textbf{AND} of
+its parent's triangle set with the splitting plane's left triangle
 set. \refFig{fig:bitmap} also gives an example of this, as Node 0 is
 split by a splitting plane with a left triangle set $[1,1,1,0]$ and
 right triangle set $[0,1,0,1]$.
 
-The method for precomputing the splitting planes is shown in
+The method for precomputing the split candidates is shown in
 \refalg{alg:calcSplittingPlanes}, which only computes them along the
 x-axis, but is trivially extended to handle more dimensions. The
 algorithm uses a triangles axis aligned bounding box, $aabb_t$ to
@@ -1612,7 +1612,7 @@ computed. To better convey the intent of
   \begin{algorithmic}
     \PROCEDURE{PreprocessLowerNodes}
               {$upperLeafs$ : Node List}
-              {$splittingPlanes$ : Plane List}{
+              {$splitCandidates$ : Plane List}{
                 \PARALLELFOR{$node$}{$upperLeafs$}
                   \PARALLELFOR{$triangle$}{$node.Triangles$}
                     \ASSIGN{$aabb_p$}{GetAabb($triangle$)}
@@ -1625,8 +1625,8 @@ computed. To better convey the intent of
                       \ASSIGN{$x_{high}.left[t]$}{$aabb_t.min.x <= aabb_p.max.x$}
                       \ASSIGN{$x_{high}.right[t]$}{$aabb_p.max.x < aabb_t.max.x$}
                     \ENDFOR
-                    \STATE{$splittingPlanes$.Add($x_{low}$)}
-                    \STATE{$splittingPlanes$.Add($x_{high}$)}
+                    \STATE{$splitCandidates$.Add($x_{low}$)}
+                    \STATE{$splitCandidates$.Add($x_{high}$)}
                     \STATE{...}
                     \COMMENTIT{Perform similar plane constructions for the y and z axis.}
                     \STATE{...}
@@ -1642,6 +1642,10 @@ computed. To better convey the intent of
 
 % Adds surface area computation to the preprocess
 
+With the splitting planes defined and computed, it is now possible to
+split the nodes. \zhou used SAH to chose a splitting plane, so this
+will also be our first approach. 
+
 \begin{algorithm}
   \caption{Calculate SAH cost}
   \label{alg:calcSAHCost}
@@ -1649,76 +1653,104 @@ computed. To better convey the intent of
     \PROCEDURE{ComputeSAHCost}
               {$activeNodes$ : Node List}
               {$splittingPlanes$ : Plane List, $leafs$ : Boolean List}{
-                \COMMENTIT{Calculate SAH for each split candidate and
-                  return the split candidate with minimal SAH.}
+                \COMMENTIT{Calculate SAH cost for each split candidate and
+                  return the split candidate with minimal cost.}
                 \PARALLELFOR{$node$}{$activeNodes$}
-                  \FOREACH{split candidate $s$}{$node.splitCandidates$}
-                    \ASSIGN{$bmp_L$}{$node.triangles \cap s.left$}
-                    \ASSIGN{$C_L$}{$\parallel bmp_L \parallel$}
-                    \ASSIGN{$A_L$}{summed surface area of $bmp_L$}
-                    \ASSIGN{$bmp_R$}{$node.triangles \cap s.right$}
-                    \ASSIGN{$C_R$}{$\parallel bmp_R \parallel$}
-                    \ASSIGN{$A_R$}{summed surface area of $bmp_R$}
+                  \FOREACH{$candidate$}{$node.splitCandidates$}
+                    \ASSIGN{$set_L$}{$node.triangles \cap candidate.left$}
+                    \ASSIGN{$C_L$}{$\parallel set_L \parallel$}
+                    \ASSIGN{$A_L$}{summed surface area of $set_L$}
+                    \ASSIGN{$set_R$}{$node.triangles \cap candidate.right$}
+                    \ASSIGN{$C_R$}{$\parallel set_R \parallel$}
+                    \ASSIGN{$A_R$}{summed surface area of $set_R$}
                     \ASSIGN{$weightedArea$}{$C_L * A_L + C_R * A_R$}
                   \ENDFOR
                   \ASSIGN{$splittingPlanes[node] \leftarrow p$}{Split candidate with minimal weighted area}
-                  \ASSIGN{$SAH$}{$p.weightedArea / node.summedArea + C_N$}
-                  \ASSIGN{$leafs[node]$}{$SAH < C_{leaf}$}
+                  \ASSIGN{$C_{SAH}$}{$C_N + p.weightedArea / node.summedArea$}
+                  \ASSIGN{$leafs[node]$}{$C_{SAH} < C_{leaf}$}
                 \ENDFOR
               }
   \end{algorithmic}
 \end{algorithm}
 
 % Explain
+
+The algorithm for computing the SAH cost of a splitting plane is given
+in \refalg{alg:calcSAHCost}. As described earlier the algorithm is
+paralized over all nodes. A node must then iterate over all useful
+split candidates, i.e. those split candidates that are associated with
+its current triangle set. For each split candidate the weighted area,
+$C_L * A_L + C_R * A_R$, is computed and the one with the lowest is
+stored as the proposed splitting candidate. The actual SAH value of
+the best split candidate is then computed and compared to the cost of
+leaving the node as a leaf node. The result of this comparison is
+returned at the end of the algorithm along with the best splitting
+candidate.
 
 % Run prefix sum on leafList and use the result as addresses for the
 % children.
 
-% When moving from upper nodes to lower nodes. Calculate a new tight
-% bounding box inside the modified bounding box. Then approximate the
-% new surface area by the reduction in BB volume.
+A kernel is then run which creates the child nodes of nodes where $SAH
+< C_{leaf}$. In order to do this however, we must again first apply
+the prefix-sum. This time we apply it to the list of leafs and use the
+result to find the addresses where a nodes children should be
+created. An example is given below, where nodes $n_0$ and $n_2$ should
+have leafs created and these should be created at address 0 and 2
+respectively.
 
+\begin{displaymath}
+  \begin{array}{r c c c c l}
+    node: & [n_0 & n_1 & n_2 & n_3]\\
+    leafs: & [1 & 0 & 1 & 0]\\
+    prefix\text{-}sum: & [0 & 1 & 1 & 2]\\
+    address: & [0 & 2 & 2 & 4] & // prefix\text{-}sum * child\text{ }per\text{ } node\\
+  \end{array}
+\end{displaymath}
 
-\subsubsection{Balanced Tree Construction}
+\subsubsection{Simplified SAH Tree Construction}
 
 % SAH is slow, so explore alternatives.
 
-% Testing shows that 'large' leaf node improves performance, cite Horn
-% about why.
+Calculating the summed surface area $A_L$ and $A_R$ in SAH is quite
+expensive, as it requires an iteration over all triangles in $set_L$
+and $set_R$ for each splitting plane. For dynamic scenes I propose the
+following simplifying assumptions: That all triangles have the same
+surface area, specifically the surface area 1. Calculating $A_N$ for a
+given node $N$ could then be reduced from a loop to one single
+instruction $A_N = \|set_N\|$ and the entire SAH cost computation can
+be simplified as follows.
 
-% Means that lower nodes will only be split 1-2 times and then
-% intersected, ie the lower splitting planes don't need to be placed
-% optimally.
+\begin{displaymath}
+  \begin{array}{r l}
+    & C_{SAH}(N \rightarrow \{L, R\}) = C_N + \frac{C_L A_L}{A_N} + \frac{C_R
+      A_R}{A_N}\\
+    \Downarrow \\
+    & C_{SSAH}(N \rightarrow \{L, R\}) = C_N +
+    \frac{\|set_L\|^2}{\|set_N\|} + \frac{\|set_R\|^2}{\|set_N\|}\\
+  \end{array}
+\end{displaymath}
 
-% Introducing the balanced split.
+% Introducing the simplified SAH split.
 
 \begin{algorithm}
-  \caption{Calculate balanced split}
+  \caption{Calculate simplified SAH cost}
   \label{alg:calcBalancedCost}
   \begin{algorithmic}
-    \PROCEDURE{ComputeBalancedSplit}
+    \PROCEDURE{ComputeSimpleSAH}
               {$activeNodes$ : Node List}
               {$splittingPlanes$ : Plane List, $leafs$ : Boolean List}{
-                \COMMENTIT{Compute the relation between left and right
-                  triangles for each split candidate and return the
-                  candidate with best relation and presumably lowest
-                  subtrees.}
+                \COMMENTIT{Calculate the simplified SAH cost for each split candidate and
+                  return the split candidate with minimal cost.}
                 \PARALLELFOR{$node$}{$activeList$}
                   \ASSIGN{$p$}{$noSplitCandidate$}
-                  \FOREACH{split candidate $s$}{$node.splitCandidates$}
-                    \ASSIGN{$bmp_L$}{$node.triangles \cap s.left$}
-                    \ASSIGN{$C_L$}{$\parallel bmp_L \parallel$}
-                    \ASSIGN{$bmp_R$}{$node.triangles \cap s.right$}
-                    \ASSIGN{$C_R$}{$\parallel bmp_R \parallel$}
-                    \ASSIGN{$largestSubtree$}{\MAX{$C_L$}{$C_R$}}
-                    \ASSIGN{$smallestSubtree$}{\MIN{$C_L$}{$C_R$}}
-                    \IF{$largestSubtree < p.largestSubtree$ \textbf{or} \\
-                      $(largestSubtree = p.largestSubtree$ \textbf{and} $smallestSubtree < p.smallestSubtree$}
-                      \ASSIGN{$p$}{$s$}
-                    \ENDIF
+                  \FOREACH{$candidate$}{$node.splitCandidates$}
+                    \ASSIGN{$set_L$}{$node.triangles \cap candidate.left$}
+                    \ASSIGN{$set_R$}{$node.triangles \cap candidate.right$}
+                    \ASSIGN{$weightedArea$}{$\|set_L\|^2 + \|set_R\|^2$}
                   \ENDFOR
-                  \ASSIGN{$splittingPlanes[node]$}{$p$}
-                  \ASSIGN{$leafs[node]$}{$(p.largestSubtree + p.largestSubtree) / 2 + C_N < C_{leaf}$}
+                  \ASSIGN{$splittingPlanes[node] \leftarrow p$}{Split candidate with minimal weighted area}
+                  \ASSIGN{$C_{SSAH}$}{$C_N + p.weightedArea / \|node.triangles\|$}
+                  \ASSIGN{$leafs[node]$}{$C_{SSAH} < C_{leaf}$}
                 \ENDFOR
               }
   \end{algorithmic}
@@ -1726,6 +1758,29 @@ computed. To better convey the intent of
 
 % Explain
 
+The algorithm for computing this \textit{Simplified Surface Area
+  Heuristic} or \textit{SSAH} can be seen in
+\refalg{alg:calcBalancedCost} and works similarly to
+\refalg{alg:calcSAHCost}. Just as with the SAH approach child nodes
+are created in a seperat kernel after prefix-sum has been applied to
+$leafs$.
+
 \subsubsection{No Tree Construction}
+
+The final tree construction algorithm I will propose for the lower
+tree phase is extremely simple: Do not create any tree!
+
+Recall from \refsection{sec:memoryModel} that the latency of global
+memory access becomes harder for the multiprocessor to hide if the
+access pattern is fragmented. Warps of threads traversing the tree
+will most likely diverge at some point and start to require different
+global memory. This becomes an even bigger problem when they reach the
+leaf nodes and different threads have to test intersection with
+different triangles. Favoring larger leaf nodes would reduce this
+fragmentation and serve to streamline global data fetching across
+warps. I therefore propose that no lower tree be created. This would
+save both the time spend preprocessing the nodes to compile the list
+of split candidates and the time spend actually creating the subtree.
+
 
 
