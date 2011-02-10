@@ -24,24 +24,23 @@
 
 % Motivation
 
-\textit{Rendering} is the process of converting a description of a
-scene into an image and is what lies at the heart of \textit{computer
-  graphics}. The ability to render complex scenes realistically or
-distinctly is vital in several areas; computer games, movies and even
-medical imaging. A scene is made up of models, which can consist of
-several thousand geometric primitives, usually triangles. Information
-about these triangles, or \textit{vertex attributes}, are stored at
-the vertices and can be it's position, normal or color among other
-things.
+\textit{Rendering} is the process of converting a scene description
+into an image and lies at the heart of \textit{computer graphics}. The
+ability to render complex scenes realistically or distinctly is vital
+in several areas; computer games, movies and even medical imaging. A
+scene is made up of models, which can consist of several thousand
+geometric primitives, usually triangles. Information about these
+triangles, or \textit{vertex attributes}, are stored at the vertices
+and can be it's position, normal or color among other things.
 
-% Rasterization and cubemapping
+% Rasterization and cube mapping
 
 When real-time rendering is needed, the technique of choice for the
 last one and a half decade has been \textit{rasterization}. In
-rasterization a geometric primitives vertex attributes are mapped into
-a \textit{raster}\footnote{A flat, 2D grid.} and the color of
-individual grid cells is calculated. This technique is so popular in
-the game industry that processing units where created specifically for
+rasterization a geometric primitives vertex attributes are mapped onto
+a \textit{raster}\footnote{A flat, 2D grid.} and used to calculate the
+color of individual grid cells. This technique is so popular in the
+gaming industry that processing units were created specifically for
 rasterization, the \textit{Graphics Processing Unit} or \textit{GPU}
 for short. Due to the industry's ever increasing demand for more
 detailed models and effects, the GPU's have seen a massive increase in
@@ -50,25 +49,27 @@ evidenced by \reffig{fig:gflops}. Unfortunatly, even with all this
 power certain aspects of rendering are still not easily solved by
 rasterization. \textit{Reflection} and \textit{refraction} effects on
 non-flat surfaces are still notoriously hard to recreate. The reason
-for this is that complex object reflections do not easily map to a 2
-dimensional grid, such as teh raster. Reflections of complex objects
-can be approximated by \textit{environment mapping} or \textit{cube
-  mapping}, of which a short describtion can be found on
-\reffig{fig:cubemap}. The trouble with cubemapping is that the scene
-must to be rendered another 6 times for each cubemap, increasing the
-cost of rendering by up to 6 times. Another short coming of
-cubemapping is that it doesn't support \textit{self reflection}, since
-it is only the surrounding environment that is rendered onto the map.
+is that the reflection of complex objects can not easily be mapped to
+a 2 dimensional grid, such as the raster. Reflections of complex
+objects can be approximated by \textit{environment mapping} or
+\textit{cube mapping}, of which a short describtion can be found on
+\reffig{fig:cubemap}. The trouble with cube mapping is that the scene
+must to be rendered another 6 times, once for each side of the
+cube map. This can increase the cost of rendering a scene by up to 6
+times for each cube map employed. Another shortcoming of cube mapping
+is that it doesn't support \textit{self reflection}, since it is only
+the surrounding environment that is rendered onto the map.
 
 \begin{figure}
   \centering
   \includegraphics{Cube_mapped_reflection_example}
+
   \vspace{3mm}
   \parbox{9.5cm}{\caption[Cube mapping visualized.]{A visualization of
       cube mapping. The environment is rendered onto the sides of the
       cube and then mapped onto the sphere. The mapping is performed
-      by using the calculated reflection vector as a texture
-      coordinate.\\Image from
+      by using the calculated reflection vector as an index into the
+      cube map.\\Image from
       http://en.wikipedia.org/wiki/Reflection\_mapping}\label{fig:cubemap}}
 \end{figure}
 
@@ -81,11 +82,12 @@ refraction rays as needed when geometry is intersected. A comparisson
 of cube mapping and ray tracing is given in
 \reffig{fig:reflectingDragons}, where a reflecting stanford dragon has
 been rendered with each technique. Notice how the ray traced dragons
-backside reflects its neck, while the cubemapped version only reflects
-the surrounding box. Advanced lighting techniques that produce
-photorealistic images are also based on ray tracin. One such technique
-is \textit{photon mapping}, which can accurately reproduce the effects
-of lighting from reflective surfaces, caustics and color bleeding.
+backside reflects its neck, while the cube mapped version only
+reflects the surrounding box. Advanced lighting techniques that
+produce photorealistic images are also based on ray tracing. One such
+technique is \textit{photon mapping}, which can accurately reproduce
+the effects of lighting from reflective surfaces, caustics and color
+bleeding.
 
 
 % High cost used to make it unattractive for interactive scenes
@@ -99,7 +101,7 @@ coupled with research into the area of \textit{interactive ray
 
 \begin{figure}
   \centering
-  \subfloat[A cubemapped reflecting dragon.]{
+  \subfloat[A cube mapped reflecting dragon.]{
     \includegraphics[width=7cm]{cubemappedDragon}
     \label{fig:cubeDragon}
   }
@@ -109,8 +111,8 @@ coupled with research into the area of \textit{interactive ray
     \includegraphics[width=7cm]{semiReflectingDragon}
     \label{fig:rayReflectingDragon}
   }
-  \caption[Cubemapping vs raytracing for reflections.]{An example of
-    the difference between using cubemapping or raytracing for
+  \caption[Cube mapping vs raytracing for reflections.]{An example of
+    the difference between using cube mapping or raytracing for
     reflections.}
   \label{fig:reflectingDragons}
 \end{figure}
@@ -124,48 +126,51 @@ which could become an interesting alternative to rasterization in the
 gaming industri and certainly is interesting for 3D artists working on
 large screen movie productions, where ray tracing is already used for
 \textit{CGI}\footnote{Computer-generated Imagery} effects and the
-artists need to quickly be able to rearrange the scene.
+artists need fast visual feedback when rearranging the scene.
 
 
 % We need Acceleration stuctures for ray tracing to achieve this
 
 To improve the performance of ray tracers, several acceleration
-structures have been developed. The most popular strucutres are
-heirarchical data structures, such as trees, and the ray tracers that
-traverse them are called \textit{hierarchical ray tracers}. This
-thesis will focus on the \textit{kd-tree}, a binary, space
-partitioning tree-structure, which recursively subdivides
+structures have been developed. The most popular structures are
+\textit{hierarchical data structures}, such as trees, and the ray
+tracers that traverse them are called \textit{hierarchical ray
+  tracers}. This thesis will focus on the \textit{kd-tree}, a binary,
+space partitioning tree-structure, which recursively subdivides
 $k$-dimensional geometry by splitting it with \textit{axis aligned
-  splitting planes}. One such subdivision can be seen on
-\reffig{fig:binarySplit}. Each node in the tree contains a splitting
-plane and a reference to the location of its left and right children,
-while the leafs contain references to the geometry contained within
-them. When a splitting plane is chosen for a leaf node, the geometry
-contained in it must be associated with the two newly constructed leaf
-nodes. A kd-tree's quality is related to the choice of splitting
+  splitting planes}. Each interior node in the tree contains a
+splitting plane and a reference to the location of its left and right
+children, while the leafs contain references to the geometry
+associated with them. An example of a subdivided scene and the
+corrosponding tree can be seen in \reffig{fig:noEmptySpaceExample}. If
+a leaf node, $n$, is split by a splitting plane, the geometry
+associated with $n$ must be associated with its two newly constructed
+child nodes. A kd-tree's quality is related to the choice of splitting
 planes and a lot of computational power can go into finding optimal
-splitting planes, as every possible useful splitting plane must be
-considered. A high quality kd-tree will place spatially close
-geometric primitives close together in the tree. Choosing a splitting
-plane is the topic of \refsection{sec:splittingPlane}. In order to
-facilitate dynamic scenes, the data structure must also be dynamic. In
-the case of kd-trees, this unfortunatly means completely rebuilding it
-fmor scratch. Due to this the algorithm for creating the kd-tree needs
-to be very fast, and might have to sacrifice tree quality for speed.
+splitting planes, as there are infinitely many possible
+\textit{splitting plane candidates}, or \textit{split candidates}, to
+consider. In a high quality kd-tree, splitting planes have been chosen
+such that spatially close geometry are allocated into the same
+subtree. Choosing a splitting plane for a node is the topic of
+\refsection{sec:splittingPlane}. In order to facilitate dynamic
+scenes, the data structure must also be dynamic. In the case of
+kd-trees, this means completely rebuilding it from scratch. Because of
+this the algorithm for creating the kd-tree needs to be very fast, and
+might have to sacrifice tree quality for improved construction speed.
 
 
 % Why do it on the GPU, yes why indeed? Leaves the CPU free to do
 % other things than rendering.
 
 As observed above, the GPU's have grown quite powerful over the last
-decade, and since the introduction of programmable GPU's and
-NVIDIA's \textit{CUDA}\footnote{Compute Unified Device Architecture.}
+decade, and since the introduction of programmable GPU's and NVIDIA's
+\textit{CUDA}\footnote{Compute Unified Device Architecture.}
 framework, many algorithms have been succesfully ported to utilize the
 resources of the GPU. I will be doing the same in this thesis and use
 the GPU to accelerate the creation of data structures and ray tracing
 them. The most compelling reason to do this, is that it leaves the CPU
-free to handle other aspects of a graphics application, such as for
-instance game logic and networking in a computer game.
+free to handle other aspects of a graphics application, such as game
+logic and networking in a computer game.
 
 
 
@@ -173,7 +178,7 @@ instance game logic and networking in a computer game.
 
 In this thesis the goal is not to produce images of photorealistic
 quality, or create an interactive ray tracer for dynamic
-scenes \footnote{This goal in itself can trivially be achieved by
+scenes \footnote{This goal alone can be achieved trivially by
   reducing the complexity of the scene or lowering the resolution.}
 Instead this thesis will explorer ray tracing acceleration structures,
 specifically the kd-tree, and it's impact on ray tracing efficiency
@@ -185,39 +190,40 @@ scenes.
 \begin{enumerate}
   \item \textbf{Create a faster ray tracer -} Several optimizations
     exists that improve the speed of a ray tracer independently of the
-    underlying acceleration stucture. These will be the focus of
-    \refsection{sec:hierarchicalTraversal}.
+    underlying acceleration stucture. Such optimizations will be
+    discussed in \refsection{sec:hierarchicalTraversal}.
   \item \textbf{Building a higher quality acceleration structure -} An
     acceleration structure of higher quality can reduce the time it
     takes the ray tracer to find the nearest intersecting point
-    between a ray and a primitive. Algorithms for producing kd-tree's
+    between a ray and the scene. Algorithms for producing kd-tree's
     of different quality is the topic of
     \refsection{sec:splittingPlane}.
   \item \textbf{Build the acceleration structure faster -} In a
     dynamic scene, the acceleration structure may need to be rebuild
-    for each frame. Being able to rebuild it fast is therefore
-    crucial. One way to ensure a faster reconstruction is by reducing
-    the time spend deciding where to place the splitting plane, which
-    can result in trees of lower quality.
+    each time the scene is rendered. Being able to rebuild it fast is
+    therefore crucial. One way to ensure a faster reconstruction is by
+    reducing the time spend deciding where to place the splitting
+    plane, which can result in trees of lower quality.
 \end{enumerate}
 
 The main topic in this thesis is the relationship between tree quality
 and construction speed. I will investigate different parts of the
-kd-tree construction phase for dynamic scenes and if sacrificing tree
-quality for speed is worthwhile in dynamic scenes, or if the ray
+kd-tree construction phase for dynamic scenes and wether sacrificing
+tree quality for speed is worthwhile in dynamic scenes, or if the ray
 tracing phase suffers a too high performance penalty from traversing a
-lower quality tree
+lower quality tree.
 
 The two parts of the kd-tree creation phase that I will investigate is
 the choice of splitting plane, \refsection{sec:splittingPlane}, and
-how to associated geometry with child nodes after a split,
+how geometry is associated with child nodes after a split,
 \refsection{sec:splittingSchemes}.
 
-The kd-trees will be evaluated in \refchapter{chp:results} by how fast
-the can be constructed and how efficiently a ray tracer can traverse
-them and render the test scenes. The goal of the thesis is then to
-find a kd-tree configuration that minimizes the total time spend
-creating and traversing the structure.
+The constructed kd-trees will be evaluated in \refchapter{chp:results}
+by how fast they can be constructed and how efficiently a ray tracer
+can traverse them and render the test scenes. The goal of this thesis
+is then to find a kd-tree configuration that minimizes the total time
+spend creating and traversing the structure and perhaps show that
+there is a tradeoff between construction speed and tree quality.
 
 To give a fair comparison of the time spend ray tracing and the time
 spend building the data structure, I will need to create an optimized
@@ -230,11 +236,11 @@ kd-trees and merely included for testing purposes.
 
 Given the added overhead of continuously rebuilding an acceleration
 structure, an interesting question is wether or not we even need
-them. In \refchapter{chp:rayTracing} I therefore present an
+it. In \refsection{sec:exhaustive} I therefore present an
 \textit{exhaustive ray tracer}, which intersects every ray with every
 triangle. The exhaustive ray tracer will be compared to the
 hierarchical ray tracers and hopefully motivate the continued use of
-acceleration structures.
+acceleration structures for dynamic scenes.
 
 
 %% The kd-tree used in this thesis to accelerate ray tracing is based on
