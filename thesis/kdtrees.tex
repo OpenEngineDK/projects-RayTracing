@@ -1501,9 +1501,9 @@ set of a node, $n$ as an index, $i$, and a bit mask, $b$. If the
 $k$'th bit in $b$ is set, this means that the $i+k$'th triangle in the
 list of all triangles is associated with the node. Recall from earlier
 that a node stored the reference to its associated triangles as an
-index, $i$ and a range, $r$. The bit mask corrosponding to $r$ would
-then simply have all it's first $r$ bits set. A more thorough example
-is given in \reffig{fig:bitmap}.
+index and a range, $r$. The bit mask corrosponding to $r$ would then
+simply have all it's first $r$ bits set. A more thorough example of
+how bit masks are used is given in \reffig{fig:bitmap}.
 
 \newcommand{\nodeBitmap}[5]{
   \begin{tabular}{c}
@@ -1575,6 +1575,37 @@ is given in \reffig{fig:bitmap}.
 
 % Example of how to store splitting planes as bitmasks
 
+Since the splitting planes are local to the lower subtree, they too
+can benefit form the bit mask representation. The splitting plane
+needs to store two triangle sets, the triangles to its left after a
+split and the triangles to its right. If these are stored as bit masks
+associating a triangle with a new node becomes trivial. I.e a new left
+child's triangle set would simply be the bitwise AND of its parent's
+triangle set with the splitting plane's left triangle
+set. \refFig{fig:bitmap} also gives an example of this, as Node 0 is
+split by a splitting plane with a left triangle set $[1,1,1,0]$ and
+right triangle set $[0,1,0,1]$.
+
+The method for precomputing the splitting planes is shown in
+\refalg{alg:calcSplittingPlanes}, which only computes them along the
+x-axis, but is trivially extended to handle more dimensions. The
+algorithm uses a triangles axis aligned bounding box, $aabb_t$ to
+determine on which side of the splitting plane the triangle is
+located. If $aabb_t$'s minimum cornor is below the splitting plane,
+then the $t$'th bit in the planes left triangle set is set. If the
+maximum cornor of $aabb_t$ is above the plane, then the plane's right
+triangle set will have its $t$'th bit set.
+
+% Using shared memory
+
+The bit mask sizes used in this thesis are 32 and 64 bit. Knowing that
+I am able to avoid constant global memory access when iterating
+through the triangles and generelly achieve a better performance. This
+is done by letting the threads work together and store the triangles
+in shared memory before the splitting planes' triangle sets are
+computed. To better convey the intent of
+\refalg{alg:calcSplittingPlanes} this optimization has been left out.
+
 \begin{algorithm}
   \caption{Preprocess Lower Nodes.}
   \label{alg:calcSplittingPlanes}
@@ -1587,12 +1618,12 @@ is given in \reffig{fig:bitmap}.
                     \ASSIGN{$aabb_p$}{GetAabb($triangle$)}
                     \COMMENTIT{Create the splitting plane sets along the x-axis.}
                     \DECLARE{$x_{low}, x_{high}$}{Plane}
-                    \FOREACH{$triangle$}{$node.Triangles$}
-                      \ASSIGN{$aabb_t$}{GetAabb($triangle$)}
-                      \ASSIGN{$x_{low}.left[triangle]$}{$aabb_t.min.x <= aabb_p.min.x$}
-                      \ASSIGN{$x_{low}.right[triangle]$}{$aabb_p.min.x < aabb_t.max.x$}
-                      \ASSIGN{$x_{high}.left[triangle]$}{$aabb_t.min.x <= aabb_p.max.x$}
-                      \ASSIGN{$x_{high}.right[triangle]$}{$aabb_p.max.x < aabb_t.max.x$}
+                    \FOREACH{$t$}{$node.Triangles$}
+                      \ASSIGN{$aabb_t$}{GetAabb($t$)}
+                      \ASSIGN{$x_{low}.left[t]$}{$aabb_t.min.x <= aabb_p.min.x$}
+                      \ASSIGN{$x_{low}.right[t]$}{$aabb_p.min.x < aabb_t.max.x$}
+                      \ASSIGN{$x_{high}.left[t]$}{$aabb_t.min.x <= aabb_p.max.x$}
+                      \ASSIGN{$x_{high}.right[t]$}{$aabb_p.max.x < aabb_t.max.x$}
                     \ENDFOR
                     \STATE{$splittingPlanes$.Add($x_{low}$)}
                     \STATE{$splittingPlanes$.Add($x_{high}$)}
@@ -1605,7 +1636,6 @@ is given in \reffig{fig:bitmap}.
   \end{algorithmic}
 \end{algorithm}
 
-% Using shared memory
 
 
 \subsubsection{SAH Tree Construction}
