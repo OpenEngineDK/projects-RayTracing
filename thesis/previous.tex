@@ -20,8 +20,8 @@
 
 Arthur Appel is credited as the being the first to describe the basic
 idea of ray casting\citebook{Appel:1968}, using it to solve the
-\textit{hidden surface problem} and to enhance the perseption of depth
-by compute shadows in opaque polygonal scenes. Whitted extended the
+\textit{hidden surface problem} and to enhance the perception of depth
+by computing shadows in opaque polygonal scenes. Whitted extended the
 idea of ray casting into the general recursive ray tracing algorithm
 still used today\citebook{Whitted:1979}. If a ray would hit a surface,
 then depending on the surface's material proporties it could generate
@@ -40,10 +40,11 @@ automatically building \textit{bounding volume hierarchies},
 Iwata introduced the use of \textit{uniform voxel grids} in
 1986\citebook{Fujimoto:1986}. Kaplan introduced the use of kd-trees as
 a spatial partitioning scheme\citebook{Kaplan:1985}. To decide where
-to place the splitting plane he used the now standard spatial median
-splitting algorithm, which places the splitting plane at the middle of
-a node's bounding box along some axis, usually either the longest or
-an axis chosen in a \textit{round robin} fassion.
+to place the splitting plane he used the now standard \textit{spatial
+  median splitting} algorithm. Spatial median splitting places the
+splitting plane at the middle of a node's bounding box along some
+axis, usually either the longest or an axis chosen in a \textit{round
+  robin} fassion.
 
 
 % Surface Area Heuristic 
@@ -70,7 +71,7 @@ last decade, the kd-tree is still one of the most widely used
 structures due to it's low memory footprint, fast ray/plane
 intersection and countless research papers devoted to both optimal
 creation and ray tracing. For these same reasons this thesis will also
-focus on and use the kd-tree as acceleration structure.
+focus on the use of kd-trees as its acceleration structure.
 
 
 
@@ -89,40 +90,39 @@ and thus not partition it effectively.
 
 With the addition of branching and looping on graphics hardware,
 several GPU based hierarchical ray tracers where proposed. A known
-optimization to CPU based hierarchical ray tracers was the use of a
-stack of neighbouring nodes that the ray could possibly traverse. This
-was used as a means to prevent having to restart tracing from the root
-of the acceleration tree, if a ray did not intersect any primitives in
-a leaf. Low amounts of available memory per thread on the graphics
-card made this optimization technique infeasable for GPU
-solutions. Instead Popov et al.\citebook{popov:07:GPURT} in 2007
-introduced a stackless ray tracer rivalling CPU ray tracers in speed,
-which preprocessed the kd-tree and added neighbour pointers to each
-node. Concurrently Horn et al.\citebook{1230129} proposed a different
-but equally effective solution. Instead of storing the entire stack of
-possible neighbouring nodes, a \textit{short-stack} of only the $N$
-lowest possible nodes was stored in memory. Horn et al. also
-introduced an optimization called \textit{push-down}, where each ray
-did not restart at the root of the tree, but instead at the root of
-the smallest subtree enclosing the ray. Finally they showed how to
-this could be implemented together with \textit{packet tracing}, where
-several rays are traced in packets to amortize the cost of traversing
-the tree.
+optimization to CPU based hierarchical ray tracers is to use a stack
+of neighbouring nodes that the ray could possibly traverse. This is
+used as a means to prevent restarting ray tracing from the root of the
+acceleration tree, if a ray does not intersect any primitives in a
+leaf. Low amounts of available memory per thread on the graphics card
+made this optimization technique infeasable for GPU solutions. Instead
+Popov et al.\citebook{popov:07:GPURT} in 2007 introduced a stackless
+ray tracer rivalling CPU ray tracers in speed, which preprocessed the
+kd-tree and added neighbour pointers to each node. Concurrently Horn
+et al.\citebook{1230129} proposed a different but equally effective
+solution. Instead of storing the entire stack of possible neighbouring
+nodes, a \textit{short-stack} of only the $N$ lowest possible nodes
+was stored in memory. Horn et al. also introduced an optimization
+called \textit{push-down}, where each ray did not restart at the root
+of the tree, but instead at the root of the smallest subtree enclosing
+the ray. Finally they showed how to this could be implemented together
+with \textit{packet tracing}, where several rays are traced in packets
+to amortize the cost of traversing the tree.
 
-\fixme{Remove in-depth comparisons to Horn and Zhou}
+%% \fixme{Remove in-depth comparisons to Horn and Zhou}
 
-In this thesis I've adopted Horn et al.'s idea of a short stack to
-improve our ray tracer. In a worst case scenario where all the rays
-are intersecting the root node's splitting plane, the push-down approch
-yields no improvement, but only adds a computational overhead, which
-can also be seen in the papers results section. Therefore I have
-chosen not to implement it. With the increased detail in ray traced
-scenes, ray directions may become more and more chaotic after the
-primary rays have been cast. Due to this, packet tracing may not be
-one of the best long term optimizations. In this thesis I will instead
-show how grouping spatially close primary rays into clusters will
-drastically improve ray tracing efficiency, with hardly any added
-extra logic.
+%% In this thesis I've adopted Horn et al.'s idea of a short stack to
+%% improve our ray tracer. In a worst case scenario where all the rays
+%% are intersecting the root node's splitting plane, the push-down approch
+%% yields no improvement, but only adds a computational overhead, which
+%% can also be seen in the papers results section. Therefore I have
+%% chosen not to implement it. With the increased detail in ray traced
+%% scenes, ray directions may become more and more chaotic after the
+%% primary rays have been cast. Due to this, packet tracing may not be
+%% one of the best long term optimizations. In this thesis I will instead
+%% show how grouping spatially close primary rays into clusters will
+%% drastically improve ray tracing efficiency, with hardly any added
+%% extra logic.
 
 
 % Previously constructing the KD-tree was most effective on the CPU,
@@ -136,11 +136,11 @@ not been done efficiently.
 % efficiently on GPU's
 
 This changed in 2008 when Zhou et al.\citebook{1409079} introduced
-\textit{breath first} tree creation on the GPU. Instead of creating
-kd-trees in depth first manner, in which only one node was processed
-at a time, their breath first algorithm made it possible to work on
+\textit{breath-first} tree creation on the GPU. Instead of creating
+kd-trees in \textit{depth-first} manner, in which only one node was processed
+at a time, their breath-first algorithm made it possible to work on
 hundreds or thousands of nodes in parallel, allowing it to scale much
-better with the graphics cards SIMT architecture. For the uppermost
+better with the architecture of graphics cards. For the uppermost
 nodes in the tree they proposed to parallelize the calculation of the
 node split cost across all geometric primitives, creating thousands of
 threads. For the lower part of the tree, where thousands of nodes
@@ -150,13 +150,15 @@ parallelized over all available nodes.
 
 % KD-tree work and what we've made differently
 
-The kd-tree construction work done in this thesis is greatly inspired
-by Zhou et al.\citebook{1409079}. My approch to upper tree nodes is
-nearly identical to theirs; using spatial median splitting for
-determining where to place the splitting plane and optimizing the tree
-by maxizing empty space. I will however also be focusing on how to
-handle triangles cut by the splitting plane and discuss 2 alternatives
-to a standard splitting approach. In the case of lower nodes I will
-compare the computation intensive SAH, as used by \zhou, to 2 other
-methods. The first trivially stops tree creation at the upper trees
-leafs, while the second method will create balanced subtrees.
+%% The kd-tree construction work done in this thesis is greatly inspired
+%% by Zhou et al.\citebook{1409079}. My approch to upper tree nodes is
+%% nearly identical to theirs; using spatial median splitting for
+%% determining where to place the splitting plane and optimizing the tree
+%% by maxizing empty space. I will however also be focusing on how to
+%% handle triangles cut by the splitting plane and discuss 2 alternatives
+%% to a standard splitting approach. In the case of lower nodes I will
+%% compare the computation intensive SAH, as used by \zhou, to 2 other
+%% methods. The first trivially stops tree creation at the upper trees
+%% leafs, while the second method will create balanced subtrees.
+
+\fixme{Ending!}
