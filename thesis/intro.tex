@@ -135,10 +135,17 @@ To improve the performance of ray tracers, several acceleration
 structures have been developed. The most popular structures are
 \textit{hierarchical data structures}, such as trees, and the ray
 tracers that traverse them are called \textit{hierarchical ray
-  tracers}. This thesis will focus on the \textit{kd-tree}, a binary,
-space partitioning tree-structure, which recursively subdivides
-$k$-dimensional geometry by splitting it with \textit{axis aligned
-  splitting planes}. Each interior node in the tree contains a
+  tracers}. When the ray of a hierarchical ray tracer traverses a
+hierarchical data structure it is in search of the nearest leaf node,
+which contains references to the geometry nearest to the ray. If the
+ray finds that it did not see, or intersect, any of the geometry in
+the current leaf node, it advances beyond the leaf and performs
+another traversal of the structure.
+
+The structure employed in this thesis is the \textit{kd-tree}, a
+binary, space partitioning tree-structure, which recursively
+subdivides $k$-dimensional geometry by splitting it with \textit{axis
+  aligned splitting planes}. Each interior node in the tree contains a
 splitting plane and a reference to the location of its left and right
 children, while the leafs contain references to the geometry
 associated with them. An example of a subdivided scene and the
