@@ -7,204 +7,34 @@
   ``good'' and a naïvely built kd-tree is often a factor of 2 or
   more.}{Ingo Wald and Vlastimil Havran}
 
-\fixme{Anden argumentation for kd-træet? Fjern distance tests?}
-\fixme{Hurtig beskrivelse af ray tracing af kd-træer. Det gælder om at
-finde den nærmeste leaf node.}
+
 
 % About KD-trees
 
-Before we in \refchapter{chp:rayTracing} discuss how rays will
-traverse the kd-tree, we must first examine the structure of it and
-how it is created.
+Since Arthur Appel described ray tracing 4 decades ago, several
+spatial acceleration structures have been developed to increase the
+speed of ray tracers. This chapter will discuss one of the the most
+popular acceleration structures, namely the kd-tree.
 
-% Why KD tree compared to other structures
+% Why KD trees
 
-As mentioned earlier in this thesis, kd-trees was chosen as the data
-structure employed to accelerate ray tracing. This choice is based on
-several factors.
+In his Ph.D. dissertation \citebook{Havran:PhD}, Vlastimil Havran did
+an extensive study of spatial acceleration structures, including
+grids, octress and kd-trees. In Chapter 3 of the dissertation he
+concludes that in most cases the kd-tree will outperform other
+well-known acceleration structures.
 
-% Cheap intersection / distance to tests. Havran p. 51
+\fixme{Explain what a frame is? Or simply replace it with image?}
 
-One of them is the ease with which the signed distance, $t$, from a
-ray to a kd-trees axis aligned splitting plane can be computed. In
-\refsection{sec:hierarchicalTraversal} we shall see that this distance
-is essential to traversing the tree. An axis aligned splitting plane
-is described by an axis, $d \in \{x, y, z\}$, and it's position along
-that axis, $N_d$. The signed distance from any ray, $R(t) = O + tD$,
-to the splitting plane is then simply calculated as
+Since \zhou{}, it has been possible to efficiently construct kd-trees
+entirely on the GPU. In their paper they show that their approach even
+allows ray tracing dynamic scenes on the GPU, where the kd-tree needs
+to be reconstructed for each frame rendered. Building on their
+approach, In \refsection{sec:lowerNodes} I will present alternatives
+to their method for choosing the splitting plane. I will also
+investigate two different methods for determining when a triangle and
+a node overlaps in \refsection{sec:splittingSchemes}.
 
-\begin{displaymath}
-  t = \frac{N_d - O_d}{D_d}
-\end{displaymath}
-
-For comparison a generel \textit{binary space partition} tree,
-\textit{BSP} tree, with arbitrarily oriented splitting planes, given
-by $ax + by + cz + d = 0$ has a much more complex distance function.
-
-\begin{displaymath}
-  t = \frac{a O_x + b O_y + c O_z + d}{a D_x + b D_y + c D_z}
-\end{displaymath}
-
-\fixme{Drop bounding volumes?}
-
-It becomes even more complex when bounding volumes are used. An axis
-aligned bounding box can be described by 2 points, $V_{min}$ and
-$V_{max}$. Calculating the signed distance to any rays entry and exit
-point is then
-
-\begin{displaymath}
-  \begin{array}{l}
-    t_{near,d} = min((V_{min,d} - O_d) / D_d, (V_{max,d} - O_d) / D_d)\\
-    t_{entry} = max(t_{near,x}, t_{near,y}, t_{near,z})
-  \end{array}
-\end{displaymath}
-
-The distance from the ray origin to all of the bounding box sides are
-calculated, then the minimum along each axis is chosen and the maximum
-of these values are the distance to the entry point. The distance to
-the exit point is calculated similarly.
-
-\begin{displaymath}
-  \begin{array}{l}
-    t_{far,d} = max((V_{min,d} - O_d) / D_d, (V_{max,d} - O_d) / D_d)\\
-    t_{exit} = min(t_{far,x}, t_{far,y}, t_{far,z})
-  \end{array}
-\end{displaymath}
-
-
-If the rays exit distance lies closer than the entry distance, then
-the ray did not intersect the bounding volume, an example of this is
-given on \reffig{fig:rayBoxIntersection}.
-
-\begin{figure}
-  \centering
-  \subfloat[Ray miss.]{
-    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
-      % Planes
-      \draw[dashed, color=gray] (-2,0) -- (5,0);
-      \draw[dashed, color=gray] (-2,2) -- (5,2);
-      \draw[dashed, color=gray] (0,3.5) -- (0,-1.5);
-      \draw[dashed, color=gray] (3,3.5) -- (3,-1.5);
-
-      % AABB
-      \draw (0,0) -- (3,0) -- (3,2) -- (0,2) -- (0,0);
-
-      % Ray
-      \drawRay{0,5}{8,-1}
-
-      % Intersection
-      \draw[fill=black] (0,5) circle (0.05cm);
-      \draw (1,5.3) node{$t_{near,y}$};
-      \draw[fill=black] (3,2.75) circle (0.05cm);
-      \draw (4,3.05) node{$t_{far,y}$};
-      \draw[fill=black] (4,2) circle (0.05cm);
-      \draw (5,2.3) node{$t_{near,x}$};
-      \draw[fill=black] (6.66,0) circle (0.05cm);
-      \draw (7.66,0.3) node{$t_{far,x}$};
-
-    \end{tikzpicture}
-  }
-  \subfloat[Ray hit.]{
-    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
-      % Planes
-      \draw[dashed, color=gray] (-2,0) -- (5,0);
-      \draw[dashed, color=gray] (-2,2) -- (5,2);
-      \draw[dashed, color=gray] (0,3.5) -- (0,-1.5);
-      \draw[dashed, color=gray] (3,3.5) -- (3,-1.5);
-
-      % AABB
-      \draw (0,0) -- (3,0) -- (3,2) -- (0,2) -- (0,0);
-
-      % Ray
-      \drawRay{-1,4}{7,-2}
-
-      % Intersection
-      \draw[fill=black] (0,3.33) circle (0.05cm);
-      \draw (1,3.63) node{$t_{near,y}$};
-      \draw[fill=black] (1.66,2) circle (0.05cm);
-      \draw (2.66,2.3) node{$t_{near,x}$};
-      \draw[fill=black] (3,1) circle (0.05cm);
-      \draw (4,1.3) node{$t_{far,y}$};
-      \draw[fill=black] (4.33,0) circle (0.05cm);
-      \draw (5.33,0.3) node{$t_{far,x}$};
-
-    \end{tikzpicture}
-  }
-  \caption{Ray/Box intersection.}
-  \label{fig:rayBoxIntersection}
-\end{figure}
-
-Clearly kd-trees provide the simplest distance calculations of the
-above given examples.
-
-% Example of kd-tree flexibility over octree (important in sparse
-% scenes / empty space partitioning)
-
-Binary trees, such as kd- and bsp trees, are also more flexible than
-\textit{quadtress} or \textit{octrees}, which subdivides the geometry
-with 2 or 3 planes respectively per node. An example can be seen on
-\reffig{fig:binQuadSplit}. This flexibility can be extremely important
-when accelerating sparse scenes.
-
-\fixme{include trees in the bsp/quad figure}
-
-\begin{figure}
-  \centering
-  \subfloat[Possible binary splits.]{
-    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
-      
-      % AABB
-      \draw (0,0) -- (6,0) -- (6,4) -- (0,4) -- (0,0);
-      
-      % TRIS
-      \drawTri{0,4}{3,3}{1.5,1}
-      \drawTri{6,1}{4, 2}{4,0}
-      
-      % splits
-      \draw (3,0) -- (3,4);
-      \draw (0,1) -- (3,1);
-      \draw (3,2) -- (6,2);
-      
-    \end{tikzpicture}
-    \label{fig:binarySplit}
-  }
-  \hspace{20pt}
-  \subfloat[Possible quadternary splits.]{
-    \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily]
-      
-      % AABB
-      \draw (0,0) -- (6,0) -- (6,4) -- (0,4) -- (0,0);
-      
-      % TRIS
-      \drawTri{0,4}{3,3}{1.5,1}
-      \drawTri{6,1}{4, 2}{4,0}
-      
-      % splits
-      \draw (3,0) -- (3,4);
-      \draw (0,1) -- (6,1);
-      
-    \end{tikzpicture}
-    \label{fig:quadternarySplit}
-  }
-
-  \parbox{9cm}{\caption[Comparisson of binary and quadternary
-      splitting]{A comparisson of binary and quadternary
-      splitting. Notice that the binary splitting planes can be placed
-      without intersecting any geometry.}\label{fig:binQuadSplit}}
-\end{figure}
-
-% Vlastimil Havran did an extensive study of available spatial
-% subdivision schemes (including regular grids, nested grids, octrees
-% and kd-trees) and concludes in his phd thesis that kd-trees are
-% better than the other schemes in most cases.
-
-Finally, in his phd. dissertation, Vlastimil Havran did an extensive
-study of spatial data structures, including grids, octress and
-kd-trees, and found that the kd-tree performed the best in most cases.
-
-Given all of the above and with the recent paper by \zhou{}, in which
-kd-trees are constructed in real-time on graphics hardware, it is easy
-to see why the choice fell on kd-trees as the acceleration structure.
 
 % About this Chapter. Start by motivation. Then explain how kd-trees
 % are constructed, including different strategies for choosing the
@@ -212,14 +42,17 @@ to see why the choice fell on kd-trees as the acceleration structure.
 % chapter will end with a discussion of how to implement the
 % algorithms efficiently on a SIMT architecture.
 
-In the rest of this chapter, we will first examine how kd-trees are
-built. In particular different algorithms for choosing the splitting
-plane candidate will be studied and how to handle geometry
-intersecting the splitting plane will be discussed. The latter part of
-this chapter deals with converting a sequential kd-tree construction
-algorithm into a dataparallel algorithm. Focus is split between upper
-tree nodes and lower tree nodes, once the number of geometric
-primitives per node goes below a certain threshold.
+Before diving into specifics about the kd-tree construction phase,
+however, I will first use the next section to illustrate the recursive
+kd-tree construction algorithm in generel terms and describe how tree
+nodes are represented in mmemory. The following subsections will then
+describe different established algorithms for choosing a splitting
+plane and how to associate geometry with child nodes after a split has
+occured. The latter part of this chapter deals with converting a
+single-threaded recursive kd-tree construction algorithm into a
+dataparallel algorithm.
+
+
 
 \section{Building KD-trees}
 
@@ -240,7 +73,7 @@ recursive kd-tree construction scheme.
                   \COMMENTIT{Determining the splitting plane will be discussed in \refsection{sec:splittingPlane}}
                   \ASSIGN{$plane$}{DeterminePlane($T, voxel$)}
                   \ASSIGN{$(voxel_L, voxel_R)$}{Split($voxel, p$)}
-                  \COMMENTIT{How to associate geometry with a voxel will be the topic of  \refsection{sec:splittingGeom}}
+                  \COMMENTIT{How to associate geometry with a voxel will be the topic of  \refsection{sec:splittingSchemes}}
                   \ASSIGN{$T_L$}{AssociateGeometry($T, voxel_L$)}
                   \ASSIGN{$T_R$}{AssociateGeometry($T, voxel_R$)}
                   \ASSIGN{$node$}{Node($plane$, ConstructKDTree($T_L, voxel_L$), ConstructKDTree($T_R, voxel_R$))}
@@ -250,17 +83,26 @@ recursive kd-tree construction scheme.
 
 ConstructKDTree takes as arguments a list of triangles and an axis
 aligned bounding box defining the volume of the node. The algorithm
-then checks if the triangles and bounding box satisfy the requirements
-for becoming a leaf node. If so, then a leaf is produced and the
-recursion terminates. If not, then the node is split by some splitting
-plane, $plane$. How to choose a splitting plane is the topic of
+checks if the triangles and bounding box satisfy the requirements for
+becoming a leaf node. If so, then a leaf is produced and the recursion
+terminates. If not, then the node is split by some splitting plane,
+$plane$. How to choose a splitting plane is the topic of
 \refsection{sec:splittingPlane}. The bounding box is then split by
 $plane$, which produces two new axis aligned bounding boxes, $voxel_L$
 an d$voxel_R$. Triangles are then distributed to each new bounding box
 by an association algorithm, which will be discussed in
 \refsection{sec:splittingSchemes}, and a new node is created that will
-contain references to it's 2 children. An example of an iteration of
-ConstructKDTree can be seen in \reffig{fig:kdIteration}.
+contain references to it's 2 children. 
+
+An example of an iteration of ConstructKDTree can be seen in
+\reffig{fig:kdIteration}. The box surrounding the scene is the
+bounding volume of the root node. Before the scene has been subdivided
+by splitting planes, the root node is also a leaf node and therefore
+contains a list of all triangles associated with it. In
+\reffig{fig:simpleScene1} a line has been drawn down the middle of the
+scene. This line represents a splitting plane and in the tree's root
+node it can be seen that the plane splits along the a-axis at position
+4, which corrosponds to what is seen in the scene.
 
 \begin{figure}
   \centering \subfloat[A simple scene and it's corrosponding
@@ -296,8 +138,8 @@ ConstructKDTree can be seen in \reffig{fig:kdIteration}.
 
   \subfloat[The same scene as in \reffig{fig:simpleScene0}. The
     kd-tree has split the geometry down the middle and created 2 new
-    leaf nodes. The geometry has then been associated with these 2
-    leaf nodes.]{
+    leaf nodes. The geometry has then been associated with the leaf
+    nodes that it overlaps.]{
     \begin{tikzpicture}[y=0.5cm, x=0.5cm,font=\sffamily]
       \drawNode{0,0}{8,0}{8,6}{0,6}
       
@@ -329,12 +171,37 @@ ConstructKDTree can be seen in \reffig{fig:kdIteration}.
         child {node [leaf] (1) {$\begin{array}{c}1\\\{0, 1\}\end{array}$}}
         child {node [leaf] (2) {$\begin{array}{c}2\\\{2, 3\}\end{array}$}};
     \end{tikzpicture}
+    \label{fig:simpleScene1}
   }
   \caption{One iteration of the kd-tree construction algorithm.}
   \label{fig:kdIteration}
 \end{figure}
 
+%% Hurtig beskrivelse af ray tracing af kd-træer. Det gælder om at
+%% finde den nærmeste leaf node.
+
+
+
+\subsection{Tree Representation}
+
 % Left balanced non pointer vs pointers
+
+Each interior node in a kd-tree must provide access to three pieces of
+information.
+
+\begin{itemize}
+\item \textit{Split axis} - The axis that an interior node is split
+  along.
+\item \textit{Split position} - The position of the splitting plane
+  along the split axis.
+\item \textit{Child references} - Information about how to find the
+  node's children .
+\end{itemize}
+
+The first to items are pretty straightforward. The axes x, y and zcan
+be stored inside 2 bits and the position of the splitting plane should
+be stored as a floating point number. How an interior nodes should
+reference its child nodes, however, is not as straightforward.
 
 In generel there are two ways a node can reference its child
 nodes. The first is through the use of \textit{balanced trees}, where
@@ -374,11 +241,13 @@ done as easily had the tree been balanced.
 
 % Triangle references
 
-A kd-tree leaf node must also be able to reference the triangles
-associated with it. In this thesis I have choosen the convention that
-triangles associated with a node must be placed sequentially in memory
-and therefore a leaf need only contain the index of its first triangle
-and the amount of triangles it is associated with.
+The only information that must be stored in a kd-tree's leaf node is
+how to reference the triangles associated with it. In this thesis I
+have choosen the convention that triangles associated with a node must
+be placed sequentially in memory and therefore a leaf need only
+contain the index of its first triangle and the amount of triangles it
+is associated with.
+
 
 \subsection{Choosing the Splitting Plane}\label{sec:splittingPlane}
 
@@ -615,14 +484,6 @@ demonstrated on \reffig{fig:aabbClipped}.
       box has been clipped to fit the part of the triangle contained
       in the nodes bounding boxes.}\label{fig:aabbClipped}}
 \end{figure}
-
-\fixme{False primitive needs to be defined elsewhere.}
-
-%% Another solution is to simply remove the offending triangles, reafter
-%% refered to as \textit{false primitives}, from the node. This can be
-%% done by performing a triangle/box intersection check, a derivation of
-%% the \textit{seperating axis theorem}, as described by Möller in
-%% \citebook{Moller:2005}.
 
 
 \subsubsection{Empty Space Maximizing}\label{sec:emptySpace}
@@ -947,15 +808,17 @@ geometry.
 
 % Simpler than splitting.
 
-Performing the triangle/bounding box overlap test can be a
-computationally heavy task. A cheaper splitting scheme is to test a
-triangle's axis aligned bounding volume with the axis aligned bounding
-volume of the node. Given that an axis aligned bounding volume, $v$,
-can be described by its minimum and maximum value along each axis, I
-define it as $v = \{v_{min}, v_{max}\} \in \{R^3, R^3\} $. Performing
-the intersection test between the triangle's bounding volume, $t$, and
-the node's, $n$, then becomes $n_{min} < v_{max} \wedge v_{min} <
-n_{max}$.
+\fixme{Defining the aabb should be done somewhere above. Possibly in
+  the intro}
+
+Performing the triangle/bounding box overlap test required for
+triangle dividing can be a computationally heavy task. A cheaper
+splitting scheme is to test a triangle's axis aligned bounding volume
+with the axis aligned bounding volume of the node. Given the above
+definition of aligned bounding volume, $v = \{v_{min}, v_{max}\} \in
+\{R^3, R^3\}$, performing the intersection test between the
+triangle's bounding volume, $t$, and the node's, $n$, then becomes
+$n_{min} < v_{max} \wedge v_{min} < n_{max}$.
 
 \begin{figure}
   \centering
@@ -992,8 +855,10 @@ in \reffig{fig:falseBoxInclusion} we clearly see that the triangle
 itself does not overlap the right node's bounding box. This
 illustrates the drawback to only testing a triangle's bounding box and
 how box inclusion will produce false positives. Triangles that do not
-intersect a nodes bounding box can be associated with that node and
-become a false primitive, which will increase the size of the tree and
+overlap a nodes bounding box can be associated with that node and
+become a \textit{false primitive}, a geometric primitive associated
+with a node even though it is not inside the node's bounding
+volume. Such false primitives will increase the size of the tree and
 slow down ray tracing time. However, box inclusion makes up for this
 by performing fast node/triangle association, cutting down on the time
 spend constructing the tree.
