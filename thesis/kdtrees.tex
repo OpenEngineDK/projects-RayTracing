@@ -13,7 +13,7 @@
 
 Since Arthur Appel described ray tracing 4 decades ago, several
 spatial acceleration structures have been developed to increase the
-speed of ray tracers. This chapter will discuss one of the the most
+speed of ray tracers. This chapter will focus on one of the the most
 popular acceleration structures, namely the kd-tree.
 
 % Why KD trees
@@ -28,12 +28,12 @@ well-known acceleration structures.
 
 Since \zhou{}, it has been possible to efficiently construct kd-trees
 entirely on the GPU. In their paper they show that their approach even
-allows ray tracing dynamic scenes on the GPU, where the kd-tree needs
-to be reconstructed for each frame rendered. Building on their
-approach, In \refsection{sec:lowerNodes} I will present alternatives
-to their method for choosing the splitting plane. I will also
-investigate two different methods for determining when a triangle and
-a node overlaps in \refsection{sec:splittingSchemes}.
+allows ray tracing dynamic scenes on the GPU, where the kd-tree is
+reconstructed for each new frame rendered. Building on their approach,
+In \refsection{sec:lowerNodes} I will present alternatives to their
+method for choosing the splitting plane. I will also investigate two
+different methods for determining when a triangle and a node overlaps
+in \refsection{sec:splittingSchemes}.
 
 
 % About this Chapter. Start by motivation. Then explain how kd-trees
@@ -45,7 +45,7 @@ a node overlaps in \refsection{sec:splittingSchemes}.
 Before diving into specifics about the kd-tree construction phase,
 however, I will first use the next section to illustrate the recursive
 kd-tree construction algorithm in generel terms and describe how tree
-nodes are represented in mmemory. The following subsections will then
+nodes are represented in memory. The following subsections will then
 describe different established algorithms for choosing a splitting
 plane and how to associate geometry with child nodes after a split has
 occured. The latter part of this chapter deals with converting a
@@ -89,10 +89,10 @@ terminates. If not, then the node is split by some splitting plane,
 $plane$. How to choose a splitting plane is the topic of
 \refsection{sec:splittingPlane}. The bounding box is then split by
 $plane$, which produces two new axis aligned bounding boxes, $voxel_L$
-an d$voxel_R$. Triangles are then distributed to each new bounding box
+and $voxel_R$. Triangles are then associated with the new leaf nodes
 by an association algorithm, which will be discussed in
 \refsection{sec:splittingSchemes}, and a new node is created that will
-contain references to it's 2 children. 
+contain references to it's 2 children.
 
 An example of an iteration of ConstructKDTree can be seen in
 \reffig{fig:kdIteration}. The box surrounding the scene is the
@@ -101,7 +101,7 @@ by splitting planes, the root node is also a leaf node and therefore
 contains a list of all triangles associated with it. In
 \reffig{fig:simpleScene1} a line has been drawn down the middle of the
 scene. This line represents a splitting plane and in the tree's root
-node it can be seen that the plane splits along the a-axis at position
+node it can be seen that the plane splits along the x-axis at position
 4, which corrosponds to what is seen in the scene.
 
 \begin{figure}
@@ -198,10 +198,11 @@ information.
   node's children .
 \end{itemize}
 
-The first to items are pretty straightforward. The axes x, y and zcan
-be stored inside 2 bits and the position of the splitting plane should
-be stored as a floating point number. How an interior nodes should
-reference its child nodes, however, is not as straightforward.
+The first two items are pretty straightforward. The choice of axis, x,
+y or z, can be stored inside 2 bits and the position of the splitting
+plane should be stored as a floating point number. How an interior
+nodes should reference its child nodes, however, is not as
+straightforward.
 
 In generel there are two ways a node can reference its child
 nodes. The first is through the use of \textit{balanced trees}, where
@@ -234,7 +235,7 @@ Unfortunatly it also means storing more data per node and in the case
 of slow memory access it could cause a memory latency
 bottleneck. However, when experimenting with different techniques for
 creating kd-trees, such as is done in this thesis, the added
-flexibility can be a benefit and in \refsection{sec:gpuEmptySpace} we
+flexibility can be a benefit. In \refsection{sec:gpuEmptySpace} we
 shall see how this flexibility can be used to add the \textit{empty
   space maximizing} optimization, something that could not have been
 done as easily had the tree been balanced.
@@ -248,16 +249,15 @@ be placed sequentially in memory and therefore a leaf need only
 contain the index of its first triangle and the amount of triangles it
 is associated with.
 
+\fixme{Mention bit masks here?}
+
 
 \subsection{Choosing the Splitting Plane}\label{sec:splittingPlane}
-
-\fixme{does this section describe clipping well enough? That false
-  primitives can accumulate over successive splits?}
 
 % All the brilliance in KD-tree construction comes down to choosing
 % the splitting plane and deciding when to stop.
 
-Looking again at \refalg{alg:kdTreeCreator}, we can see that all the
+Looking again at \refalg{alg:kdTreeCreator}, we can see that the
 brilliance in constructing a high quality kd-tree is knowing where to
 place the splitting plane and when to end the recursion and create a
 leaf.
@@ -282,27 +282,28 @@ at the spatial median of a node's bounding box. There are 2 ways to
 choose which dimensional spatial median to use. A \textit{round robin}
 fashion can be used, where the dimensions are cycled every iteration;
 i.e. when creating the first node the plane will lie perpendicular to
-the x-axis, the children will then be split along the y-axis, in the
-next iteration the plane will split along the z-axis and then restart
-again at x. Another way of choosing the dimension is to split along
-the largest axis of the node's bounding box. This can be more costly
-than the round robin approach, since the entire bounding box will have
-to be calculated each iteration, but it will also produce trees of
-higher quality.
+the x-axis, that node's children will then be split along the y-axis,
+in the next iteration the nodes will be split along the z-axis and
+then the cycle restarts again at the x-axis. Another way of choosing
+the dimension is to split along the largest axis of the node's
+bounding box. This can be more costly than the round robin approach,
+but it will also produce trees of higher quality.
 
 The termination requirement for spatial median splitting is equally as
 simple as choosing the splitting plane. If the number of triangles per
-node falls below a certain threshold, then the recursion stops.
+node falls below a certain threshold, then recursion is stopped.
 
 % Refered to as the naïve implementation in Wald07.
 
 This method is refered to as naïve in \citebook{wald:06:NlogN} and
-rightly so. Not much thought is put into the distribution of geometry
-inside the bounding box. On \reffig{fig:crapMedian} an example is
-given where a node is split in a non-intuitive way. Spatial median
-splitting does, however, make up for its suboptimal splitting planes
-by being quite fast, and I will therefore use it for creating my
-kd-trees upper nodes, as is described in \refsection{sec:upperNodes}.
+rightly so, since spatial median splitting does not take the
+distribution of geometry inside a node's bounding box into account. On
+\reffig{fig:crapMedian} an example is given where a node is split in a
+non-intuitive way. Spatial median splitting does, however, make up for
+its suboptimal splitting planes by being quite fast.
+
+ %% and I will therefore use it for creating my kd-trees upper nodes, as
+ %% is described in \refsection{sec:upperNodes}.
 
 \begin{figure}
   \centering
@@ -330,7 +331,7 @@ kd-trees upper nodes, as is described in \refsection{sec:upperNodes}.
       small.}\label{fig:crapMedian}}
 \end{figure}
 
-\subsubsection{Surface Area Heuristic}
+\subsubsection{Surface Area Heuristic}\label{sec:SAH}
 
 % SAH assumptions can be seen in Wald07
 
@@ -338,29 +339,29 @@ A far better splitting plane position can be obtained by applying the
 \textit{surface area heuristic}, \textit{SAH}. Instead of only
 considering the bounding volume surrounding the geometry, SAH
 considers the entire geometry associated with a node. In essence SAH
-computes the \textit{expected cost} of traversing a node, $N$, that
-has been split into the child nodes $L$ and $R$.
+computes the \textit{expected cost}, $C_{SAH}$, of traversing a node,
+$N$, that has been split into the child nodes $L$ and $R$.
 
 \begin{displaymath}
   C_{SAH}(N \rightarrow \{L, R\}) = C_N + \frac{C_L A_L}{A_N} +
   \frac{C_R A_R}{A_N}
 \end{displaymath}
 
-where $C_N$ is the cost of traversing the node itself and is
+where $C_N$ is the cost of traversing an interior node and is
 independent of the splitting plane, $C_L$ is the cost of traversing
 the left child node and $C_R$ is the cost of traversing the right
 child node. $A_n$ is the summed surface area of the geometry
-associated with node $n$. Choosing the best splitting plane amounts to
-applying SAH to all possible splitting planes and then choosing the
-one with lowest cost. Since the above cost evaluation does not take
-ray directions into account, SAH assumes that rays are uniformly
-distributed, infinite lines.
+associated with node $n$. Choosing the most optimal splitting plane
+amounts to applying SAH to all possible splitting planes and then
+choosing the one with lowest cost. Since the above cost evaluation
+does not take ray directions into account, SAH assumes that rays are
+uniformly distributed, infinite lines.
 
 % Globlly optimal is infeasable for complex scenes and instead a local
 % greedy approximation is used.
 
-SAH can automatically determine when to stop splitting. The cost of
-traversing a leaf node is given as 
+SAH can also automatically determine when to stop splitting. The cost
+of traversing a leaf node is given as
 
 \begin{displaymath}
   C_{leaf}(N) = \|T\| * C_i
@@ -368,15 +369,15 @@ traversing a leaf node is given as
 
 where $\|T\|$ is the number of triangles and $C_i$ is the cost of
 intersecting a triangle. SAH's termination criteria is then
-$C_{leaf}(N) <= C_{SAH}(N)$, i.e. SAH terminates when the cost of
-intersecting a leaf becomes less than the cost of most optimal
-splitting plane.
+$C_{leaf}(N) <= C_{SAH}(N)$, i.e. SAH terminates when the expected
+cost of splitting $N$ becomes higher than the cost of keeping $N$ as a
+leaf node.
 
 Calculating a globally optimal solution using SAH is infeasable for
-complex scenes, as that would require calculating the cost of all
+complex scenes, as that would require evaluating the cost of all
 possible subtrees. A \textit{local greedy approximation} is used
 instead, where it is assumed that the created child nodes are
-leafs. This assumption simplifies the SAH calculation to 
+leafs. This assumption simplifies the SAH calculation to
 
 \begin{displaymath}
   C_{SAH}(N \rightarrow \{L, R\}) = C_N + \frac{C_{leaf}(L) A_L}{A_N}
@@ -384,9 +385,9 @@ leafs. This assumption simplifies the SAH calculation to
 \end{displaymath}
 
 
-Inspite of all the assumptions made by SAH, which in practice do not
-hold, it is still considered one of the best heuristics and produces
-trees of the highest quality.
+Inspite of SAH's assumptions about ray distribution and that in
+practice a local greedy approximation is used, it is still considered
+one of the best heuristics and produces trees of the highest quality.
 
 % SAH calculation optimizations include axis round robin and some damn
 % paper I can't remember.
@@ -399,23 +400,27 @@ trees of the highest quality.
 
 As mentioned above the SAH cost needs to be evaluated for \textit{all}
 available splitting planes. Since there are infinitely many potential
-planes along either axis, we need some method to distinguish the
+planes along either axis, some method is needed to distinguish the
 useful splitting planes from unimportant ones. The interesting
-splitting planes are those finitely many planes where the geometry
+splitting planes are those finitely many planes, where the geometry
 association in the resulting left and right child nodes change. These
-splitting planes are called \textit{split candidates}.
+splitting planes are called \textit{split candidates} and are tangent
+planes to the geometry inside a node's bounding volume.
 
 % Take planes from bounding volumes
 
-The obvious choice of split candidates are the 6 planes defined by a
-triangles axis aligned bounding box. These are interesting and fulfil
-the requirement for becoming split candidates as they represent the
-exact location where the geometry association for the left and right
-side changes. While using the bounding box sides is a simple and fast
+The obvious choice of axis aligned split candidates are the 6 planes
+defined by a triangle's axis aligned bounding box. These fulfil the
+requirement for becoming split candidates, as they represent the exact
+location where the geometry association for the left and right side
+changes. While using the bounding box sides is a simple and fast
 solution, it is not always the most optimal. The reason for this is
 that a triangle may not be located entirely inside a node and
 therefore its bounding box does not represent the most optimal
-split. An example of this can be seen \reffig{fig:aabbSplit}.
+split. An example of this can be seen \reffig{fig:aabbSplit}, where
+moving the split candidates given by the sides of the triangle's
+boudning box would not change the triangle association in the
+resulting two leaf nodes.
 
 \begin{figure}
   \centering
@@ -435,11 +440,11 @@ split. An example of this can be seen \reffig{fig:aabbSplit}.
       planes..}\label{fig:aabbSplit}}
 \end{figure}
 
-Another problem with this approach is that bounding boxes of small
-nodes may be completely contained inside the geometry's bounding box
-and thus none of the planes are actually useful split candidates as
-they cna not split the node. \reffig{fig:aabbContained} demonstrates
-this.
+Another problem with choosing the sides of a triangle's bounding box
+as split candidates is that bounding boxes of small nodes may be
+completely contained inside the geometry's bounding box. Thus none of
+the planes are actually useful split candidates as they can not split
+the node. \Reffig{fig:aabbContained} demonstrates this.
 
 \begin{figure}
   \centering
@@ -462,7 +467,7 @@ this.
 
 A solution is to continuously \textit{clip} the bounding box of the
 split geometry to fit the part of the geometry inside the tree nodes
-bounding box, creating \textit{perfect split} condidates, as
+bounding box, creating \textit{perfect split condidates}, as
 demonstrated on \reffig{fig:aabbClipped}.
 
 \begin{figure}
@@ -491,15 +496,15 @@ demonstrated on \reffig{fig:aabbClipped}.
 An effective optimization to the quality of kd-trees is \textit{empty
   space maximization}. The idea behind the optimization is to cut away
 large empty parts of the scene near the top of the tree. This is done
-by injecting empty leaf nodes in the upper parts of the tree. The
-empty nodes will provide rays traversing the tree with an early out
-option, skipping a large portion of the geometry.
+by injecting empty leaf nodes into the tree. The empty nodes will then
+provide rays traversing the tree with an early out option, allowing
+them to skip a large portion of the geometry.
 
 \Reffig{fig:noEmptySpaceExample} shows a simple scene without empty
 space cut away and its corrosponding kd-tree. Without empty space
 maximization the ray entering the scene from the lower left cornor is
-forced to perform intersection test with every triangle in leaf node
-1. In contrast the kd-tree in \reffig{fig:emptySpaceExample} has been
+forced to perform intersection test with every triangle in leaf 1. In
+contrast the kd-tree in \reffig{fig:emptySpaceExample} has been
 created with empty space maximization enabled and the ray entering the
 scene now ends up in leaf 4. Leaf 4 is empty and allows the ray to
 advance forward while skipping every triangle in leaf 1.
@@ -614,12 +619,12 @@ advance forward while skipping every triangle in leaf 1.
 \end{figure}
 
 
-Unfortunatly, how large a percentage of a node that should be empty
-before empty space splitting should cut it away is highly scene
-specific, making this optimization less usefull in the general
-case. Like \zhou{} I have found that performing an empty space split
-is optimal when a bounding box is more than 25\% empty along one of
-the axes.
+Unfortunatly, the percentage of a node that should be empty space
+before it is cut away is highly scene specific, making this
+optimization less usefull in the general case. Like \zhou{} I have
+found that injecting empty nodes into the tree is generelly optimal
+when a bounding box is more than 25\% empty along one of its axes.
+
 
 % Dynamic empty space threshold, favor early out in the top of the tree.
 
@@ -630,21 +635,20 @@ the axes.
 
 \subsection{Triangle/Node Association Schemes}\label{sec:splittingSchemes}
 
-When a splitting plane has been chosen, the triangles in the split
-kd-tree node needs to be associated with those child nodes that they
+When a splitting plane has been chosen, the interior node's associated
+triangles needs to be distributed to the child nodes that they
 overlap. Triangles located entirely in front of the splitting plane
 are associated with the left child node and triangles entirely behind
-are associated with the right child node. The association schemes
-discussed in this section present different methods for handling the
-triangles intersected by the splitting plane. The scheme employed is
-important in dynamic schemes, on one hand a fast approximating
-association scheme may assign triangles to nodes that do not
-necessarily overlap them, resulting in larger trees and slower ray
-tracing times. On the other hand a scheme that rigorously checks every
-triangle and only assigns triangles to nodes that they definitely
-intersect will result in a smaller tree and faster ray tracing time,
-but will also result in more time spend creating the acceleration
-structure.
+are associated with the right child. The association schemes discussed
+in this section present different methods for handling the triangles
+intersected by the splitting plane. The scheme employed is important
+in dynamic schemes, on one hand a fast approximating association
+scheme may assign triangles to nodes that they do necessarily overlap,
+resulting in larger trees and slower ray tracing times. On the other
+hand a scheme that rigorously checks every triangle and only assigns
+triangles to nodes that they definitely intersect will result in a
+smaller tree and faster ray tracing time, but will also incur a
+performance penalty when constructing the acceleration structure.
 
 
 %% This section will look at alternatives to triangle splitting, namely
@@ -770,9 +774,9 @@ being created, this can result in excessively many new triangles being
 created, as evidenced by \reffig{fig:excessiveSplitting} where the
 same triangle is split three times. The problem with excessive
 splitting is that each new triangle actually represents the original
-triangle and so on \reffig{fig:excessiveSplitting} we see nodes
-containing up to 6 triangles, all representing the exact same original
-and cluttering up the tree with unnecessary geometry. A more
+triangle and on \reffig{fig:excessiveSplitting} nodes can be seen
+containing up to 6 triangles, which all represents the exact same
+original and cluttering up the tree with redundant geometry. A more
 preferable situation is seen in \reffig{fig:dividing}, where each leaf
 node only contains one reference to the original triangle.
 
@@ -804,21 +808,27 @@ that node, otherwise the triangle will not be a part of that nodes
 geometry.
 
 
-\subsubsection{Box Inclusion}
+\subsubsection{Box Inclusion}\label{sec:boxInclusion}
 
 % Simpler than splitting.
 
-\fixme{Defining the aabb should be done somewhere above. Possibly in
-  the intro}
+\fixme{Defining the aabb should be done somewhere above? Possibly in
+  the intro?}
 
 Performing the triangle/bounding box overlap test required for
 triangle dividing can be a computationally heavy task. A cheaper
-splitting scheme is to test a triangle's axis aligned bounding volume
-with the axis aligned bounding volume of the node. Given the above
-definition of aligned bounding volume, $v = \{v_{min}, v_{max}\} \in
-\{R^3, R^3\}$, performing the intersection test between the
-triangle's bounding volume, $t$, and the node's, $n$, then becomes
-$n_{min} < v_{max} \wedge v_{min} < n_{max}$.
+splitting scheme is to test a triangle's axis aligned bounding box
+with the axis aligned bounding box of the node. An axis aligned
+bounding box can be described by its maximum and minimum values along
+each axis and I therefore define it as, $v = \{v_{min}, v_{max}\} \in
+\{R^3, R^3\}$, performing the overlap test between the triangle's
+bounding volume, $t$, and the node's, $n$, then becomes
+
+\begin{displaymath}
+  \text{overlap}(n,v) = n_{min} < v_{max} \wedge v_{min} < n_{max}
+\end{displaymath}
+
+\fixme{Is < defined for $R^3$?}
 
 \begin{figure}
   \centering
@@ -853,15 +863,15 @@ down the middle. In both examples the triangle will be associated with
 both new nodes, as the triangles bounding box overlaps both nodes. But
 in \reffig{fig:falseBoxInclusion} we clearly see that the triangle
 itself does not overlap the right node's bounding box. This
-illustrates the drawback to only testing a triangle's bounding box and
-how box inclusion will produce false positives. Triangles that do not
-overlap a nodes bounding box can be associated with that node and
-become a \textit{false primitive}, a geometric primitive associated
-with a node even though it is not inside the node's bounding
-volume. Such false primitives will increase the size of the tree and
-slow down ray tracing time. However, box inclusion makes up for this
-by performing fast node/triangle association, cutting down on the time
-spend constructing the tree.
+illustrates the drawback of only testing a triangle's bounding box and
+how box inclusion can produce \textit{false primitives}, geometric
+primitives associated with a node even though it does not overlap the
+node's bounding volume. Such false primitives will increase the size
+of the tree and thus slow down ray tracing time. However, box
+inclusion makes up for this by performing fast node/triangle
+association, cutting down on the time spend constructing the tree.
+
+
 
 % Also has an increased change of looping during construction in
 % combination with a small max lower size. Fx fairy forest loops using
@@ -874,8 +884,6 @@ spend constructing the tree.
 % With the added leaf intersection in the raytracer, extra triangles
 % in the leaf nodes become even less important and this method starts
 % to shine for dynamic scenes.
-
-
 
 
 
@@ -1365,25 +1373,28 @@ trees with and without this optimization.
 
 Compared with the upper tree creation phase, the lower tree creation
 is quite simple and only requires a few kernels. Since there can be
-thousands of nodes at the lower node phase, parallization can
-effectively be done over nodes instead of primitives. 
+thousands of active nodes at the lower node phase, parallization can
+effectively be done over nodes instead of primitives.
 
-\zhou{} proposes that the Surface Area Heuristic is used when deciding
-which splitting candidate to use and that the set of splitting candidates
-is precomputed. Precomputing the splitting candidates instead of
-clipping them after each new split can cause false primitives to
-accumulate in nodes over successive splits, as described in
-\refsection{sec:splittingPlane}. \zhou's reasoning is
+\zhou{} proposes that the surface area heuristic is used when deciding
+which splitting candidate to use and that the set of splitting
+candidates is precomputed from the geometry's bounding
+volumes. Precomputing the splitting candidates instead of adjusting
+them after each split, can cause SAH to not choose the most desireable
+splitting plane. This has already been discussed in
+\refsection{sec:SAH} in the Split Candidates paragraph and
+\reffig{fig:aabbSplit} presents an example. \zhou's reasoning for
+doing it is
 
 \quotebook{While clipping is effective for large nodes by preventing
   false postives from accumulating over future splits, our experiments
   indicate that clipping rarely improves ray tracing
   performance.}{1409079}
 
-Later in this section I will propose two simplifications to the
-standard SAH approach. These simplifications may both produce
-acceleration structures of lower quality than the computationally
-heavy SAH, but they make up for this by being much faster.
+%% Later in this section I will propose two simplifications to the
+%% standard SAH approach. These simplifications may both produce
+%% acceleration structures of lower quality than the computationally
+%% heavy SAH, but they make up for this by being much faster.
 
 \subsubsection{Lower Tree Split Candidates}
 
@@ -1501,6 +1512,9 @@ is done by letting the threads work together and store the triangles
 in shared memory before the splitting planes' triangle sets are
 computed. To better convey the intent of
 \refalg{alg:calcSplittingPlanes} this optimization has been left out.
+
+\fixme{Note that this procedure can cause false primitives and that
+  they can accumulate over succesive splits.}
 
 \begin{algorithm}
   \caption{Preprocess Lower Nodes.}
