@@ -230,43 +230,42 @@ balanced trees.
 % easier to work with them.
 
 To avoid balanced trees we can instead use pointers to reference the
-children. This allows for more flexibility when creating the tree.
-Unfortunatly it also means storing more data per node and in the case
-of slow memory access it could cause a memory latency
-bottleneck. However, when experimenting with different techniques for
-creating kd-trees, such as is done in this thesis, the added
-flexibility can be a benefit. In \refsection{sec:gpuEmptySpace} we
-shall see how this flexibility can be used to add the \textit{empty
-  space maximizing} optimization, something that could not have been
-done as easily had the tree been balanced.
+children. This allows for more flexibility when creating the tree.  Unfortunatly
+it also means storing more data per node and in the case of slow memory access
+it could cause a memory latency bottleneck. However, when experimenting with
+different techniques for creating kd-trees, such as is done in this thesis, the
+added flexibility can be a benefit. In \refsection{sec:gpuEmptySpace} we shall
+see how this flexibility can be used to add the \textit{empty space maximizing}
+optimization, something that could not have been done as easily had the tree
+been balanced.
 
 % Triangle references
 
-The only information that must be stored in a kd-tree's leaf node is
-how to reference the triangles associated with it. In this thesis I
-have choosen the convention that triangles associated with a node must
-be placed sequentially in memory and therefore a leaf need only
-contain the index of its first triangle and the amount of triangles it
-is associated with.
-
-\fixme{Mention bit masks here?}
+The only information that must be stored in a kd-tree's leaf node is how to
+reference the triangles associated with it. In this thesis I have choosen the
+convention that triangles associated with a node must be placed sequentially in
+memory and therefore a leaf need only contain the index of its first triangle
+and the amount of triangles it is associated with. When the amount of triangles
+associated with a node goes below a certain threshold I will switch the
+representation to an index and a bit mask instead. How this will work and the
+advantages of the bit mask representation will be explained in
+\refsection{sec:lowerNodes}.
 
 
 \subsection{Choosing the Splitting Plane}\label{sec:splittingPlane}
 
-% All the brilliance in KD-tree construction comes down to choosing
-% the splitting plane and deciding when to stop.
+% All the brilliance in KD-tree construction comes down to choosing the
+% splitting plane and deciding when to stop.
 
-Looking again at \refalg{alg:kdTreeCreator}, we can see that the
-brilliance in constructing a high quality kd-tree is knowing where to
-place the splitting plane and when to end the recursion and create a
-leaf.
+Looking again at \refalg{alg:kdTreeCreator}, we can see that the brilliance in
+constructing a high quality kd-tree is knowing where to place the splitting
+plane and when to end the recursion and create a leaf.
 
 % Different splitting planes heuristics.
 
-In the following section I present two algorithms that solves this
-problem and then I extend them with empty space maximizing, an
-optimization to the quality of the tree.
+In the following section I present two algorithms that solves this problem and
+then I extend them with empty space maximizing, an optimization to the quality
+of the tree.
 
 
 \subsubsection{Spatial Median}
@@ -277,30 +276,28 @@ optimization to the quality of the tree.
 % largest axis can be choosen. (Which initially minimises the surface
 % of the children)
 
-A quite simple method for choosing the splitting plane is to place it
-at the spatial median of a node's bounding box. There are 2 ways to
-choose which dimensional spatial median to use. A \textit{round robin}
-fashion can be used, where the dimensions are cycled every iteration;
-i.e. when creating the first node the plane will lie perpendicular to
-the x-axis, that node's children will then be split along the y-axis,
-in the next iteration the nodes will be split along the z-axis and
-then the cycle restarts again at the x-axis. Another way of choosing
-the dimension is to split along the largest axis of the node's
-bounding box. This can be more costly than the round robin approach,
-but it will also produce trees of higher quality.
+A quite simple method for choosing the splitting plane is to place it at the
+spatial median of a node's bounding box. There are 2 ways to choose which
+dimensional spatial median to use. A \textit{round robin} fashion can be used,
+where the dimensions are cycled every iteration; i.e. when creating the first
+node the plane will lie perpendicular to the x-axis, that node's children will
+then be split along the y-axis, in the next iteration the nodes will be split
+along the z-axis and then the cycle restarts again at the x-axis. Another way of
+choosing the dimension is to split along the largest axis of the node's bounding
+box. This can be more costly than the round robin approach, but it will also
+produce trees of higher quality.
 
-The termination requirement for spatial median splitting is equally as
-simple as choosing the splitting plane. If the number of triangles per
-node falls below a certain threshold, then recursion is stopped.
+The termination requirement for spatial median splitting is equally as simple as
+choosing the splitting plane. If the number of triangles per node falls below a
+certain threshold, then recursion is stopped.
 
 % Refered to as the naïve implementation in Wald07.
 
-This method is refered to as naïve in \citebook{wald:06:NlogN} and
-rightly so, since spatial median splitting does not take the
-distribution of geometry inside a node's bounding box into account. On
-\reffig{fig:crapMedian} an example is given where a node is split in a
-non-intuitive way. Spatial median splitting does, however, make up for
-its suboptimal splitting planes by being quite fast.
+This method is refered to as naïve in \citebook{wald:06:NlogN} and rightly so,
+since spatial median splitting does not take the distribution of geometry inside
+a node's bounding box into account. On \reffig{fig:crapMedian} an example is
+given where a node is split in a non-intuitive way. Spatial median splitting
+does, however, make up for its suboptimal splitting planes by being quite fast.
 
  %% and I will therefore use it for creating my kd-trees upper nodes, as
  %% is described in \refsection{sec:upperNodes}.
@@ -324,42 +321,36 @@ its suboptimal splitting planes by being quite fast.
   \end{tikzpicture}
 
   \vspace{3mm}
-  \parbox{5cm}{\caption[A poor split produced by median splitting.]{A
-      poor split produced by median splitting. The solid line is a
-      median split. The dashed one is a more optimal splitting plane,
-      since it divides the large triangle from the
-      small.}\label{fig:crapMedian}}
+  \parbox{5cm}{\caption[A poor split produced by median splitting.]{A poor split
+      produced by median splitting. The solid line is a median split. The dashed
+      one is a more optimal splitting plane, since it divides the large triangle
+      from the small.}\label{fig:crapMedian}}
 \end{figure}
 
 \subsubsection{Surface Area Heuristic}\label{sec:SAH}
 
 % SAH assumptions can be seen in Wald07
 
-\fixme{Explain that there are not as many triangles per lower node and
-  that SAH therefore is much more efficient here than for upper
-  nodes.}
-
 A far better splitting plane position can be obtained by applying the
-\textit{surface area heuristic}, \textit{SAH}. Instead of only
-considering the bounding volume surrounding the geometry, SAH
-considers the entire geometry associated with a node. In essence SAH
-computes the \textit{expected cost}, $C_{SAH}$, of traversing a node,
-$N$, that has been split into the child nodes $L$ and $R$.
+\textit{surface area heuristic}, \textit{SAH}. Instead of only considering the
+bounding volume surrounding the geometry, SAH considers the entire geometry
+associated with a node. In essence SAH computes the \textit{expected cost},
+$C_{SAH}$, of traversing a node, $N$, that has been split into the child nodes
+$L$ and $R$.
 
 \begin{displaymath}
   C_{SAH}(N \rightarrow \{L, R\}) = C_N + \frac{C_L A_L}{A_N} +
   \frac{C_R A_R}{A_N}
 \end{displaymath}
 
-where $C_N$ is the cost of traversing an interior node and is
-independent of the splitting plane, $C_L$ is the cost of traversing
-the left child node and $C_R$ is the cost of traversing the right
-child node. $A_n$ is the summed surface area of the geometry
-associated with node $n$. Choosing the most optimal splitting plane
-amounts to applying SAH to all possible splitting planes and then
-choosing the one with lowest cost. Since the above cost evaluation
-does not take ray directions into account, SAH assumes that rays are
-uniformly distributed, infinite lines.
+where $C_N$ is the cost of traversing an interior node and is independent of the
+splitting plane, $C_L$ is the cost of traversing the left child node and $C_R$
+is the cost of traversing the right child node. $A_n$ is the summed surface area
+of the geometry associated with node $n$. Choosing the most optimal splitting
+plane amounts to applying SAH to all possible splitting planes and then choosing
+the one with lowest cost. Since the above cost evaluation does not take ray
+directions into account, SAH assumes that rays are uniformly distributed,
+infinite lines.
 
 % Globlly optimal is infeasable for complex scenes and instead a local
 % greedy approximation is used.
@@ -1237,7 +1228,7 @@ amount to its index, we can lookup the starting index of the next child node's
 triangles. Subtracting these two values yields the range of triangles spanned by
 a child node.
 
-\fixme{Mention hot nodes are split into leafs and next nodes. We already know
+\fixme{Mention how nodes are split into leafs and next nodes. We already know
   the layout.}
 
 \begin{algorithm}
@@ -1396,32 +1387,32 @@ tree.
 
 % Propagating aabb's downwards
 
-With the addresses of the nodes produced by empty space maximization
-computed, a kernel can be launched that creates the actual empty space
-nodes and rewires the parent node to point to the empty space nodes
-instead of its current child node. 
+With the addresses of the nodes produced by empty space maximization computed, a
+kernel can be launched that creates the actual empty space nodes and rewires the
+parent node to point to the empty space nodes instead of its current child node.
 
-This construction is very flexible and all computations needed by
-empty space maximization can be turned on and off at will, which
-allows me to easily compare the quality and construction speed of
-trees with and without this optimization.
+This construction is very flexible and all computations needed by empty space
+maximization can be turned on and off at will, which allows me to easily compare
+the quality and construction speed of trees with and without this optimization.
 
 \subsection{Lower Tree Creation}\label{sec:lowerNodes}
 
-Compared with the upper tree creation phase, the lower tree creation
-is quite simple and only requires a few kernels. Since there can be
-thousands of active nodes at the lower node phase, parallization can
-effectively be done over nodes instead of primitives.
+Compared with the upper tree creation phase, the lower tree creation is quite
+simple and only requires a few kernels. Since there can be thousands of active
+nodes at the lower node phase, parallization can effectively be done over nodes
+instead of primitives.
 
-\zhou{} proposes that the surface area heuristic is used when deciding
-which splitting candidate to use and that the set of splitting
-candidates is precomputed from the geometry's bounding
-volumes. Precomputing the splitting candidates instead of adjusting
-them after each split, can cause SAH to not choose the most desireable
-splitting plane. This has already been discussed in
+\fixme{Note that this procedure can cause false primitives and that they can
+  accumulate over succesive splits.}
+
+\zhou{} proposes that the surface area heuristic is used when deciding which
+splitting candidate to use and that the set of splitting candidates is
+precomputed from the geometry's bounding volumes. Precomputing the splitting
+candidates instead of adjusting them after each split, can cause SAH to not
+choose the most desireable splitting plane. This has already been discussed in
 \refsection{sec:SAH} in the Split Candidates paragraph and
-\reffig{fig:aabbSplit} presents an example. \zhou's reasoning for
-doing it is
+\reffig{fig:aabbSplit} presents an example. \zhou's reasoning for doing it
+anyway is
 
 \quotebook{While clipping is effective for large nodes by preventing
   false postives from accumulating over future splits, our experiments
@@ -1504,54 +1495,50 @@ of how bit masks are used is given in \reffig{fig:bitmap}.
           {\drawTri{3.2, 0.8}{3.8, 0.8}{3.8, 0.2}}}};
     \end{tikzpicture}
   }
-  \caption[A description of storing triangles as bit masks.]{A
-    description of storing triangles as bit masks. The bit masks are
-    represented by a grid containing triangles. If a grid cell
-    contains a triangle, then that bit is set. Node 0 contains all
-    triangles, as evidenced by its bit mask. Node 0 is then split
-    along the splitting plane drawn in the scene, which has left
-    triangle mask $[1,1,1,0]$ and right mask $[0,1,0,1]$. The result
-    of splitting is leafs 1 and 2, whose triangle set is a bitwise
-    \textbf{AND} between Node 0's bit mask and the left and right bitmask
-    respectively.}
+  \caption[A description of storing triangles as bit masks.]{A description of
+    storing triangles as bit masks. The bit masks are represented by a grid
+    containing triangles. If a grid cell contains a triangle, then that bit is
+    set. Node 0 contains all triangles, as evidenced by its bit mask. Node 0 is
+    then split along the splitting plane drawn in the scene, which has the left
+    triangle set mask $[1,1,1,0]$ and right mask $[0,1,0,1]$. The result of
+    splitting is leafs 1 and 2, whose triangle set is a bitwise \textbf{AND}
+    between Node 0's bit mask and the left and right bit mask respectively.}
   \label{fig:bitmap}
 \end{figure}
 
 % Example of how to store splitting planes as bitmasks
 
-Since the split candidates are local to the lower subtree, they too
-can benefit from the bit mask representation. The split candidate
-needs to store two triangle sets, the triangles to its left after a
-split and the triangles to its right. If these are stored as bit masks
-associating a triangle with a new node becomes trivial. E.g. a new
-left child's triangle set would simply be the bitwise \textbf{AND} of
-its parent's triangle set with the splitting plane's left triangle
-set. \refFig{fig:bitmap} also gives an example of this, as Node 0 is
-split by a splitting plane with a left triangle set $[1,1,1,0]$ and
-right triangle set $[0,1,0,1]$.
+Since the split candidates are local to the lower subtree, they too can benefit
+from the bit mask representation. Each split candidate needs to store two
+triangle sets, the triangles below the splitting plane and the triangles
+above. If these are stored as bit masks it becomes trivial to associating a
+triangle with a child node after a split. E.g. a new left child's triangle set
+would simply be the bitwise \textbf{AND} of its parent's triangle set and the
+triangle set below the splitting plane. \refFig{fig:bitmap} also gives an
+example of this, as Node 0 is split by a splitting plane with the triangle sets
+$[1,1,1,0]$ below and $[0,1,0,1]$ above. Hereafter the triangle set below a
+split candidate will be refered to as its left triangle set and the set above is
+its right.
 
 The method for precomputing the split candidates is shown in
-\refalg{alg:calcSplittingPlanes}, which only computes them along the
-x-axis, but is trivially extended to handle more dimensions. The
-algorithm uses a triangles axis aligned bounding box, $aabb_t$ to
-determine on which side of the splitting plane the triangle is
-located. If $aabb_t$'s minimum cornor is below the splitting plane,
-then the $t$'th bit in the planes left triangle set is set. If the
-maximum cornor of $aabb_t$ is above the plane, then the plane's right
-triangle set will have its $t$'th bit set.
+\refalg{alg:calcSplittingPlanes}, which only computes them along the x-axis, but
+is trivially extended to handle more dimensions. The algorithm uses a triangles
+axis aligned bounding box, $aabb_t$ to determine on which side of the splitting
+plane the triangle is located. If $aabb_t$'s minimum cornor is below the
+splitting plane, then the $t$'th bit in the planes left triangle bit mask is
+set. If the maximum cornor of $aabb_t$ is above the plane, then the plane's
+right triangle bit mask will have its $t$'th bit set.
 
 % Using shared memory
 
-The bit mask sizes used in this thesis are 32 and 64 bit. Knowing that
-I am able to avoid constant global memory access when iterating
-through the triangles and generelly achieve a better performance. This
-is done by letting the threads work together and store the triangles
-in shared memory before the splitting planes' triangle sets are
-computed. To better convey the intent of
-\refalg{alg:calcSplittingPlanes} this optimization has been left out.
+\refalg{alg:calcSplittingPlanes} loops over the set of triangles twice, once in
+parallel and once for each thread. This results in a lot of global memory
+access, which can potentially slow down the procedure. The fix is the same as in
+\refsection{sec:usingSharedMem}, where the threads in a warp worked together to
+load data into shared memory and then accessed that instead of global memory. To
+better convey the intent of \refalg{alg:calcSplittingPlanes} this optimization
+has been left out.
 
-\fixme{Note that this procedure can cause false primitives and that
-  they can accumulate over succesive splits.}
 
 \begin{algorithm}
   \caption{Preprocess Lower Nodes.}
@@ -1589,9 +1576,17 @@ computed. To better convey the intent of
 
 % Adds surface area computation to the preprocess
 
-With the splitting planes defined and computed, it is now possible to
-split the nodes. \zhou used SAH to chose a splitting plane, so this
-will also be our first approach. 
+With the splitting planes defined and computed, it is now possible to split the
+nodes. \zhou{} used SAH to chose a splitting plane, so this will also be our
+first approach. While SAH did not fit the upper tree construction phase because
+of too many triangles per node and the assumption that all splits resulted in
+leaf nodes, these are the very reasons that it fits so much better for lower
+tree construction. Since the lower tree is constructed from up to 32 or 64
+triangles, the time complexity for computing $C_{SAH}$ per node is now bounded
+by $O(32^2) = O(1)$ or $O(64^2) = O(1)$, instead of $O(t^2)$, where $t$ is the
+amount of triangles in an upper node and can be hundreds of thousands. Also the
+assumption that a split will result in two leafs is far more likely to be true
+at the lower tree phase than the upper phase.
 
 \begin{algorithm}
   \caption{Calculate SAH cost}
@@ -1622,28 +1617,25 @@ will also be our first approach.
 
 % Explain
 
-The algorithm for computing the SAH cost of a splitting plane is given
-in \refalg{alg:calcSAHCost}. As described earlier the algorithm is
-paralized over all nodes. A node must then iterate over all useful
-split candidates, i.e. those split candidates that are associated with
-its current triangle set. For each split candidate the weighted area,
-$C_L * A_L + C_R * A_R$, is computed and the one with the lowest is
-stored as the proposed splitting candidate. The actual SAH value of
-the best split candidate is then computed and compared to the cost of
-leaving the node as a leaf node. The result of this comparison is
-returned at the end of the algorithm along with the best splitting
-candidate.
+The algorithm for computing the SAH cost of a splitting plane is given in
+\refalg{alg:calcSAHCost}. As described earlier the algorithm is paralized over
+all nodes. A node must then iterate over all useful split candidates, i.e. those
+split candidates that are associated with its current triangle set. For each
+split candidate the weighted area, $C_L * A_L + C_R * A_R$, is computed and the
+one with the lowest is stored as the proposed splitting candidate. The actual
+SAH value of the best split candidate is then computed and compared to the cost
+of leaving the node as a leaf node. The result of this comparison is returned at
+the end of the algorithm along with the best splitting candidate.
 
 % Run prefix sum on leafList and use the result as addresses for the
 % children.
 
-A kernel is then run which creates the child nodes of nodes where $SAH
-< C_{leaf}$. In order to do this however, we must again first apply
-the prefix-sum. This time we apply it to the list of leafs and use the
-result to find the addresses where a nodes children should be
-created. An example is given below, where nodes $n_0$ and $n_2$ should
-have leafs created and these should be created at address 0 and 2
-respectively.
+A kernel is then run which creates the child nodes of nodes where $SAH <
+C_{leaf}$. In order to do this however, we must again first apply the
+prefix-sum. This time we apply it to the $leafs$ list and use the result to find
+the addresses where a nodes children should be created. An example is given
+below, where nodes $n_0$ and $n_2$ should have leafs created and these should be
+created at address 0 and 2 respectively.
 
 \begin{displaymath}
   \begin{array}{r c c c c l}
@@ -1654,17 +1646,18 @@ respectively.
   \end{array}
 \end{displaymath}
 
+
+
 \subsubsection{Simplified SAH Tree Construction}
 
 % SAH is slow, so explore alternatives.
 
-Calculating the summed surface area $A_L$ and $A_R$ in SAH is quite
-expensive, as it requires an iteration over all triangles in $set_L$
-and $set_R$ for each splitting plane. For dynamic scenes I propose the
-following simplifying assumptions: That all triangles have the same
-surface area, specifically the surface area 1. Calculating $A_N$ for a
-given node $N$ could then be reduced from a loop to one single
-instruction $A_N = \|set_N\|$ and the entire SAH cost computation can
+While SAH's time complexity is $O(1)$, the iteration over all triangles
+assocated with a node to compute $A_L$ and $A_R$ is still quite expensive. For
+dynamic scenes I propose the following simplifying assumptions: That all
+triangles have the same surface area, specifically the surface area
+1. Calculating $A_N$ for a given node $N$ could then be reduced from a loop to
+one single instruction $A_N = \|set_N\|$ and the entire SAH cost computation can
 be simplified as follows.
 
 \begin{displaymath}
@@ -1705,29 +1698,26 @@ be simplified as follows.
 
 % Explain
 
-The algorithm for computing this \textit{Simplified Surface Area
-  Heuristic} or \textit{SSAH} can be seen in
-\refalg{alg:calcBalancedCost} and works similarly to
-\refalg{alg:calcSAHCost}. Just as with the SAH approach child nodes
-are created in a seperat kernel after prefix-sum has been applied to
-$leafs$.
+The algorithm for computing this \textit{Simplified Surface Area Heuristic} or
+\textit{SSAH} can be seen in \refalg{alg:calcBalancedCost} and works similarly
+to \refalg{alg:calcSAHCost}. Just as with the SAH approach, child nodes are
+created in a seperat kernel after prefix-sum has been applied to $leafs$.
 
 \subsubsection{No Tree Construction}
 
-The final tree construction algorithm I will propose for the lower
-tree phase is extremely simple: Do not create any tree!
+The final tree construction algorithm I will propose for the lower tree phase is
+extremely simple: Do not create any tree!
 
-Recall from \refsection{sec:memoryModel} that the latency of global
-memory access becomes harder for the multiprocessor to hide if the
-access pattern is fragmented. Warps of threads traversing the tree
-will most likely diverge at some point and start to require different
-global memory. This becomes an even bigger problem when they reach the
-leaf nodes and different threads have to test intersection with
-different triangles. Favoring larger leaf nodes would reduce this
-fragmentation and serve to streamline global data fetching across
-warps. I therefore propose that no lower tree be created. This would
-save both the time spend preprocessing the nodes to compile the list
-of split candidates and the time spend actually creating the subtree.
+Recall from \refsection{sec:memoryModel} that the latency of global memory
+access becomes harder for the multiprocessor to hide if the access pattern is
+fragmented. Warps of threads traversing the tree will most likely diverge at
+some point and start to require different global memory. This becomes an even
+bigger problem when they reach the leaf nodes and different threads have to test
+intersection with different triangles. Favoring larger leaf nodes would reduce
+this fragmentation and serve to streamline global data fetching across warps. I
+therefore propose that no lower tree be created. This would save both the time
+spend preprocessing the nodes to compile the list of split candidates and the
+time spend actually creating the subtree.
 
 
 
