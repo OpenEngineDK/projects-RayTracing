@@ -24,41 +24,38 @@
 
 % Motivation
 
-\textit{Rendering} is the process of converting a scene description
-into an image and lies at the heart of \textit{computer graphics}. The
-ability to render complex scenes realistically or distinctly is vital
-in several areas; computer games, movies and even medical imaging. A
-scene is made up of models, which can consist of several thousand
-geometric primitives, usually triangles. Information about these
-triangles, or \textit{vertex attributes}, are stored at the vertices
+\textit{Rendering} is the process of converting a scene description into an
+image and lies at the heart of \textit{computer graphics}. The ability to render
+complex scenes realistically or distinctly is vital in several areas; computer
+games, movies and even medical imaging. A scene is made up of models, which can
+consist of several thousand geometric primitives, usually triangles. Information
+about these triangles, or \textit{vertex attributes}, are stored at the vertices
 and can be it's position, normal or color among other things.
 
 % Rasterization and cube mapping
 
-When real-time rendering is needed, the technique of choice for the
-last one and a half decade has been \textit{rasterization}. In
-rasterization a geometric primitives vertex attributes are mapped onto
-a \textit{raster}\footnote{A flat, 2D grid.} and used to calculate the
-color of individual grid cells. This technique is so popular in the
-gaming industry that processing units were created specifically for
-rasterization, the \textit{Graphics Processing Unit} or \textit{GPU}
-for short. Due to the industry's ever increasing demand for more
-detailed models and effects, the GPU's have seen a massive increase in
-both computational power and throughput over the last decade, as
-evidenced by \reffig{fig:gflops}. Unfortunatly, even with all this
-power certain aspects of rendering are still not easily solved by
-rasterization. \textit{Reflection} and \textit{refraction} effects on
-non-flat surfaces are still notoriously hard to recreate. The reason
-is that the reflection of complex objects can not easily be mapped to
-a 2 dimensional grid, such as the raster. Reflections of complex
-objects can be approximated by \textit{environment mapping} or
-\textit{cube mapping}, of which a short describtion can be found on
-\reffig{fig:cubemap}. The trouble with cube mapping is that the scene
-must to be rendered another 6 times, once for each side of the
-cube map. This can increase the cost of rendering a scene by up to 6
-times for each cube map employed. Another shortcoming of cube mapping
-is that it doesn't support \textit{self reflection}, since it is only
-the surrounding environment that is rendered onto the map.
+When real-time rendering is needed, the technique of choice for the last one and
+a half decade has been \textit{rasterization}. In rasterization a geometric
+primitives vertex attributes are mapped onto a \textit{raster}\footnote{A flat,
+  2D grid.} and used to calculate the color of individual grid cells. This
+technique is so popular in the gaming industry that processing units were
+created specifically for rasterization, the \textit{Graphics Processing Unit} or
+\textit{GPU} for short. Due to the industry's ever increasing demand for more
+detailed models and effects, the GPU's have seen a massive increase in both
+computational power and throughput over the last decade, as evidenced by
+\reffig{fig:gflops}. Unfortunatly, even with all this power certain aspects of
+rendering are still not easily solved by rasterization. \textit{Reflection} and
+\textit{refraction} effects on non-flat surfaces are still notoriously hard to
+recreate. The reason is that the reflection of complex objects can not easily be
+mapped to a 2 dimensional grid, such as the raster. Reflections of complex
+objects can be approximated by \textit{environment mapping} or \textit{cube
+  mapping}, of which a short describtion can be found on
+\reffig{fig:cubemap}. The trouble with cube mapping is that the scene must to be
+rendered another 6 times, once for each side of the cube map. This can increase
+the cost of rendering a scene by up to 6 times for each cube map
+employed. Another shortcoming of cube mapping is that it doesn't support
+\textit{self reflection}, since it is only the surrounding environment that is
+rendered onto the map.
 
 \begin{figure}
   \centering
