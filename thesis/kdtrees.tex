@@ -393,29 +393,28 @@ one of the best heuristics and produces trees of the highest quality.
 % To avoid having to test the infinitely many splitting planes
 % possible, we instead have to choose sensible planes for SAH.
 
-As mentioned above the SAH cost needs to be evaluated for \textit{all}
-available splitting planes. Since there are infinitely many potential
-planes along either axis, some method is needed to distinguish the
-useful splitting planes from unimportant ones. The interesting
-splitting planes are those finitely many planes, where the geometry
-association in the resulting left and right child nodes change. These
-splitting planes are called \textit{split candidates} and are tangent
-planes to the geometry inside a node's bounding volume.
+As mentioned above the SAH cost needs to be evaluated for \textit{all} available
+splitting planes. Since there are infinitely many potential planes along either
+axis, some method is needed to distinguish the useful splitting planes from
+unimportant ones. The interesting splitting planes are those finitely many
+planes, where the geometry association in the resulting left and right child
+nodes change. These splitting planes are called \textit{split candidates} and
+are \textit{tangent planes} to the geometry inside a node's bounding volume. A
+tangent plane lies perpendicular to a geometric primitives surface and only
+touches its surface.
 
 % Take planes from bounding volumes
 
-The obvious choice of axis aligned split candidates are the 6 planes
-defined by a triangle's axis aligned bounding box. These fulfil the
-requirement for becoming split candidates, as they represent the exact
-location where the geometry association for the left and right side
-changes. While using the bounding box sides is a simple and fast
-solution, it is not always the most optimal. The reason for this is
-that a triangle may not be located entirely inside a node and
-therefore its bounding box does not represent the most optimal
-split. An example of this can be seen \reffig{fig:aabbSplit}, where
-moving the split candidates given by the sides of the triangle's
-boudning box would not change the triangle association in the
-resulting two leaf nodes.
+The obvious choice of axis aligned split candidates are the 6 planes defined by
+a triangle's axis aligned bounding box. These fulfil the requirement for
+becoming split candidates, as they represent the exact location where the
+geometry association for the left and right side changes. While using the
+bounding box sides is a simple and fast solution, it is not always the most
+optimal. The reason for this is that a triangle may not be located entirely
+inside a node and therefore its bounding box does not represent the most optimal
+split. An example of this can be seen \reffig{fig:aabbSplit}, where moving the
+split candidates given by the sides of the triangle's boudning box would not
+change the triangle association in the resulting two leaf nodes.
 
 \begin{figure}
   \centering
@@ -792,15 +791,14 @@ node only contains one reference to the original triangle.
       one reference to the original triangle.}\label{fig:dividing}}
 \end{figure}
 
-This is the central idea behind \textit{triangle dividing}. Instead of
-splitting a triangle around the splitting plane and creating new
-triangles, I associate the original triangle with the leaf
-nodes. Wether or not to associate a triangle and node is decided by
-performing a \textit{triangle/bounding box overlap} test, as described
-in Möller\citebook{Moller:2005}. If the triangle overlaps the leaf
-node's bounding box after the split, then it will be associated with
-that node, otherwise the triangle will not be a part of that nodes
-geometry.
+This is the central idea behind \textit{triangle dividing}. Instead of splitting
+a triangle around the splitting plane and creating new triangles, I associate
+the original triangle with the leaf nodes. Whether or not to associate a
+triangle and node is decided by performing a \textit{triangle/bounding box
+  overlap} test, as described in Möller\citebook{Moller:2005}. If the triangle
+overlaps the leaf node's bounding box after the split, then it will be
+associated with that node, otherwise the triangle will not be a part of that
+nodes geometry.
 
 
 \subsubsection{Box Inclusion}\label{sec:boxInclusion}
@@ -1033,24 +1031,23 @@ bounding box from a node's associated triangles, again as described in
 \refsection{sec:reduce}, and then each node can use that bounding box
 to decide where to place its splitting plane. 
 
-To associate triangles and nodes in the upper parts of the tree, both
-schemes described in \refsection{sec:splittingSchemes} can be
-employed. As with the splitting plane decision, the triangle/node
-association scheme will be parallelized over all triangles. Since I
-have made the assumption that all triangles associated with a node
-must be placed sequentially in memory, the triangles need to be sorted
-after the triangle/node association has been determined. To
-parallelize this sorting over all triangels, I again make use of the
-scan primitive described in \refsection{sec:GPUprims}. Since a
-triangle can be associated with both child nodes, the left-right
-splitting from \refsection{sec:GPUprims} is not directly
-applicable. Instead I will be using a variant where the prefix-sum
-calculation is applied to a list of size $2 * \|triangles\|$. In the
-first half of the list I will then use 0's and 1's to represent wether
-the $t$'th triangle overlapped its current node's left child. The last
-half of the list does the same but with the right child. Computing the
-prefix-sum of this list then yields the addresses, $associateAddr$,
-that the triangles should be sorted to. Below is an example of this
+To associate triangles and nodes in the upper parts of the tree, both schemes
+described in \refsection{sec:splittingSchemes} can be employed. As with the
+splitting plane decision, the triangle/node association scheme will be
+parallelized over all triangles. Since I have made the assumption that all
+triangles associated with a node must be placed sequentially in memory, the
+triangles need to be sorted after the triangle/node association has been
+determined. To parallelize this sorting over all triangels, I again make use of
+the scan primitive described in \refsection{sec:GPUprims}. Since a triangle can
+be associated with both child nodes, the left-right splitting from
+\refsection{sec:GPUprims} is not directly applicable. Instead I will be using a
+variant where the prefix-sum calculation is applied to a list of size $2 *
+\|triangles\|$. In the first half of the list I will then use 0's and 1's to
+represent whether the $t$'th triangle overlapped its current node's left
+child. The last half of the list does the same but with the right
+child. Computing the prefix-sum of this list then yields the addresses,
+$associateAddr$, that the triangles should be sorted to. Below is an example of
+this
 
 \begin{displaymath}
   \begin{array}{r c c c c c c c c c c c c c}
@@ -1328,7 +1325,7 @@ box provides a loose upper bound on the geometry.
 
 The algorithm for performing empty space splitting is inserted right after the
 nodes' new tight bounding boxes have been computed and before the new child
-nodes are created. Wether or not empty space maximization should be performed on
+nodes are created. Whether or not empty space maximization should be performed on
 any of the nodes in $activeNodes$ is then checked in parallel for all
 nodes. Each side of a node is checked sequentially and if it is found that the
 amount of empty space between the tight bounding box and the loose bounding box

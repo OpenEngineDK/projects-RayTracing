@@ -72,6 +72,8 @@ rendered onto the map.
 
 % Ray tracing and comparing it to rasterization
 
+\fixme{Define rays!}
+
 Another technique for rendering is \textit{ray tracing}, which
 eloquently solves reflection and refraction by tracing rays from the
 eye and into the scene, spawning and tracing new reflection- and
@@ -212,7 +214,7 @@ scenes.
 
 The main topic in this thesis is the relationship between tree quality
 and construction speed. I will investigate different parts of the
-kd-tree construction phase for dynamic scenes and wether sacrificing
+kd-tree construction phase for dynamic scenes and whether sacrificing
 tree quality for speed is worthwhile in dynamic scenes, or if the ray
 tracing phase suffers a too high performance penalty from traversing a
 lower quality tree.
@@ -239,7 +241,7 @@ devoted to ray tracing optimization, but the topic is secondary to
 kd-trees and merely included for testing purposes.
 
 Given the added overhead of continuously rebuilding an acceleration
-structure, an interesting question is wether or not we even need
+structure, an interesting question is whether or not we even need
 it. In \refsection{sec:exhaustive} I therefore present an
 \textit{exhaustive ray tracer}, which intersects every ray with every
 triangle. The exhaustive ray tracer will be compared to the
@@ -256,7 +258,7 @@ acceleration structures for dynamic scenes.
 %% tracing time. An improvement to the tree quality in \zhou{} is
 %% \textit{empty space maximization}, which places empty nodes in the
 %% tree and thus facilitates an early out option for a ray tracer, as
-%% described in \refsection{sec:emptySpace}. I shall investigate wether
+%% described in \refsection{sec:emptySpace}. I shall investigate whether
 %% or not the added computational cost of this optimization is worthwhile
 %% in dynamic scenes.
 
