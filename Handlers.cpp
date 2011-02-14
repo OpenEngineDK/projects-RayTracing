@@ -169,8 +169,8 @@ namespace OpenEngine {
             (*triangleMap, &TriangleMapWrapper::GetLowerAlgorithm,
              &TriangleMapWrapper::SetLowerAlgorithm, "LowerAlgorithm");
         lowerType->name = "Lower Algorithm";
-        lowerType->AddEnum("Bitmap", TriangleMap::BITMAP);
-        lowerType->AddEnum("Balanced", TriangleMap::BALANCED);
+        lowerType->AddEnum("None", TriangleMap::BITMAP);
+        lowerType->AddEnum("SSAH", TriangleMap::BALANCED);
         lowerType->AddEnum("SAH", TriangleMap::SAH);
         values.push_back(lowerType);
 
