@@ -13,10 +13,12 @@
 #include <Renderers/OpenGL/PhotonRenderingView.h>
 #include <Renderers/IRenderer.h>
 #include <Scene/TransformationNode.h>
+#include <Scene/KDNode.h>
 #include <Utils/IInspector.h>
 #include <Utils/InspectionBar.h>
 #include <Utils/CUDA/IRayTracer.h>
 #include <Utils/CUDA/TriangleMap.h>
+#include <Utils/CUDA/TriangleMapUpperCreator.h>
 
 #include <Logging/Logger.h>
 
@@ -58,10 +60,14 @@ namespace OpenEngine {
         void SetLowerAlgorithm(TriangleMap::LowerAlgorithm l) { rv->GetTriangleMap()->SetLowerAlgorithm(l); }
         void SplitEmptySpace(bool s) { rv->GetTriangleMap()->SplitEmptySpace(s); }
         bool IsSplittingEmptySpace() { return rv->GetTriangleMap()->IsSplittingEmptySpace(); }
+        void SetEmptySpaceThreshold(float t) { Utils::CUDA::TriangleMapUpperCreator::SetEmptySpaceThreshold(t); }
+        float GetEmptySpaceThreshold() { return Utils::CUDA::TriangleMapUpperCreator::GetEmptySpaceThreshold(); }
         void SetSplitMethod(TriangleMap::SplitMethod s) { rv->GetTriangleMap()->SetSplitMethod(s); }
         TriangleMap::SplitMethod GetSplitMethod() { return rv->GetTriangleMap()->GetSplitMethod(); }
         void SetPropagateBoundingBox(bool p) { rv->GetTriangleMap()->SetPropagateBoundingBox(p); }
         bool GetPropagateBoundingBox() { return rv->GetTriangleMap()->GetPropagateBoundingBox(); }
+        void SetTraversalCost(float t) { rv->GetTriangleMap()->SetTraversalCost(t); }
+        float GetTraversalCost() { return rv->GetTriangleMap()->GetTraversalCost(); }
     };
 
     RayInspectionBar::RayInspectionBar(AntTweakBar* atb, 
@@ -147,7 +153,7 @@ namespace OpenEngine {
         splitScheme->name = "Splitting Scheme";        
         splitScheme->AddEnum("Box", TriangleMap::BOX);
         splitScheme->AddEnum("Divide", TriangleMap::DIVIDE);
-//splitScheme->AddEnum("Split", TriangleMap::SPLIT);
+// splitScheme->AddEnum("Split", TriangleMap::SPLIT);
         values.push_back(splitScheme);
 
         RWValueCall<TriangleMapWrapper, bool> *emptySplit
@@ -157,12 +163,32 @@ namespace OpenEngine {
         emptySplit->name = "Maximize empty space";
         values.push_back(emptySplit);
 
+        RWValueCall<TriangleMapWrapper, float> *emptyThreshold
+            = new RWValueCall<TriangleMapWrapper, float>
+            (*triangleMap, &TriangleMapWrapper::GetEmptySpaceThreshold,
+             &TriangleMapWrapper::SetEmptySpaceThreshold);
+        emptyThreshold->name = "Empty space threshold";
+        emptyThreshold->properties[MIN] = 0.1f;
+        emptyThreshold->properties[MAX] = 0.9f;
+        emptyThreshold->properties[STEP] = 0.01f;
+        values.push_back(emptyThreshold);
+
         RWValueCall<TriangleMapWrapper, bool> *propagateAabbs
             = new RWValueCall<TriangleMapWrapper, bool>
             (*triangleMap, &TriangleMapWrapper::GetPropagateBoundingBox,
              &TriangleMapWrapper::SetPropagateBoundingBox);
         propagateAabbs->name = "Propagate Aabbs";
         values.push_back(propagateAabbs);
+
+        RWValueCall<TriangleMapWrapper, float> *traversalCost
+            = new RWValueCall<TriangleMapWrapper, float>
+            (*triangleMap, &TriangleMapWrapper::GetTraversalCost,
+             &TriangleMapWrapper::SetTraversalCost);
+        traversalCost->name = "Traversal Cost";
+        traversalCost->properties[MIN] = 4;
+        traversalCost->properties[MAX] = Scene::KDNode::MAX_LOWER_SIZE;
+        traversalCost->properties[STEP] = 1;
+        values.push_back(traversalCost);
 
         EnumRWValueCall<TriangleMapWrapper, TriangleMap::LowerAlgorithm> *lowerType
             = new EnumRWValueCall<TriangleMapWrapper, TriangleMap::LowerAlgorithm>
