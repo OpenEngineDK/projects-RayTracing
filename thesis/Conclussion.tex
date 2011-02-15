@@ -31,6 +31,12 @@
 
 % First establish which ray tracer works the best
 
+\newcommand{\tabelMoeller}{
+  \begin{tabular}{c}
+    Moeller- \\ Trumbore
+  \end{tabular}
+}
+
 \begin{figure}
   \centering
   \SetTabelTextSize
@@ -38,54 +44,56 @@
     \tabelParam{c}{\textit{Ray} \\ \textit{Tracer:}} &
     \tabelParam{c}{\textit{Ray/triangle}\\\textit{intersection:}} &
     \tabelParam{c}{\textit{Packets:}} &
-    \tabelParam{c}{\textit{Leaf} \\ \textit{skipping:}} &
-    \tabelScene{Cornell \\Box} & 
-    \tabelScene{Reflecting \\Dragon} & 
-    \tabelScene{Sponza}\\
+    \tabelParam{c||}{\textit{Leaf} \\ \textit{skipping:}} &
+    \tabelScene{Cornell \\ Box \\ (3)} & 
+    \tabelScene{Reflecting \\ Dragon \\ (49909)} & 
+    \tabelScene{Sponza \\ (98779)}\\
       \hline
-      \multirow{4}{*}{Exhaustive} & \multirow{2}{*}{Moeller} & No & N/A & 6 \\
+      \multirow{4}{*}{Exhaustive} & \multirow{2}{*}{\tabelMoeller} & No & N/A & 11.2ms & \worstResult{1118ms} & \worstResult{964ms} \\
       \cline{3-7}
-      & & Yes & N/A & 6 \\
+      & & Yes & N/A & \worstResult{11.6ms} & 1114ms & \worstResult{964ms} \\
       \cline{2-7}
-      & \multirow{2}{*}{Woop} & No & N/A & 6 \\
+      & \multirow{2}{*}{Woop} & No & N/A & \bestResult{9.3ms} & \bestResult{898ms} & \bestResult{650ms}\\
       \cline{3-7}
-      & & Yes & N/A & 6 \\
+      & & Yes & N/A & 9.7ms & 903ms & 651ms\\
+      \hline
       \hline
 
   % KD-Restart
-  \multirow{8}{*}{KD-Restart} & \multirow{4}{*}{Moeller} & \multirow{2}{*}{No} & No & 6 \\
+  \multirow{8}{*}{KD-Restart} & \multirow{4}{*}{\tabelMoeller} & \multirow{2}{*}{No} & No & 17.9ms & \worstResult{790ms} & \worstResult{592ms} \\
   \cline{4-7}
-  & & & Yes & 6 \\
+  & & & Yes & \worstResult{18.1ms} & 486ms & 287ms \\
   \cline{3-7}
-  & & \multirow{2}{*}{Yes} & No & 6 \\
+  & & \multirow{2}{*}{Yes} & No & 17.2ms & 579ms & 424ms \\
   \cline{4-7}
-  & & & Yes & 6 \\
+  & & & Yes & 17.4ms & \bestResult{355ms} & \bestResult{196ms} \\
   \cline{2-7}
-  & \multirow{4}{*}{Woop} & \multirow{2}{*}{No} & No & 6 \\
+  & \multirow{4}{*}{Woop} & \multirow{2}{*}{No} & No & 15.5ms & 690ms & 549ms \\
   \cline{4-7}
-  & & & Yes & 6 \\
+  & & & Yes & 15.8ms & 500ms & 287ms \\
   \cline{3-7}
-  & & \multirow{2}{*}{Yes} & No & 6 \\
+  & & \multirow{2}{*}{Yes} & No & \bestResult{14.6ms} & 495ms & 342ms \\
   \cline{4-7}
-  & & & Yes & 6 \\
+  & & & Yes & 14.8ms & \bestResult{355ms} & \bestResult{198ms} \\
+  \hline
   \hline
 
   % Short-Stack
-  \multirow{8}{*}{Short-Stack} & \multirow{4}{*}{Moeller} & \multirow{2}{*}{No} & No & 6 \\
+  \multirow{8}{*}{Short-Stack} & \multirow{4}{*}{\tabelMoeller} & \multirow{2}{*}{No} & No & 20.0ms & \worstResult{808ms} & \worstResult{595ms} \\
   \cline{4-7}
-  & & & Yes & 6 \\
+  & & & Yes & \worstResult{20.2ms} & 503ms & 266ms \\
   \cline{3-7}
-  & & \multirow{2}{*}{Yes} & No & 6 \\
+  & & \multirow{2}{*}{Yes} & No & 19.5ms & 590ms & 421ms \\
   \cline{4-7}
-  & & & Yes & 6 \\
+  & & & Yes & 19.8ms & \bestResult{360ms} & \bestResult{167ms} \\
   \cline{2-7}
-  & \multirow{4}{*}{Woop} & \multirow{2}{*}{No} & No & 6 \\
+  & \multirow{4}{*}{Woop} & \multirow{2}{*}{No} & No & 18.5ms & 738ms & 560ms \\
   \cline{4-7}
-  & & & Yes & 6 \\
+  & & & Yes & 18.7ms & 522ms & 270ms \\
   \cline{3-7}
-  & & \multirow{2}{*}{Yes} & No & 6 \\
+  & & \multirow{2}{*}{Yes} & No & \bestResult{17.8ms} & 523ms & 348ms \\
   \cline{4-7}
-  & & & Yes & 6 \\
+  & & & Yes & 18.1ms & 368ms & 171ms \\
   \hline
 \end{tabular}
 \caption[Stuff]{more stuff}
@@ -176,6 +184,9 @@
     & & 8 & \\
     \hline
   \end{tabular}
+  \caption[Lower tree creation results.]{Lower tree creation results. --What is
+    seen and what parameters where used--}
+  \label{fig:lowerResults}
 \end{figure}
 
 % Splitting Schemes:
