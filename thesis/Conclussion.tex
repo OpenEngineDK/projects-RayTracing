@@ -10,15 +10,17 @@
 % calculations in the lower nodes useless.
 
 
+% Test scenes: Cornell, reflecting dragon2 and sponza
+
 \begin{figure}
   \centering
-  \subfloat[The Cornell Box.]{
+  \subfloat[The Cornell Box - 36 Triangles.]{
     \includegraphics[width=0.3\textwidth]{cornellBox}
   }
-  \subfloat[The Reflecting Stanford Dragon.]{
+  \subfloat[The Reflecting Stanford Dragon - 203k Triangles.]{
     \includegraphics[width=0.3\textwidth]{semiReflectingDragon}
   }
-  \subfloat[Sponza.]{
+  \subfloat[Sponza - 279k Triangles.]{
     \includegraphics[width=0.3\textwidth]{sponza}
   }
   \caption[Test scenes.]{The 3 test scenes.}
@@ -30,75 +32,151 @@
 % First establish which ray tracer works the best
 
 \begin{figure}
-\begin{tabular} {r | c | c | c || c || c || c ||}
-  \multicolumn{4}{c||}{ } & \begin{turn}{45}\begin{tabular}{c}Cornell \\Box\end{tabular}\end{turn} & \begin{turn}{45}\begin{tabular}{c}Reflecting \\Dragon\end{tabular}\end{turn} & \begin{turn}{45}Sponza\end{turn}\\
-  \hline
-  \multirow{4}{*}{Exhaustive} & \multirow{2}{*}{Moeller} & No packets & N/A & 6 \\
-  \cline{3-7}
-  & & Packets & N/A & 6 \\
-  \cline{2-7}
-  & \multirow{2}{*}{Woop} & No packets & N/A & 6 \\
-  \cline{3-7}
-  & & Packets & N/A & 6 \\
-  \hline
+  \centering
+  \SetTabelTextSize
+  \begin{tabular} {r | c | c | c || c || c || c ||}
+    \tabelParam{c}{\textit{Ray} \\ \textit{Tracer:}} &
+    \tabelParam{c}{\textit{Ray/triangle}\\\textit{intersection:}} &
+    \tabelParam{c}{\textit{Packets:}} &
+    \tabelParam{c}{\textit{Leaf} \\ \textit{skipping:}} &
+    \tabelScene{Cornell \\Box} & 
+    \tabelScene{Reflecting \\Dragon} & 
+    \tabelScene{Sponza}\\
+      \hline
+      \multirow{4}{*}{Exhaustive} & \multirow{2}{*}{Moeller} & No & N/A & 6 \\
+      \cline{3-7}
+      & & Yes & N/A & 6 \\
+      \cline{2-7}
+      & \multirow{2}{*}{Woop} & No & N/A & 6 \\
+      \cline{3-7}
+      & & Yes & N/A & 6 \\
+      \hline
 
   % KD-Restart
-  \multirow{8}{*}{KD-Restart} & \multirow{4}{*}{Moeller} & \multirow{2}{*}{No packets} & All Leafs & 6 \\
+  \multirow{8}{*}{KD-Restart} & \multirow{4}{*}{Moeller} & \multirow{2}{*}{No} & No & 6 \\
   \cline{4-7}
-  & & & Skip Leafs & 6 \\
+  & & & Yes & 6 \\
   \cline{3-7}
-  & & \multirow{2}{*}{Packets} & All Leafs & 6 \\
+  & & \multirow{2}{*}{Yes} & No & 6 \\
   \cline{4-7}
-  & & & Skip Leafs & 6 \\
+  & & & Yes & 6 \\
   \cline{2-7}
-  & \multirow{4}{*}{Woop} & \multirow{2}{*}{No packets} & All Leafs & 6 \\
+  & \multirow{4}{*}{Woop} & \multirow{2}{*}{No} & No & 6 \\
   \cline{4-7}
-  & & & Skip Leafs & 6 \\
+  & & & Yes & 6 \\
   \cline{3-7}
-  & & \multirow{2}{*}{Packets} & All Leafs & 6 \\
+  & & \multirow{2}{*}{Yes} & No & 6 \\
   \cline{4-7}
-  & & & Skip Leafs & 6 \\
+  & & & Yes & 6 \\
   \hline
 
   % Short-Stack
-  \multirow{8}{*}{Short-Stack} & \multirow{4}{*}{Moeller} & \multirow{2}{*}{No packets} & All Leafs & 6 \\
+  \multirow{8}{*}{Short-Stack} & \multirow{4}{*}{Moeller} & \multirow{2}{*}{No} & No & 6 \\
   \cline{4-7}
-  & & & Skip Leafs & 6 \\
+  & & & Yes & 6 \\
   \cline{3-7}
-  & & \multirow{2}{*}{Packets} & All Leafs & 6 \\
+  & & \multirow{2}{*}{Yes} & No & 6 \\
   \cline{4-7}
-  & & & Skip Leafs & 6 \\
+  & & & Yes & 6 \\
   \cline{2-7}
-  & \multirow{4}{*}{Woop} & \multirow{2}{*}{No packets} & All Leafs & 6 \\
+  & \multirow{4}{*}{Woop} & \multirow{2}{*}{No} & No & 6 \\
   \cline{4-7}
-  & & & Skip Leafs & 6 \\
+  & & & Yes & 6 \\
   \cline{3-7}
-  & & \multirow{2}{*}{Packets} & All Leafs & 6 \\
+  & & \multirow{2}{*}{Yes} & No & 6 \\
   \cline{4-7}
-  & & & Skip Leafs & 6 \\
+  & & & Yes & 6 \\
   \hline
 \end{tabular}
 \caption[Stuff]{more stuff}
 \label{fig:rayTracerEvaluation}
 \end{figure}
 
-%% \begin{tabular}{ r  c  c | c | c | c | c | c | c |}
-%% %  & Cornell Box & Reflecting Dragon & Sponza & Fairy Forest \\
-%%   &&& \multicolumn{6}{|c|}{Reflecting Dragon - 32bit} \\
-%%   \cline{4-9}
-%%   &&& \multicolumn{3}{|c|}{None} & \multicolumn{3}{|c|}{Empty Space} \\
-%%   \cline{4-9}
-%%   &&& Box & Divide & Split & Box & Divide & Split \\
-%%   \hline
-%%   \multirow{4}{*}{kd-Restart} & \multirow{2}{*}{Moeller} & Leaf Skipping & \\
-%%   && All Leafs & \\
-%%   \cline{2-8}
-%%   & \multirow{2}{*}{Woop} & Leaf Skipping & \\
-%%   && All Leafs & \\
-%%   \hline
-%% \end{tabular}
 
-% Test scenes: Cornell, transparent/reflecting dragon2 and sponza
+
+% Upper tree creation parameters
+
+% Not creating lower nodes (using None)
+
+\begin{figure}
+  \centering
+  \SetTabelTextSize
+  \begin{tabular} {c | c | c || c || c || c ||}
+    % Titel bar: Association scheme | empty space maximization | threshold |
+    % Cornell | dragon | sponza
+    \multicolumn{1}{c}{\begin{tabular}{c}\textit{Association} \\ \textit{scheme:}\end{tabular}} &
+    \multicolumn{1}{c}{\begin{tabular}{c}\textit{Empty Space} \\ \textit{Maximization:}\end{tabular}} &
+    \begin{tabular}{c}\textit{Empty Space} \\ \textit{Threshold:}\end{tabular} &
+    \tabelScene{Cornell \\ Box} & 
+    \tabelScene{Reflecting \\ Dragon} &
+    \tabelScene{Sponza}\\
+    \hline % Titel end
+    \multirow{4}{*}{Dividing} & No & N/A & 1-3 (3)\\
+    \cline{2-6}
+    & \multirow{3}{*}{Yes} & 15 & \\
+    \cline{3-6}
+    & & 25 & \\
+    \cline{3-6}
+    & & 35 & \\
+    \hline
+    \multirow{4}{*}{Box Inclusion} & No & N/A & \\
+    \cline{2-6}
+    & \multirow{3}{*}{Yes} & 15 & \\
+    \cline{3-6}
+    & & 25 & \\
+    \cline{3-6}
+    & & 35 & \\
+    \hline
+  \end{tabular}
+  \caption[Upper tree creation results.]{Upper tree creation results. --What is
+    seen and what parameters where used--}
+  \label{fig:upperResults}
+\end{figure}
+
+
+% Lower node creation
+
+\begin{figure}
+  \centering
+  \SetTabelTextSize
+  \begin{tabular}{c |c | c || c || c || c ||}
+    \tabelParam{c}{\textit{Bit Mask:}} &
+    \tabelParam{c}{\textit{Splitting} \\ \textit{Scheme:}} &
+    \tabelParam{c||}{$C_{N}:$} &
+    \tabelScene{Cornell \\ Box} & 
+    \tabelScene{Reflecting \\ Dragon} &
+    \tabelScene{Sponza}\\
+    \hline % Titel end
+    \multirow{7}{*}{32bit} & None & N/A & \\
+    \cline{2-6}
+    & \multirow{3}{*}{SAH} & 24 & \\
+    \cline{3-6}
+    & & 16 & \\
+    \cline{3-6}
+    & & 8 & \\
+    \cline{2-6}
+    & \multirow{3}{*}{SSAH} & 24 & \\
+    \cline{3-6}
+    & & 16 & \\
+    \cline{3-6}
+    & & 8 & \\
+    \hline
+    \multirow{7}{*}{64bit} & None & N/A & \\
+    \cline{2-6}
+    & \multirow{3}{*}{SAH} & 24 & \\
+    \cline{3-6}
+    & & 16 & \\
+    \cline{3-6}
+    & & 8 & \\
+    \cline{2-6}
+    & \multirow{3}{*}{SSAH} & 24 & \\
+    \cline{3-6}
+    & & 16 & \\
+    \cline{3-6}
+    & & 8 & \\
+    \hline
+  \end{tabular}
+\end{figure}
 
 % Splitting Schemes:
 
