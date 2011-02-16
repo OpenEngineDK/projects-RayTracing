@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
     // setup the engine
     Engine* engine = new Engine;
     IEnvironment* env = new SDLEnvironment(SCREEN_WIDTH, SCREEN_HEIGHT, 32);
-    //IEnvironment* env = new SDLEnvironment(1440, 900, 32, FRAME_FULLSCREEN);
+    //IEnvironment* env = new SDLEnvironment(SCREEN_WIDTH, SCREEN_HEIGHT, 32, FRAME_FULLSCREEN);
     engine->InitializeEvent().Attach(*env);
     engine->ProcessEvent().Attach(*env);
     engine->DeinitializeEvent().Attach(*env);
