@@ -1,16 +1,26 @@
-\chapter{Results}\label{chp:results}
-
-\chapterquote{It’s hardware that makes a machine fast. It’s software
-  that makes a fast machine slow.}{Craig Bruce}
-
 % Tabels of nodes and triangled visited. Perhaps some statistics over
 % wasted iterations by threads waiting for other threads in the warp
 % to finish. The high triangle count pr leaf optimization may be
 % related to this and makes using highly optimized splitting plane
 % calculations in the lower nodes useless.
 
+\chapter{Results}\label{chp:results}
 
-% Test scenes: Cornell, reflecting dragon2 and sponza
+\chapterquote{It’s hardware that makes a machine fast. It’s software
+  that makes a fast machine slow.}{Craig Bruce}
+
+% Intro
+
+In this chapter I will compare the construction speed and the quality of the
+different kd-tree construction schemes implemented as part of this thesis.
+
+% Hardware
+
+The implementations have been tested on a dual core Intel Core i7 2.66GHz CPU
+with 4GB RAM. The GPU used is an NVIDIA 330M with CUDA Compute Capability 1.2, 6
+multiprocessors running at 1.1GHz and 512MB RAM. CUDA 3.1 was installed on the
+machine. All tests where performed with a screen resolution of 640x480, which
+equals 307200 primary rays traced into the scene.
 
 \begin{figure}
   \centering
@@ -23,13 +33,50 @@
   \subfloat[Sponza - 279k Triangles.]{
     \includegraphics[width=0.3\textwidth]{sponza}
   }
-  \caption[Test scenes.]{The 3 test scenes.}
+  \caption[Test scenes.]{The 3 test scenes used in this chapter.}
   \label{fig:testScenes}
 \end{figure}
 
-% Evaluate ray tracers
+% Test scenes: Cornell, reflecting dragon2 and sponza
 
-% First establish which ray tracer works the best
+The tests will be conducted on three different test scenes shown in
+\reffig{fig:testScenes}. \textit{The Cornell Box} scene was chosen for its
+simplicity. With only 36 triangles the scene should be very fast to render and
+allows me to compare the performance of the ray tracer implementations on a
+simple scene. The \textit{Sponza} scene was chosen for its complexity. At 279k
+triangles it will test both the quality and the construction speed of the
+kd-tree constructors in large scenes. The last scene tested is \textit{The
+  Reflecting Stanford Dragon} consisting of 203k triangles. The reflecting
+geometry in the scene spawns 189572 reflection rays and is used to test
+the importance of a high quality kd-tree when more rays than just the primary
+are traced.
+
+% Rest of this chapter
+
+In \refsection{sec:evaluateRayTracer} I will evaluate the different ray tracer
+implementations and the impact of the optimizations described in
+\refsection{sec:hierarchicalTraversal}. I have chosen to implement the
+short-stack optimization as a seperat ray tracer, instead of applying it to the
+kd-restart ray tracer. This is merely a design decision and has no impact on the
+actual results presented below. 
+%, except for presenting them more clearly, but how is it clear?
+The overall fastest ray tracer will be used in the following sections to
+evaluate the quality of the kd-trees constructed. In
+\refsection{sec:evaluateUpperTree} I will compare quality and construction speed
+of the different construction schemes for the upper part of the kd-tree. The
+upper tree configuration that performs best, will be used in
+\refsection{sec:evaluateUpperTree}, where the kd-tree's lower parts will be
+constructed using SAH, SSAH and no construction scheme.
+
+\fixme{Dynamic scenes, so best kd-tree is the one with lowest summed
+  construction + ray tracing time.}
+
+\section{Evaluate Ray Tracers}\label{sec:evaluateRayTracer}
+
+\Reffig{fig:rayTracerEvaluation} shows the time it took different ray tracer
+configurations to render each of the three test scenes. The kd-tree
+configuration used to produce kd-trees for the hierarchical ray tracers is
+described in the figure's caption.
 
 \newcommand{\tabelMoeller}{
   \begin{tabular}{c}
@@ -39,17 +86,20 @@
 
 \begin{figure}
   \centering
-  \SetTabelTextSize
-  \begin{tabular} {r | c | c | c || c || c || c ||}
-    \tabelParam{c}{\textit{Ray} \\ \textit{Tracer:}} &
-    \tabelParam{c}{\textit{Ray/triangle}\\\textit{intersection:}} &
-    \tabelParam{c}{\textit{Packets:}} &
-    \tabelParam{c||}{\textit{Leaf} \\ \textit{skipping:}} &
-    \tabelScene{Cornell \\ Box \\ (3)} & 
-    \tabelScene{Reflecting \\ Dragon \\ (49909)} & 
-    \tabelScene{Sponza \\ (98779)}\\
+  \begin{minipage}{\textwidth}
+    \centering
+    \SetTabelTextSize
+    \begin{tabular} {r | c | c | c || c || c || c ||}
+      \tabelParam{c}{\textit{Ray} \\ \textit{Tracer:}} &
+      \tabelParam{c}{\textit{Ray/triangle}\\\textit{intersection:}} &
+      \tabelParam{c}{\textit{Packets:}} &
+      \tabelParam{c||}{\textit{Leaf} \\ \textit{skipping:}} &
+      \tabelScene{Cornell \\ Box \\ 1.0ms (3)} & 
+      \tabelScene{Reflecting \\ Dragon \\ 150ms (49909)} & 
+      \tabelScene{Sponza \\ 263ms (98779)}\\
       \hline
-      \multirow{4}{*}{Exhaustive} & \multirow{2}{*}{\tabelMoeller} & No & N/A & 11.2ms & \worstResult{1118ms} & \worstResult{964ms} \\
+      \multirow{4}{*}{Exhaustive\footnote{The exhaustive ray tracer only ray traces the first 4096 triangles in a scene. Even with this hard upper limit it is clear that an exhaustive approach will not work for detailed scenes.}} & 
+        \multirow{2}{*}{\tabelMoeller} & No & N/A & 11.2ms & \worstResult{1118ms} & \worstResult{964ms} \\
       \cline{3-7}
       & & Yes & N/A & \worstResult{11.6ms} & 1114ms & \worstResult{964ms} \\
       \cline{2-7}
@@ -59,48 +109,95 @@
       \hline
       \hline
 
-  % KD-Restart
-  \multirow{8}{*}{KD-Restart} & \multirow{4}{*}{\tabelMoeller} & \multirow{2}{*}{No} & No & 17.9ms & \worstResult{790ms} & \worstResult{592ms} \\
-  \cline{4-7}
-  & & & Yes & \worstResult{18.1ms} & 486ms & 287ms \\
-  \cline{3-7}
-  & & \multirow{2}{*}{Yes} & No & 17.2ms & 579ms & 424ms \\
-  \cline{4-7}
-  & & & Yes & 17.4ms & \bestResult{355ms} & \bestResult{196ms} \\
-  \cline{2-7}
-  & \multirow{4}{*}{Woop} & \multirow{2}{*}{No} & No & 15.5ms & 690ms & 549ms \\
-  \cline{4-7}
-  & & & Yes & 15.8ms & 500ms & 287ms \\
-  \cline{3-7}
-  & & \multirow{2}{*}{Yes} & No & \bestResult{14.6ms} & 495ms & 342ms \\
-  \cline{4-7}
-  & & & Yes & 14.8ms & \bestResult{355ms} & \bestResult{198ms} \\
-  \hline
-  \hline
-
-  % Short-Stack
-  \multirow{8}{*}{Short-Stack} & \multirow{4}{*}{\tabelMoeller} & \multirow{2}{*}{No} & No & 20.0ms & \worstResult{808ms} & \worstResult{595ms} \\
-  \cline{4-7}
-  & & & Yes & \worstResult{20.2ms} & 503ms & 266ms \\
-  \cline{3-7}
-  & & \multirow{2}{*}{Yes} & No & 19.5ms & 590ms & 421ms \\
-  \cline{4-7}
-  & & & Yes & 19.8ms & \bestResult{360ms} & \bestResult{167ms} \\
-  \cline{2-7}
-  & \multirow{4}{*}{Woop} & \multirow{2}{*}{No} & No & 18.5ms & 738ms & 560ms \\
-  \cline{4-7}
-  & & & Yes & 18.7ms & 522ms & 270ms \\
-  \cline{3-7}
-  & & \multirow{2}{*}{Yes} & No & \bestResult{17.8ms} & 523ms & 348ms \\
-  \cline{4-7}
-  & & & Yes & 18.1ms & 368ms & 171ms \\
-  \hline
-\end{tabular}
-\caption[Stuff]{more stuff}
-\label{fig:rayTracerEvaluation}
+      % KD-Restart
+      \multirow{8}{*}{KD-Restart} & \multirow{4}{*}{\tabelMoeller} & \multirow{2}{*}{No} & No & 17.9ms & \worstResult{790ms} & \worstResult{592ms} \\
+      \cline{4-7}
+      & & & Yes & \worstResult{18.1ms} & 486ms & 287ms \\
+      \cline{3-7}
+      & & \multirow{2}{*}{Yes} & No & 17.2ms & 579ms & 424ms \\
+      \cline{4-7}
+      & & & Yes & 17.4ms & \bestResult{355ms} & \bestResult{196ms} \\
+      \cline{2-7}
+      & \multirow{4}{*}{Woop} & \multirow{2}{*}{No} & No & 15.5ms & 690ms & 549ms \\
+      \cline{4-7}
+      & & & Yes & 15.8ms & 500ms & 287ms \\
+      \cline{3-7}
+      & & \multirow{2}{*}{Yes} & No & \bestResult{14.6ms} & 495ms & 342ms \\
+      \cline{4-7}
+      & & & Yes & 14.8ms & \bestResult{355ms} & \bestResult{198ms} \\
+      \hline
+      \hline
+      
+      % Short-Stack
+      \multirow{8}{*}{Short-Stack} & \multirow{4}{*}{\tabelMoeller} & \multirow{2}{*}{No} & No & 20.0ms & \worstResult{808ms} & \worstResult{595ms} \\
+      \cline{4-7}
+      & & & Yes & \worstResult{20.2ms} & 503ms & 266ms \\
+      \cline{3-7}
+      & & \multirow{2}{*}{Yes} & No & 19.5ms & 590ms & 421ms \\
+      \cline{4-7}
+      & & & Yes & 19.8ms & \bestResult{360ms} & \bestResult{167ms} \\
+      \cline{2-7}
+      & \multirow{4}{*}{Woop} & \multirow{2}{*}{No} & No & 18.5ms & 738ms & 560ms \\
+      \cline{4-7}
+      & & & Yes & 18.7ms & 522ms & 270ms \\
+      \cline{3-7}
+      & & \multirow{2}{*}{Yes} & No & \bestResult{17.8ms} & 523ms & 348ms \\
+      \cline{4-7}
+      & & & Yes & 18.1ms & 368ms & 171ms \\
+      \hline
+    \end{tabular}\par
+    \vspace{-0.75\skip\footins}
+    \renewcommand{\footnoterule}{}
+  \end{minipage}
+  \caption[Ray tracing results.]{The table shows the time it took different ray
+    tracer configurations to render each of the three test scenes.  The bold
+    faced render times performed the best for a given ray tracer and scene. The
+    ones in red performed the worst. The kd-trees for the scenes where
+    constructed with empty space maximization enabled and a threshold of 25\%,
+    the triangle/node association scheme employed is dividing. The threshold for
+    the lower tree was 32, but no lower tree was constructed. The size of the
+    kd-tree is reported in parenthesis below the name of the scene. The size of
+    the short stack is 4 elements, which has been found to perform well in
+    practice.}
+  \label{fig:rayTracerEvaluation}
 \end{figure}
 
+% Evaluate the ray tracers for the individual scenes
 
+\Reffig{fig:rayTracerEvaluation} shows that The exhaustive ray tracer generelly
+performs worst of all the ray tracers. This was to be expected, since the
+exhaustive ray tracers time complexity is $O(nm)$ and the hierarchical ray
+tracers' are $O(n \log m)$, for $n$ rays and $m$ triangles. As expected Woop's
+simpler Triangle/Ray intersection performs better than Moeller-Trumbore's in all
+cases. The screen space packet optimization has also been applied to the
+exhaustive ray tracer, but generelly causes a small overhead instead of a
+performance improvement. This was to be expected, since all rays intersect the
+triangles in the same order, and therefore it does not matter which rays are
+traced together. In the Reflecting Dragon scene we see a small speed increase
+when using packets. This may be the result of fewer warps tracing reflection
+rays, but can also be caused by an acceptable deviation in timing precision.
+
+In the Cornell Box scene, the kd-restart implementation performed worse than the
+exhaustive ray tracer, even without taking the kd-tree construction time into
+account.
+
+%% For a simple scene, such as the Cornell Box with 3 nodes, the exhaustive ray
+%% tracer outperformed both the kd-restart ray tracer and short-stack
+%% implementation, even without accounting for the time it took to construct the
+%% kd-tree. This is not entirely unexpected, since the exhaustive ray tracer only
+%% needs to intersect every ray with 36 triangles, where the hierarchical ray
+%% tracers need to first traverse the root node before they can begin ray/triangle
+%% intersection in leafs that can reference up to 32 triangles. The short-stack ray
+%% tracer performs even worse than kd-restart, since it not only has to traverse
+%% the tree, but also maintain its internal stack, which is of little use in such a
+%% short kd-tree.
+
+
+% Overall best ray tracer, which shall be used further on.
+
+
+
+\section{Evaluate Upper Tree Creation}\label{sec:evaluateUpperTree}
 
 % Upper tree creation parameters
 
@@ -118,21 +215,21 @@
     \tabelScene{Reflecting \\ Dragon} &
     \tabelScene{Sponza}\\
     \hline % Titel end
-    \multirow{4}{*}{Dividing} & No & N/A & \worstResult{146+385ms (38k)} & \worstResult{258-220ms (87k)}\\
+    \multirow{4}{*}{Dividing} & No & N/A & \worstResult{146/385ms (38k)} & \worstResult{258/220ms (87k)}\\
     \cline{2-5}
-    & \multirow{3}{*}{Yes} & 15\% & 150+376ms (56k) & 263-167ms (104k) \\
+    & \multirow{3}{*}{Yes} & 15\% & 150/376ms (56k) & 263/167ms (104k) \\
     \cline{3-5}
-    & & 25\% & 150+355ms (50k) & 263-167ms (99k)\\
+    & & 25\% & 150/355ms (50k) & 263/167ms (99k)\\
     \cline{3-5}
-    & & 35\% & 150+357ms (45k) & 263-167ms (95k)\\
+    & & 35\% & 150/357ms (45k) & 263/167ms (95k)\\
     \hline
-    \multirow{4}{*}{Box Inclusion} & No & N/A & 116+397ms (41k) & 213-241ms (112k) \\
+    \multirow{4}{*}{Box Inclusion} & No & N/A & 116/397ms (41k) & 213/241ms (112k) \\
     \cline{2-5}
-    & \multirow{3}{*}{Yes} & 15\% & 121+386ms (59k) & 219-182ms (130k) \\
+    & \multirow{3}{*}{Yes} & 15\% & 121/386ms (59k) & 219/182ms (130k) \\
     \cline{3-5}
-    & & 25\% & 121+373ms (53k) & 219-182ms (125k)\\
+    & & 25\% & 121/373ms (53k) & 219/182ms (125k)\\
     \cline{3-5}
-    & & 35\% & \bestResult{121+366ms (48k)} & \bestResult{219-180ms (120k)}\\
+    & & 35\% & \bestResult{121/366ms (48k)} & \bestResult{219/180ms (120k)}\\
     \hline
   \end{tabular}
   \caption[Upper tree creation results.]{Upper tree creation results. --What is
@@ -140,6 +237,8 @@
   \label{fig:upperResults}
 \end{figure}
 
+
+\section{Evaluate Lower Tree Creation}\label{sec:evaluateLowerTree}
 
 % Lower node creation
 

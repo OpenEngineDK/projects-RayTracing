@@ -11,7 +11,9 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning,shadows,arrows}
 
-\usepackage{wrapfig}
+\usepackage{caption}
+\captionsetup{labelfont=bf, font=small}
+
 \usepackage[final,plainpages=false]{hyperref}
 \hypersetup{pdfborder=0 0 0} % Go away you ugly boxes!
 
@@ -20,9 +22,6 @@
 \usepackage{verbatim}
 \usepackage{multirow}
 \usepackage{rotating}
-%\usepackage{subfig}
-%\usepackage{slashbox}
-%\usepackage{color}
 \usepackage{listings}
 \usepackage{listing}
 \usepackage{algorithm}
@@ -30,6 +29,10 @@
 \usepackage[numbers]{natbib}
 
 %\citestyle{chicago} % Chicago Manual of Style citations
+
+\newcommand{\lookOfDisapproval}{
+  \ensuremath{\overset{-\mkern-11mu-\mkern-3.5mu\rhook}{\smash{\odot}\rule{0ex}{.46ex}}\underline{\hspace{0.5em}}\overset{-\mkern-11mu-\mkern-3.5mu\rhook}{\smash{\odot}\rule{0ex}{.46ex}}}
+}
 
 %\renewcommand{\danishhyphenmins}{22} % fuck lorte orddeling!
 \usepackage[\documentstate]{ifdraft}
@@ -42,11 +45,6 @@
 \setcounter{tocdepth}{3}
 
 %% default lst options
-
-%% Special environments
-
-\newenvironment{shcode}%
-{\verbatim}{\endverbatim}
 
 % use a TT font with bold 
 \renewcommand{\ttdefault}{pcr}
@@ -62,7 +60,6 @@
 
 \lstnewenvironment{pythoncode}{\lstset{language=Python}}{}
 \lstnewenvironment{cppcode}{\lstset{language=C++}}{}
-% \lstnewenvironment{shcode}{\lstset{language=sh}}{}
 
 %% Some commands
 \newcommand{\todo}[1]{\textcolor{red}{#1}\fixme{#1}}

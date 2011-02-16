@@ -5,20 +5,19 @@
 
 \fixme{Conclusion must mirror the goals in chp 1! Do it!}
 
+In this thesis I have presented several different algorithms for constructing
+kd-trees.
+
 \chapter{Future Work}\label{chp:future}
 
 \chapterquote{Software is like entropy: It is difficult to grasp,
   weighs nothing, and obeys the Second Law of Thermodynamics; i.e., it
   always increases.}{Norman Augustine}
 
+Optimize triangle divide by excluding uninteresting test cases.
+
+Optimize SAH/SSAH
+
 KD/BVH combination trees: still only carry information for one
 dimension, but also provide near and far planes, useful for estimating
 the advancement of the ray's $t_{min}$.
-
-Look at stackless raytracers with ropes.
-
-Aila et al.\citebook{Aila2009} has looked at persistent threads to
-accelerate raytracing. This could be utilized to accelerate the SAH
-calculations of individial nodes.
-
-Optimize triangle divide by excluding uninteresting test cases.
