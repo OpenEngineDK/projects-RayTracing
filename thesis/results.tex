@@ -152,12 +152,12 @@ described in the figure's caption.
   \caption[Ray tracing results.]{The table shows the time it took different ray
     tracer configurations to render each of the three test scenes.  The bold
     faced render times performed the best for a given ray tracer and scene. The
-    ones in red performed the worst. The kd-trees for the scenes where
+    ones in red performed the worst. The kd-trees for the scenes were
     constructed with empty space maximization enabled and a threshold of 25\%,
-    the triangle/node association scheme employed is dividing. The threshold for
+    the triangle/node association scheme employed was dividing. The threshold for
     the lower tree was 32, but no lower tree was constructed. The size of the
     kd-tree is reported in parenthesis below the name of the scene. The size of
-    the short stack is 4 elements, which has been found to perform well in
+    the short stack was 4 elements, which has been found to perform well in
     practice.}
   \label{fig:rayTracerEvaluation}
 \end{figure}
@@ -179,22 +179,31 @@ rays, but can also be caused by an acceptable deviation in timing precision.
 
 In the Cornell Box scene, the kd-restart implementation performed worse than the
 exhaustive ray tracer, even without taking the kd-tree construction time into
-account.
+account. This is not entirely unexpected, since the exhaustive ray tracer only
+needs to intersect every ray with 36 triangles, where the kd-restart
+implementation needs to first traverse the root node, before it can begin
+ray/triangle intersection in leafs that can reference up to 32 triangles. In the
+more complex scenes, kd-restart outperformed exhaustive ray tracing by a wide
+margin. Unsurprisingly the configuration consisting of Moeller-Trumbore
+intersection, no packets and no leaf skipping performed the worst. It was a bit
+more surprising to see that with packets and leaf skipping enabled, it did not
+matter much if Moeller-Trumbore's or Woop's intersection method was
+used. However, this makes sense since the rays in the same warp are spatially
+close and are therefore able to skip most of the leaf nodes they visit, and thus
+a lot of intersection computations, before reaching their intersection point.
 
-%% For a simple scene, such as the Cornell Box with 3 nodes, the exhaustive ray
-%% tracer outperformed both the kd-restart ray tracer and short-stack
-%% implementation, even without accounting for the time it took to construct the
-%% kd-tree. This is not entirely unexpected, since the exhaustive ray tracer only
-%% needs to intersect every ray with 36 triangles, where the hierarchical ray
-%% tracers need to first traverse the root node before they can begin ray/triangle
-%% intersection in leafs that can reference up to 32 triangles. The short-stack ray
-%% tracer performs even worse than kd-restart, since it not only has to traverse
-%% the tree, but also maintain its internal stack, which is of little use in such a
-%% short kd-tree.
+The short-stack implementation performed very similar to kd-restart. In the
+simple Cornell Box scene it performed slightly worse, due to the overhead of
+maintaining a stack. In the Reflecting Dragon scene, it performed roughly
+similar to kd-restart and in the Sponza scene it outperformed both the
+exhaustive ray tracer, kd-restart and was about 70\% faster than the an
+unoptimized kd-restart implementation.
 
-
-% Overall best ray tracer, which shall be used further on.
-
+Overall the short-stack implementation performed the best. While it may have
+been outperformed in the Cornell Box, it was by far the best ray tracer in the
+complex Sponza scene. I will therefore use the short-stack implementation, with
+Moeller-Trumber intersection, packets and leaf skipping enabled, to evaluate the
+quality of kd-trees in the following sections.
 
 
 \section{Evaluate Upper Tree Creation}\label{sec:evaluateUpperTree}
@@ -232,8 +241,13 @@ account.
     & & 35\% & \bestResult{121/366ms (48k)} & \bestResult{219/180ms (120k)}\\
     \hline
   \end{tabular}
-  \caption[Upper tree creation results.]{Upper tree creation results. --What is
-    seen and what parameters where used--}
+  \caption[Upper tree creation results.]{The entries in the table shows the time
+    it took to create the kd-tree in miliseconds, the time it took to render the
+    scene and the number of nodes in the kd-tree is the number in
+    parenthesis. The scene was ray traced using the short stack configuration
+    that performed best above. To keep the lower tree construction phase from
+    having as little influence on teh results as possible, no lower tree will be
+    constructed and lower tree threshold has been set to 32.}
   \label{fig:upperResults}
 \end{figure}
 
