@@ -109,31 +109,30 @@
 \begin{figure}
   \centering
   \SetTabelTextSize
-  \begin{tabular} {c | c | c || c || c || c ||}
+  \begin{tabular} {c | c | c || c || c ||}
     % Titel bar: Association scheme | empty space maximization | threshold |
     % Cornell | dragon | sponza
     \multicolumn{1}{c}{\begin{tabular}{c}\textit{Association} \\ \textit{scheme:}\end{tabular}} &
     \multicolumn{1}{c}{\begin{tabular}{c}\textit{Empty Space} \\ \textit{Maximization:}\end{tabular}} &
-    \begin{tabular}{c}\textit{Empty Space} \\ \textit{Threshold:}\end{tabular} &
-    \tabelScene{Cornell \\ Box} & 
+    \begin{tabular}{c}\textit{Empty}\\\textit{Space} \\ \textit{Threshold:}\end{tabular} &
     \tabelScene{Reflecting \\ Dragon} &
     \tabelScene{Sponza}\\
     \hline % Titel end
-    \multirow{4}{*}{Dividing} & No & N/A & & \worstResult{146+385ms (38k)} & \worstResult{258-220ms (87k)}\\
-    \cline{2-6}
-    & \multirow{3}{*}{Yes} & 15\% & & 150+376ms (56k) & 263-167ms (104k) \\
-    \cline{3-6}
-    & & 25\% & & 150+355ms (50k) & 263-167ms (99k)\\
-    \cline{3-6}
-    & & 35\% & & 150+357ms (45k) & 263-167ms (95k)\\
+    \multirow{4}{*}{Dividing} & No & N/A & \worstResult{146+385ms (38k)} & \worstResult{258-220ms (87k)}\\
+    \cline{2-5}
+    & \multirow{3}{*}{Yes} & 15\% & 150+376ms (56k) & 263-167ms (104k) \\
+    \cline{3-5}
+    & & 25\% & 150+355ms (50k) & 263-167ms (99k)\\
+    \cline{3-5}
+    & & 35\% & 150+357ms (45k) & 263-167ms (95k)\\
     \hline
-    \multirow{4}{*}{Box Inclusion} & No & N/A & & 116+397ms (41k) & 213-241ms (112k) \\
-    \cline{2-6}
-    & \multirow{3}{*}{Yes} & 15\% & & 121+386ms (59k) & 219-182ms (130k) \\
-    \cline{3-6}
-    & & 25\% & & 121+373ms (53k) & 219-182ms (125k)\\
-    \cline{3-6}
-    & & 35\% & & \bestResult{121+366ms (48k)} & \bestResult{219-180ms (120k)}\\
+    \multirow{4}{*}{Box Inclusion} & No & N/A & 116+397ms (41k) & 213-241ms (112k) \\
+    \cline{2-5}
+    & \multirow{3}{*}{Yes} & 15\% & 121+386ms (59k) & 219-182ms (130k) \\
+    \cline{3-5}
+    & & 25\% & 121+373ms (53k) & 219-182ms (125k)\\
+    \cline{3-5}
+    & & 35\% & \bestResult{121+366ms (48k)} & \bestResult{219-180ms (120k)}\\
     \hline
   \end{tabular}
   \caption[Upper tree creation results.]{Upper tree creation results. --What is
@@ -147,49 +146,40 @@
 \begin{figure}
   \centering
   \SetTabelTextSize
-  \begin{tabular}{c |c | c || c || c || c ||}
+  \begin{tabular}{c |c | c || c || c ||}
     \tabelParam{c}{\textit{Bit Mask:}} &
     \tabelParam{c}{\textit{Splitting} \\ \textit{Scheme:}} &
     \tabelParam{c||}{$C_{N}:$} &
-    \tabelScene{Cornell \\ Box} & 
     \tabelScene{Reflecting \\ Dragon} &
     \tabelScene{Sponza}\\
     \hline % Titel end
-    \multirow{7}{*}{32bit} & None & N/A & \\
-    \cline{2-6}
-    & \multirow{3}{*}{SAH} & 24 & \\
-    \cline{3-6}
-    & & 16 & \\
-    \cline{3-6}
-    & & 8 & \\
-    \cline{2-6}
-    & \multirow{3}{*}{SSAH} & 24 & \\
-    \cline{3-6}
-    & & 16 & \\
-    \cline{3-6}
-    & & 8 & \\
-    \hline
-    \multirow{11}{*}{64bit} & None & N/A & \\
-    \cline{2-6}
-    & \multirow{5}{*}{SAH} & 40 & \\
-    \cline{3-6}
-    & & 32 & \\
-    \cline{3-6}
-    & & 24 & \\
-    \cline{3-6}
-    & & 16 & \\
-    \cline{3-6}
-    & & 8 & \\
-    \cline{2-6}
-    & \multirow{5}{*}{SSAH} & 40 & \\
-    \cline{3-6}
-    & & 32 & \\
-    \cline{3-6}
-    & & 24 & \\
-    \cline{3-6}
-    & & 16 & \\
-    \cline{3-6}
-    & & 8 & \\
+    \multirow{7}{*}{32bit} & None & N/A & \bestResult{121/357ms (48.1k)} & \bestResult{219/179ms (120k)}\\
+    \cline{2-5}
+    & \multirow{3}{*}{SAH} & 24 & 273/358ms (48.2k) & 616/180ms (121k)\\
+    \cline{3-5}
+    & & 16 & 273/359ms (48.3k) & 648/180ms (129k)\\
+    \cline{3-5}
+    & & 8 & \worstResult{280/358ms (50k)} & \worstResult{775/181ms (167k)}\\
+    \cline{2-5}
+    & \multirow{3}{*}{SSAH} & 24 & 159/382ms (126k) & 305/201ms (287k)\\
+    \cline{3-5}
+    & & 16 & 162/393ms (143k) & 309/207ms (313k)\\
+    \cline{3-5}
+    & & 8 & 165/401ms (168k) & 318/227ms (394k)\\
+    \hline \hline
+    \multirow{7}{*}{64bit} & None & N/A & \bestResult{98/464ms (19k)} & \bestResult{160/193ms (38k)}\\
+    \cline{2-5}
+    & \multirow{3}{*}{SAH} & 40 & 1113/462ms (20k) & 2393/194ms (41k)\\
+    \cline{3-5}
+    & & 32 & 1113/463ms (20) & 2530/193ms (43k)\\
+    \cline{3-5}
+    & & 24 & \worstResult{1126/467ms (20)} & \worstResult{2816/190ms (48k)}\\
+    \cline{2-5}
+    & \multirow{3}{*}{SSAH} & 40 & 326/416ms (92k) & 609/200ms (162k)\\
+    \cline{3-5}
+    & & 32 & 328/423ms (102k) & 613/204ms (177k) \\
+    \cline{3-5}
+    & & 24 & 331/426ms (110k) & 616/206ms (191k)\\
     \hline
   \end{tabular}
   \caption[Lower tree creation results.]{Lower tree creation results. --What is
