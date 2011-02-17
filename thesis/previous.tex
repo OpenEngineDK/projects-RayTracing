@@ -11,10 +11,13 @@
 %% something like ”In contrast to method X, my method...”, or ”The main
 %% difference between my work and X is...”.
 
-\chapter{Previous Work}
+\section{Previous Work}
 
 \chapterquote{If you want to make an apple pie from scratch, you must
   first create the universe.}{Carl Sagan}
+
+\fixme{Remove the quote since previous work is only a section now? But I really
+  like this Carl Sagan quote :)}
 
 % Early ray tracing
 
@@ -88,26 +91,24 @@ and thus not partition it effectively.
 
 % Traversing the tree and doing it fast
 
-With the addition of branching and looping on graphics hardware,
-several GPU based hierarchical ray tracers where proposed. A known
-optimization to CPU based hierarchical ray tracers is to use a stack
-of neighbouring nodes that the ray could possibly traverse. This is
-used as a means to prevent restarting ray tracing from the root of the
-acceleration tree, if a ray does not intersect any primitives in a
-leaf. Low amounts of available memory per thread on the graphics card
-made this optimization technique infeasable for GPU solutions. Instead
-Popov et al.\citebook{popov:07:GPURT} in 2007 introduced a stackless
-ray tracer rivalling CPU ray tracers in speed, which preprocessed the
-kd-tree and added neighbour pointers to each node. Concurrently Horn
-et al.\citebook{1230129} proposed a different but equally effective
-solution. Instead of storing the entire stack of possible neighbouring
-nodes, a \textit{short-stack} of only the $N$ lowest possible nodes
-was stored in memory. Horn et al. also introduced an optimization
-called \textit{push-down}, where each ray did not restart at the root
-of the tree, but instead at the root of the smallest subtree enclosing
-the ray. Finally they showed how to this could be implemented together
-with \textit{packet tracing}, where several rays are traced in packets
-to amortize the cost of traversing the tree.
+With the addition of branching and looping on graphics hardware, several GPU
+based hierarchical ray tracers where proposed. A known optimization to CPU based
+hierarchical ray tracers is to use a stack of neighbouring nodes that the ray
+could possibly traverse. This is used as a means to prevent restarting ray
+tracing from the root of the acceleration tree, if a ray does not intersect any
+primitives in a leaf. Small amounts of available memory per thread on the
+graphics card made this optimization technique infeasable for GPU
+solutions. Instead Popov et al.\citebook{popov:07:GPURT} in 2007 introduced a
+stackless ray tracer rivalling CPU ray tracers in speed, which preprocessed the
+kd-tree and added neighbour pointers to each node. Concurrently Horn et
+al.\citebook{1230129} proposed a different but equally effective
+solution. Instead of storing the entire stack of possible neighbouring nodes, a
+\textit{short-stack} of only the $N$ lowest possible nodes was stored in
+memory. Horn et al. also introduced an optimization called \textit{push-down},
+where each ray did not restart at the root of the tree, but instead at the root
+of the smallest subtree enclosing the ray. Finally they showed how to this could
+be implemented together with \textit{packet tracing}, where several rays are
+traced in packets to amortize the cost of traversing the tree.
 
 %% \fixme{Remove in-depth comparisons to Horn and Zhou}
 

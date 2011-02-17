@@ -13,44 +13,31 @@
 \begin{minipage}{0.7\textwidth}
 \section*{Abstract}
 
-This thesis is aimed at raytracing dynamic scenes and doing that efficiently
-while harnesing the massive power of todays graphics cards. It is motivated by
-the ever increasing interest in raytracing and global illumination for creating
+This thesis is aimed at ray tracing dynamic scenes and doing that efficiently
+while harnesing the massive power of today's graphics cards. It is motivated by
+the ever increasing interest in ray tracing and global illumination for creating
 effects in movies, but also the increased usage of 2D and 3D ray tracing in
 modern computer games.
 
-The thesis explores different techniques for creating hierarchical ray tracing
+This thesis explores different techniques for creating hierarchical ray tracing
 acceleration structures, specifically the binary kd-trees, and how to create
 these efficiently on graphics hardware.
 
-\fixme{Quality is defined as ray tracing speed}
+While previous work with kd-trees has focused on creating high quality
+acceleration structures, the goal of this thesis is to explore the relationship
+between construction speed and tree quality. I will focus on dynamic scenes,
+where the kd-tree must be rebuild before each frame, and investigate if the
+overall time to ray trace a scene can be increased by producing acceleration
+structures much faster, but at a lower quality.
 
-While previous work with kd-trees has focused on creating optimal acceleration
-structures, the goal of this thesis is to explorer the tradeoffs between
-spending time producing structures of high quality or more quickly produce a
-lower quality acceleration structure. This tradeoff can be very important in
-dynamic scenes, where the acceleration structure may have to be rebuild for
-every frame.
-
-As part of the thesis an optimized ray tracer will be developed to evaluate the
-quality of the kd-trees produced and to estimate if there is a potential
-performance gain to be had by quickly producing kd-trees of lower quality.
+The quality of a kd-tree will be defined by how fast it can be used to ray trace
+a scene. An optimized ray tracer will therefore be developed as part of the
+thesis to evaluate the quality of the kd-trees produced. The total time spent
+construction and ray tracing the kd-tree will be used to estimate if there is a
+potential performance gain to be had by quickly producing kd-trees of lower
+quality.
 
 \end{minipage}
 \end{center}
-
-% Show that to achive raytracing of dynamic scenes, focus should not
-% be on creating 'optimal' trees, but instead on creating good trees
-% fast.
-
-
-
-
-
-
-% Efficiently create KD trees on the GPU and ray trace them.
-
-% KDtree focus will be on optimizations and the tradeoff between
-% spending extra time on the kd-tree instead of ray tracing.
 
 

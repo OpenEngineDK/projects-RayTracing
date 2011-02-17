@@ -177,9 +177,8 @@ node it can be seen that the plane splits along the x-axis at position
   \label{fig:kdIteration}
 \end{figure}
 
-%% Hurtig beskrivelse af ray tracing af kd-træer. Det gælder om at
-%% finde den nærmeste leaf node.
-
+\fixme{Hurtig beskrivelse af ray tracing af kd-træer. Det gælder om at finde den
+  nærmeste leaf node. Er det gjort et andet sted? Og definer rays!}
 
 
 \subsection{Tree Representation}
@@ -623,7 +622,7 @@ when a bounding box is more than 25\% empty along one of its axes.
 % Dynamic empty space threshold, favor early out in the top of the tree.
 
 % huge ray tracing performance improvement in testscene (23% without
-% raytracers doing intersection tests at leaf nodes)
+% ray tracers doing intersection tests at leaf nodes)
 
 % Implementation is 
 
@@ -874,14 +873,14 @@ association, cutting down on the time spend constructing the tree.
 % some extra overhead. Or combine with Divide every n'th step for
 % optimal sweetness.
 
-% With the added leaf intersection in the raytracer, extra triangles
+% With the added leaf intersection in the ray tracer, extra triangles
 % in the leaf nodes become even less important and this method starts
 % to shine for dynamic scenes.
 
 
 
 
-\section{Adopting the Algorithms for CUDA}
+\section{Adopting the Algorithms for CUDA}\label{sec:kdTreeImpl}
 
 % Needs to exploit the dataparallel nature of GPU's A GPU needs as
 % many of its multiprocessors occupied as possibly for optimal
