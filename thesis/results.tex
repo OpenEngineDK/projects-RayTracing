@@ -164,12 +164,12 @@ described in the figure's caption.
 
 % Evaluate the ray tracers for the individual scenes
 
-\Reffig{fig:rayTracerEvaluation} shows that The exhaustive ray tracer generelly
-performs worst of all the ray tracers. This was to be expected, since the
-exhaustive ray tracers time complexity is $O(nm)$ and the hierarchical ray
-tracers' are $O(n \log m)$, for $n$ rays and $m$ triangles. As expected Woop's
-simpler Triangle/Ray intersection performs better than Moeller-Trumbore's in all
-cases. The screen space packet optimization has also been applied to the
+From \reffig{fig:rayTracerEvaluation} it can be seen that the exhaustive ray
+tracer generelly performs worst of all the ray tracers. This was to be expected,
+since the exhaustive ray tracers time complexity is $O(nm)$ and the hierarchical
+ray tracers' are $O(n \log m)$, for $n$ rays and $m$ triangles. As expected
+Woop's simpler Triangle/Ray intersection performs better than Moeller-Trumbore's
+in all cases. The screen space packet optimization has also been applied to the
 exhaustive ray tracer, but generelly causes a small overhead instead of a
 performance improvement. This was to be expected, since all rays intersect the
 triangles in the same order, and therefore it does not matter which rays are
@@ -208,9 +208,15 @@ quality of kd-trees in the following sections.
 
 \section{Evaluate Upper Tree Creation}\label{sec:evaluateUpperTree}
 
-% Upper tree creation parameters
+Since the Cornell Box scene contains so few triangles and only shows that the
+exhaustive ray tracer is fastest for extremely simple scenes, I will not use it
+to evaluate the kd-tree constructor configurations. Instead I will only use the
+Reflecting Dragon and Sponza scenes.
 
-% Not creating lower nodes (using None)
+The results from creating the upper parts of the kd-tree with different
+configurations can be seen in \reffig{fig:upperResults}. The entries in the
+table shows kd-tree construction time, time used to render the scene and in
+parenthesis the amount of nodes in the final tree can be seen.
 
 \begin{figure}
   \centering
@@ -228,11 +234,11 @@ quality of kd-trees in the following sections.
     \cline{2-5}
     & \multirow{3}{*}{Yes} & 15\% & 150/376ms (56k) & 263/167ms (104k) \\
     \cline{3-5}
-    & & 25\% & 150/355ms (50k) & 263/167ms (99k)\\
+    & & 25\% & \bestResult{150/355ms} (50k) & \bestResult{263/167ms (99k)}\\
     \cline{3-5}
-    & & 35\% & 150/357ms (45k) & 263/167ms (95k)\\
-    \hline
-    \multirow{4}{*}{Box Inclusion} & No & N/A & 116/397ms (41k) & 213/241ms (112k) \\
+    & & 35\% & 150/357ms (45k) & \bestResult{263/167ms (95k)}\\
+    \hline\hline
+    \multirow{4}{*}{Box Inclusion} & No & N/A & \worstResult{116/397ms (41k)} & \worstResult{213/241ms (112k)} \\
     \cline{2-5}
     & \multirow{3}{*}{Yes} & 15\% & 121/386ms (59k) & 219/182ms (130k) \\
     \cline{3-5}
@@ -242,15 +248,42 @@ quality of kd-trees in the following sections.
     \hline
   \end{tabular}
   \caption[Upper tree creation results.]{The entries in the table shows the time
-    it took to create the kd-tree in miliseconds, the time it took to render the
-    scene and the number of nodes in the kd-tree is the number in
+    it took to create the kd-tree in milliseconds, the time it took to render
+    the scene and the number of nodes in the kd-tree is the number in
     parenthesis. The scene was ray traced using the short stack configuration
     that performed best above. To keep the lower tree construction phase from
-    having as little influence on teh results as possible, no lower tree will be
-    constructed and lower tree threshold has been set to 32.}
+    having as little influence on the results as possible, no lower tree will be
+    constructed and lower tree threshold has been set to 32. As in
+    \reffig{fig:rayTracerEvaluation} the boldfaced text denotes the fastest
+    configuration and red the slowest.}
   \label{fig:upperResults}
 \end{figure}
 
+From the results it is clear that using the Dividing triangle/node association
+scheme produces trees of trees of highest quality. In the Reflecting Dragon
+scene, trees build with Dividing are generelly ray traced 10ms, or 2.5\%, faster
+and contain 3k fewer nodes than their Box Inclusion counterparts. In the Sponza
+scene the difference is even more noticeable at up to 8.7\%. Unfortunatly
+producing kd-trees using the Dividing scheme is a lot slower than using Box
+Inclusion. In the above scenes this means that while Dividing produces the
+highest quality trees, Box Inclusion makes up for its slower ray tracing results
+by producing trees up to 19\% faster.
+
+As can be seen on the table, enabling empty space maximization adds 4-6ms to the
+kd-tree construction time and a few thousand extra nodes to the tree. Enabling
+it also increase the tree quality though and ray tracing improvements lie in the
+range of 8\% for the Reflecting Dragon and 24\% in Sponza's great hall. The
+substantial increase in Sponza is a direct consequence of all the empty space in
+the middle of the scene that the rays have to traverse. As for setting the empty
+space threshold, 35\% seems to be marginally better than 25\%. They achieve
+roughly the same tree quality, but with a 35\% empty space threshold the tree
+becomes 4-10\% smaller than a tree with a 25\% threshold. The tree will thus
+take up less memory, which can become important on GPU's where memory is
+limited.
+
+Overall configuring the tree constructor to use Box Inclusion and empty space
+maximization with a 35\% threshold yielded the best tradeoff between
+construction speed and ray tracing time.
 
 \section{Evaluate Lower Tree Creation}\label{sec:evaluateLowerTree}
 
