@@ -247,7 +247,7 @@ parenthesis the amount of nodes in the final tree can be seen.
     & & 35\% & \bestResult{121/366ms (48k)} & \bestResult{219/180ms (120k)}\\
     \hline
   \end{tabular}
-  \caption[Upper tree creation results.]{The entries in the table shows the time
+  \caption[Upper tree creation results.]{The entries in the table show the time
     it took to create the kd-tree in milliseconds, the time it took to render
     the scene and the number of nodes in the kd-tree is the number in
     parenthesis. The scene was ray traced using the short stack configuration
@@ -317,9 +317,9 @@ construction speed and ray tracing time.
     \cline{2-5}
     & \multirow{3}{*}{SAH} & 40 & 1113/462ms (20k) & 2393/194ms (41k)\\
     \cline{3-5}
-    & & 32 & 1113/463ms (20) & 2530/193ms (43k)\\
+    & & 32 & 1113/463ms (20k) & 2530/193ms (43k)\\
     \cline{3-5}
-    & & 24 & \worstResult{1126/467ms (20)} & \worstResult{2816/190ms (48k)}\\
+    & & 24 & \worstResult{1126/467ms (20k)} & \worstResult{2816/190ms (48k)}\\
     \cline{2-5}
     & \multirow{3}{*}{SSAH} & 40 & 326/416ms (92k) & 609/200ms (162k)\\
     \cline{3-5}
@@ -328,10 +328,61 @@ construction speed and ray tracing time.
     & & 24 & 331/426ms (110k) & 616/206ms (191k)\\
     \hline
   \end{tabular}
-  \caption[Lower tree creation results.]{Lower tree creation results. --What is
-    seen and what parameters where used--}
+  \caption[Lower tree creation results.]{Like in \reffig{fig:upperResults}, the
+    entries in the table show the time it took to create the entire kd-tree in
+    milliseconds, the time it took to render the scene and the number in
+    parenthesis is the number of nodes in the kd-tree. To create the upper part
+    of the tree the best configuration from \refsection{sec:evaluateUpperTree}
+    was used and the overall best ray tracer from
+    \refsection{sec:evaluateRayTracer} was used to evaluate teh quality of the
+    tree. As in \reffig{fig:rayTracerEvaluation} the boldfaced text denotes the
+    fastest configuration and red the slowest.}
   \label{fig:lowerResults}
 \end{figure}
+
+For the lower tree creation phase, using a bit mask of size 32 generelly
+performs better than one of size 64. One of the reasons for this is the added
+register usage from having larger bit masks. In the case of the ray tracers it
+means storing an extra 32bit of information per thread, which results in more
+register spilling. The real performance hit however comes when creating the
+lower tree. The reason for this is that the register usage of the kernels
+implementing \refalg{alg:calcSplittingPlanes}, \refalg{alg:calcSAHCost} and
+\refalg{alg:calcBalancedCost} increase drastically when switching to 64bit bit
+masks. An example is \refalg{alg:calcSplittingPlanes} which increase from a
+register usage of 30 per thread when 32bit bit masks are used, to 53 registers
+per thread at 64 bits. Typing the register usge into the \textit{CUDA Occupancy
+  Calculator}\footnote{\url{http://developer.download.nvidia.com/compute/cuda/3_2_prod/sdk/docs/CUDA_Occupancy_Calculator.xls}}
+we can see that 53 registers per thread results in an occupancy of 25\%, which
+is not enough to properly utilize the GPU's multiprocessors, nor enough to
+efficient hide global memory latency. Trying to minimize the register usage by
+storing more computations in global memory only increases the global memory
+latency and does little for performance.
+
+Looking at the results for kd-trees wieth 32bit bit masks, constructing no lower
+tree performs best overall. Obviously kd-trees constructors that do not
+construct any lower tree will have the fastest construction time, but from
+\reffig{fig:lowerResults} we can also see that they have the fastest ray tracing
+time and therefore the highest tree quality. This data seems to verify my idea
+from the No Tree Construction subsection in \refsection{sec:lowerNodes}, that
+favoring larger leaf nodes on GPU's would reduce thread divergence and increase
+performance.
+
+Using the surface area heuristic to construct the lower trees instead of no
+construction increases construction time by up to 253\% in the worst case, while
+all the time yielding kd-trees of similar quality.
+
+Using my proposed simplified surface area heuristic instead only increases
+construction time by 31-45\% compared to no tree construction, but also reduces
+the tree quality by up to 27\%, which makes it unsuitable compared to no tree
+construction.
+
+In all cases constructing no lower tree performed best, and only when the bit
+masks allowed the lower tree to associate up to 64 triangles per leaf was SAH
+and SSAH able to produce trees of higher quality than a solution not producing
+any lower trees. However, the cost of producing these trees were to high to be
+of any use in a dynamic scene.
+
+
 
 % Splitting Schemes:
 
