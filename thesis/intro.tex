@@ -163,15 +163,17 @@ dynamic. It is possible to dynamically add and remove elements to a kd-tree, but
 doing so can degrade the quality of the kd-tree or its subtrees. If a subtree's
 quality has degraded to much, it would have to be reconstructed. In the worst
 case scenario this reconstruction needs to be performed on the entire tree and
-is equivelant to a complete reconstruction. 
+is equivelant to a complete reconstruction. Because of this, the algorithms for
+creating and restructuring kd-trees needs to be very fast, and might even have
+to sacrifice tree quality for improved construction speed. This is also what
+makes dynamic scenes interesting compared to static scenes. Ray tracers
+rendering static scenes can take as much time as they need to produce high
+quality acceleration structures. This may not possible in dynamic scenes, where
+a user that modifies the scene will want visual feedback of the modifications
+made as fast as possible.
 
-%% Because of this, the algorithms for creating and restructuring kd-trees needs to
-%% be very fast, and might even have to sacrifice tree quality for improved
-%% construction speed.
-
-Since this thesis is about efficiently rendering dynamic scenes, I will need to
-investigate both optimizations to the ray tracers and the kd-trees. In generel
-there are 3 ways to optimize ray tracing with respect to dynamic scenes.
+In generel there are 3 ways to optimize ray tracing with respect to dynamic
+scenes to achieve maximum efficiency:
 
 \begin{enumerate}
   \item \textbf{Building a higher quality acceleration structure -} An
@@ -317,7 +319,7 @@ acceleration structures for dynamic scenes.
 
 \section{Overview}
 
-The thesis is structured as follows:
+The rest thesis is structured as follows:
 
 % Previous work
 
