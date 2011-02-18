@@ -150,13 +150,15 @@ the geometry associated with them. An example of a subdivided scene and the
 corrosponding tree can be seen on \reffig{fig:kdIteration} in
 \refchapter{chp:kdTrees}, where kd-trees will be introduced thoroughly. If a
 leaf node, $n$, is split by a splitting plane, the geometry associated with $n$
-must be associated with its two newly constructed child nodes. A kd-tree's
-quality is related to the choice of splitting planes and a lot of computational
-power can go into finding optimal splitting planes, as there are infinitely many
-possible \textit{splitting plane candidates}, or \textit{split candidates}, to
+must be associated with its two newly constructed child nodes. The quality of a
+kd-tree is the ease with which it allows a scene to be ray traced and is related
+to the choice of splitting planes and a lot of computational power can go into
+finding optimal splitting planes, as there are infinitely many possible
+\textit{splitting plane candidates}, or \textit{split candidates}, to
 consider. In a high quality kd-tree, splitting planes have been chosen such that
-spatially close geometry are allocated into the same subtree. Choosing a
-splitting plane for a node is the topic of \refsection{sec:splittingPlane}. 
+spatially close geometry are allocated into the same subtree and the scene can
+be ray traced as fast as possible. Choosing a splitting plane for a node is the
+topic of \refsection{sec:splittingPlane}.
 
 In order to facilitate dynamic scenes, the data structure must also be
 dynamic. It is possible to dynamically add and remove elements to a kd-tree, but
@@ -188,7 +190,7 @@ scenes to achieve maximum efficiency:
     spend deciding where to place the splitting plane, which can result in trees
     of lower quality.
   \item \textbf{Create a faster ray tracer -} Several optimizations exist that
-    improve the speed of a ray tracer independently of the underlying
+    improve the speed of a ray tracer without modifying the underlying
     acceleration stucture. Such optimizations will be discussed in
     \refsection{sec:hierarchicalTraversal}.
 \end{enumerate}
@@ -205,7 +207,10 @@ of the GPU. I will be doing the same in this thesis and use the GPU to
 accelerate the creation of data structures and ray tracing them. The most
 compelling reason to do this, is that it leaves the CPU free to handle other
 aspects of a graphics application, such as game logic and networking in a
-computer game.
+computer game. 
+
+%% However, the results achieved in this thesis with respect to ray tracing dynamic
+%% scenes are architecture independent and apply to the CPU aswell as the GPU.
 
 \input{previous}
 
@@ -335,33 +340,43 @@ The rest thesis is structured as follows:
 
 The next chapter introduces NVIDIA's CUDA framework. Here I will describe its
 thread and memory model. I will then go on to describe a new primitive proposed
-by \sengupta{}, which will be much needed when assigning triangles to child
-nodes after their parent node has been split. Finally this section will focus on
-optimization techniques specific to CUDA. These will be applied incrementally in
-a case study of a global minima algorithm.
+by \sengupta{}, which will be much needed when for example assigning triangles
+to child nodes after their parent node has been split. Finally this section will
+focus on optimization techniques specific to CUDA. These will be applied
+incrementally in a case study of a global minima algorithm.
 
 % kd-trees
 
-\refchapter{chp:kdTrees} is then devoted to discussing kd-trees. The
-first part of this section deals with the general kd-tree construction
-algorith. Here I will present several algorithms for choosing the
-splitting plane and discuss 3 different algorithms for associating
-triangles with child nodes. The second part of the section deals with
-the actual implementation of kd-trees on a GPU.
+\refchapter{chp:kdTrees} is then devoted to discussing kd-trees. The first part
+of this section deals with the general kd-tree construction algorith. Here I
+will present several algorithms for choosing the splitting plane and discuss
+three different approaches used to associate triangles with leaf nodes. The
+second part of the section deals with the actual implementation of kd-trees on a
+GPU and will describe how the nodes are structured in memory and how to
+construct binary trees effectively on dataparallel hardware.
 
 % ray tracing
 
-Having introduced kd-trees, the next chapter will deal with the
-algorithms for traversing such trees and ray tracing the scene. Here
-several optimizations to a basic heirarchical ray tracer will be
-discussed and incrementally added. First though, an exhaustive ray
-tracer is presented and will be used in the Results chapter to
-motivate the use of hierarchical data structures. This section also
-includes a discussion of 2 triangle intersection algorithms with
-respect to performance on the graphics hardware.
+Having introduced kd-trees, the next chapter will deal with the algorithms for
+traversing such trees and ray tracing the scene. Here several optimizations to a
+basic hierarchical ray tracer will be discussed and incrementally added. First
+though, an exhaustive ray tracer is presented and will be used in the Results
+chapter to motivate the use of hierarchical data structures. This section also
+includes a discussion of two triangle intersection algorithms with respect to
+achieving maximal performance on GPUs.
 
 % Results
 
-% Conclusion
+In the results chapter I will first evaluate the performance of ray tracers
+configured with different optimizations. I will then use the ray tracer that
+generelly performs best to evaluate the quality of the different kd-trees
+created. The metric used to determine which kd-tree construction algorithm
+performs best will be the total rendering time, i.e. the sum of the construction
+time and ray tracing time.
 
-% Future work
+% Conclusion % Future work
+
+In the conclusion I will discuss the results and the implications of my work and
+finally under future work I will address future improvements based on the
+experience I have gained while working on this thesis.
+
