@@ -9,7 +9,7 @@
 
 #include "SceneCreator.h"
 
-#include <Display/Camera.h>
+#include "Display/BoundedCamera.h"
 #include <Geometry/GeometrySet.h>
 #include <Geometry/Mesh.h>
 #include <Resources/IDataBlock.h>
@@ -28,7 +28,7 @@ namespace OpenEngine {
     using namespace Scene;
     using namespace Utils;
 
-    void SceneCreator::CreateScene(std::string name, ISceneNode *scene, Camera *cam, 
+    void SceneCreator::CreateScene(std::string name, ISceneNode *scene, BoundedCamera *cam, 
                                      TransformationNode * geomTrans){
         if (name.compare("sponza") == 0)
             CreateSponza(scene, cam, geomTrans);
@@ -42,7 +42,7 @@ namespace OpenEngine {
             CreateSponza(scene, cam, geomTrans);
     }
     
-    void SceneCreator::CreateCornell(ISceneNode *sceneRoot, Camera *cam, 
+    void SceneCreator::CreateCornell(ISceneNode *sceneRoot, BoundedCamera *cam, 
                                      TransformationNode *geomTrans){
         logger.info << "Creating Cornell Box Scene" << logger.end;
         ISceneNode* cornell = CreateCornellBox();
@@ -64,12 +64,15 @@ namespace OpenEngine {
 
         cam->SetPosition(Vector<3, float>(-4.5f, 3.0f, 4.5f));
         cam->LookAt(Vector<3, float>(-0.8f, -1.0f, 0.0f));
+
+        //cam->SetMinimumBound(Vector<3, float>(-4.9f));
+        //cam->SetMaximumBound(Vector<3, float>(4.9f));
         
         //cam->SetPosition(Vector<3, float>(0.0f, 2.0f, 9.5f));
         //cam->LookAt(Vector<3, float>(0.0f, 0.0f, 0.0f));
     }
 
-    void SceneCreator::CreateSponza(Scene::ISceneNode *sceneRoot, Display::Camera *cam, 
+    void SceneCreator::CreateSponza(Scene::ISceneNode *sceneRoot, Display::BoundedCamera *cam, 
                                     Scene::TransformationNode * geomTrans){
 
         logger.info << "Creating Sponza Scene" << logger.end;
@@ -84,7 +87,7 @@ namespace OpenEngine {
         cam->LookAt(Vector<3, float>(-1.0f, 9.0f, 0.0f));
     }
 
-    void SceneCreator::CreateDragon(Scene::ISceneNode *sceneRoot, Display::Camera *cam, 
+    void SceneCreator::CreateDragon(Scene::ISceneNode *sceneRoot, Display::BoundedCamera *cam, 
                                     Scene::TransformationNode * geomTrans){
         logger.info << "Creating Stanford Dragon Scene" << logger.end;
         MeshNode* cornell = CreateCornellBox();
@@ -99,9 +102,13 @@ namespace OpenEngine {
         
         cam->SetPosition(Vector<3, float>(0.0f, 3.0f, 4.5f));
         cam->LookAt(Vector<3, float>(0.0f, 0.0f, 0.0f));
+
+        cam->SetMinimumBound(Vector<3, float>(-4.9f));
+        cam->SetMaximumBound(Vector<3, float>(4.9f));
+
     }
 
-    void SceneCreator::CreateBunny(Scene::ISceneNode *sceneRoot, Display::Camera *cam, 
+    void SceneCreator::CreateBunny(Scene::ISceneNode *sceneRoot, Display::BoundedCamera *cam, 
                                    Scene::TransformationNode * geomTrans){
         logger.info << "Creating Stanford Bunny Scene" << logger.end;
         MeshNode* cornell = CreateCornellBox();
@@ -113,6 +120,9 @@ namespace OpenEngine {
         ISceneNode* bunny = LoadBunny();
         geomTrans->AddNode(bunny);
         
+        cam->SetMinimumBound(Vector<3, float>(-4.9f));
+        cam->SetMaximumBound(Vector<3, float>(4.9f));
+
         //cam->SetPosition(Vector<3, float>(-4.5f, 3.0f, 4.5f));
         //cam->LookAt(Vector<3, float>(-0.8f, -1.0f, 0.0f));
     }
@@ -181,11 +191,11 @@ namespace OpenEngine {
     }
 
     ISceneNode* SceneCreator::LoadBunny() {
-        IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res4.ply");
+        IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res2.ply");
         duckRes->Load();
         MeshNode* bunny = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0)->GetNode(0);
 
-        const Vector<4, float> bakersChocolate(0.36f, 0.2, 0.09f, 1.0f);
+        const Vector<4, float> bakersChocolate(0.36f, 0.2, 0.09f, 0.7f);
         const Vector<4, float> lightChocolate(0.667f, 0.49f, 0.361f, 1.0f);
         GeometrySetPtr geom = bunny->GetMesh()->GetGeometrySet();
         IDataBlockPtr color = Float4DataBlockPtr(new DataBlock<4, float>(geom->GetSize()));

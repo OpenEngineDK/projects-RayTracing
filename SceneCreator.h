@@ -10,7 +10,7 @@
 #include <string>
 
 namespace OpenEngine {
-    namespace Display { class Camera; }
+    namespace Display { class BoundedCamera; }
     namespace Scene { 
         class ISceneNode; 
         class MeshNode; 
@@ -20,16 +20,16 @@ namespace OpenEngine {
     class SceneCreator {
     public:
         static void CreateScene(std::string name, Scene::ISceneNode *scene, 
-                                Display::Camera *cam, Scene::TransformationNode * geomTrans);
+                                Display::BoundedCamera *cam, Scene::TransformationNode * geomTrans);
 
         //private:
-        static void CreateCornell(Scene::ISceneNode *sceneRoot, Display::Camera *cam, 
+        static void CreateCornell(Scene::ISceneNode *sceneRoot, Display::BoundedCamera *cam, 
                                   Scene::TransformationNode * geomTrans);
-        static void CreateSponza(Scene::ISceneNode *sceneRoot, Display::Camera *cam, 
+        static void CreateSponza(Scene::ISceneNode *sceneRoot, Display::BoundedCamera *cam, 
                                  Scene::TransformationNode * geomTrans);
-        static void CreateDragon(Scene::ISceneNode *sceneRoot, Display::Camera *cam, 
+        static void CreateDragon(Scene::ISceneNode *sceneRoot, Display::BoundedCamera *cam, 
                                  Scene::TransformationNode * geomTrans);
-        static void CreateBunny(Scene::ISceneNode *sceneRoot, Display::Camera *cam, 
+        static void CreateBunny(Scene::ISceneNode *sceneRoot, Display::BoundedCamera *cam, 
                                 Scene::TransformationNode * geomTrans);
 
         static Scene::MeshNode* CreateCornellBox();

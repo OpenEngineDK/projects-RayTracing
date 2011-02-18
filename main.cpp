@@ -9,7 +9,7 @@
 
 // OpenEngine stuff
 #include <Core/Engine.h>
-#include <Display/Camera.h>
+#include "Display/BoundedCamera.h"
 #include <Display/PerspectiveViewingVolume.h>
 #include <Logging/Logger.h>
 #include <Logging/StreamLogger.h>
@@ -81,7 +81,7 @@ ISceneNode* CreateSibenik() {
 
 TransformationNode *geomTrans = new TransformationNode();
 
-ISceneNode* SetupScene(std::string name, Camera* cam){
+ISceneNode* SetupScene(std::string name, BoundedCamera* cam){
 
     RenderStateNode* rsNode = new RenderStateNode();
     rsNode->DisableOption(RenderStateNode::BACKFACE);
@@ -147,7 +147,7 @@ int main(int argc, char** argv) {
     ResourceManager<IModelResource>::AddPlugin(new AssimpPlugin());
     ResourceManager<ITexture2D>::AddPlugin(new FreeImagePlugin());
 
-    Camera* camera  = new Camera(*(new PerspectiveViewingVolume(1, 4000)));
+    BoundedCamera* camera  = new BoundedCamera(*(new PerspectiveViewingVolume(1, 4000)));
     ISceneNode* scene = SetupScene(sceneName, camera);
 
     //DataBlockBinder* bob = new DataBlockBinder(*renderer);

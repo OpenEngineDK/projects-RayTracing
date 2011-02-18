@@ -8,6 +8,7 @@ SET( PROJECT_SOURCES
   main.cpp
   Handlers.cpp
   SceneCreator.cpp
+  Display/BoundedCamera.cpp
 )
 
 # Project executable
