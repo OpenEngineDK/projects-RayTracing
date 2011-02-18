@@ -20,6 +20,7 @@
 % spend on creating a better kD tree will pay off in final rendering
 % time.
 
+\fixme{Definer rays!}
 
 In this chapter we shall look at how to implement a ray tracer and how it can be
 optimized to run efficiently on graphics hardware. The result will be an
@@ -650,7 +651,7 @@ early out option provided by empty space maximization.
 Since the only information available to ray traversing a kd-tree is the position
 of the splitting plane and not the bounding volume of the node, the ray can
 easily get sidetracked and end up in leaf nodes, whose bounding box it does not
-even intersect. \refFig{fig:waywardRay} is a simple example of this. Extending
+even intersect. \Reffig{fig:waywardRay} is a simple example of this. Extending
 the ray, $R(t) = t \vectwoT{1}{1} + \vectwoT{-4}{0}$, we can clearly see that it
 will intersect leaf node 2. Unfortunatly, when using kd-trees, the only
 information available to the ray is that the node is split along the y-axis at
