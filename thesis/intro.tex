@@ -189,7 +189,7 @@ scenes to achieve maximum efficiency:
     the acceleration structure may need to be entirely reconstructed each time a
     dynamic scene is rendered. Being able to rebuild it fast is therefore
     crucial. One way to ensure a faster reconstruction is by reducing the time
-    spend deciding where to place the splitting plane, which can result in trees
+    spent deciding where to place the splitting plane, which can result in trees
     of lower quality.
   \item \textbf{Create a faster ray tracer -} Several optimizations exist that
     improve the speed of a ray tracer without modifying the underlying
@@ -244,7 +244,7 @@ and render the test scenes. In the tests I will always perform a complete
 rebuild of the kd-tree before rendering the scene. This is done to ensure that
 my tests capture the worst case scenario for dynamic scenes, which is a complete
 update of the entire scene and thus a complete rebuild. The goal of this thesis
-is then to find a kd-tree configuration that minimizes the total time spend both
+is then to find a kd-tree configuration that minimizes the total time spent both
 recreating and traversing the structure and observe if there is a tradeoff
 between construction speed and tree quality.
 

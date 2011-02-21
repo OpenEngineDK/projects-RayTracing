@@ -70,7 +70,7 @@ As explained in the introduction, the worst-case scenario of dynamic scenes is a
 complete reconstruction of the acceleration structure. To ensure that my
 implementations are tested against thsis worst-case scenario, the acceleration
 structures are completely rebuild for each image rendered. The best kd-tree
-configuration is therefore the one that minimizes the total time spend
+configuration is therefore the one that minimizes the total time spent
 constructing the kd-tree and afterwards ray tracing it.
 
 
@@ -104,11 +104,11 @@ described in the figure's caption.
       \multirow{4}{*}{Exhaustive\footnote{The exhaustive ray tracer only ray traces the first 4096 triangles in a scene. Even with this hard upper limit it is clear that an exhaustive approach will not work for detailed scenes.}} & 
         \multirow{2}{*}{\tabelMoeller} & No & N/A & 11.2ms & \worstResult{1118ms} & \worstResult{964ms} \\
       \cline{3-7}
-      & & Yes & N/A & \worstResult{11.6ms} & 1114ms & \worstResult{964ms} \\
+      & & 4x8 & N/A & \worstResult{11.6ms} & 1114ms & \worstResult{964ms} \\
       \cline{2-7}
       & \multirow{2}{*}{Woop} & No & N/A & \bestResult{9.3ms} & \bestResult{898ms} & \bestResult{650ms}\\
       \cline{3-7}
-      & & Yes & N/A & 9.7ms & 903ms & 651ms\\
+      & & 4x8 & N/A & 9.7ms & 903ms & 651ms\\
       \hline
       \hline
 
@@ -117,7 +117,7 @@ described in the figure's caption.
       \cline{4-7}
       & & & Yes & \worstResult{18.1ms} & 486ms & 287ms \\
       \cline{3-7}
-      & & \multirow{2}{*}{Yes} & No & 17.2ms & 579ms & 424ms \\
+      & & \multirow{2}{*}{4x8} & No & 17.2ms & 579ms & 424ms \\
       \cline{4-7}
       & & & Yes & 17.4ms & \bestResult{355ms} & \bestResult{196ms} \\
       \cline{2-7}
@@ -125,7 +125,7 @@ described in the figure's caption.
       \cline{4-7}
       & & & Yes & 15.8ms & 500ms & 287ms \\
       \cline{3-7}
-      & & \multirow{2}{*}{Yes} & No & \bestResult{14.6ms} & 495ms & 342ms \\
+      & & \multirow{2}{*}{4x8} & No & \bestResult{14.6ms} & 495ms & 342ms \\
       \cline{4-7}
       & & & Yes & 14.8ms & \bestResult{355ms} & \bestResult{198ms} \\
       \hline
@@ -136,7 +136,7 @@ described in the figure's caption.
       \cline{4-7}
       & & & Yes & \worstResult{20.2ms} & 503ms & 266ms \\
       \cline{3-7}
-      & & \multirow{2}{*}{Yes} & No & 19.5ms & 590ms & 421ms \\
+      & & \multirow{2}{*}{4x8} & No & 19.5ms & 590ms & 421ms \\
       \cline{4-7}
       & & & Yes & 19.8ms & \bestResult{360ms} & \bestResult{167ms} \\
       \cline{2-7}
@@ -144,7 +144,7 @@ described in the figure's caption.
       \cline{4-7}
       & & & Yes & 18.7ms & 522ms & 270ms \\
       \cline{3-7}
-      & & \multirow{2}{*}{Yes} & No & \bestResult{17.8ms} & 523ms & 348ms \\
+      & & \multirow{2}{*}{4x8} & No & \bestResult{17.8ms} & 523ms & 348ms \\
       \cline{4-7}
       & & & Yes & 18.1ms & 368ms & 171ms \\
       \hline
@@ -384,20 +384,3 @@ masks allowed the lower tree to associate up to 64 triangles per leaf was SAH
 and SSAH able to produce trees of higher quality than a solution not producing
 any lower trees. However, the cost of producing these trees were to high to be
 of any use in a dynamic scene.
-
-
-
-% Splitting Schemes:
-
-% Profile the time it takes to create the different trees, especially
-% the splitting kernels.
-
-% Compare amount of nodes.
-
-% Tree traversal time.
-
-% Warp coherence: balance between traversal steps and intersections =
-% high amount of nodes in the leafs ie even less important to spend
-% alot of time on that last split.
-
-

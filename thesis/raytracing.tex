@@ -21,17 +21,17 @@
 % time.
 
 In this chapter we shall look at how to implement a ray tracer and how it can be
-optimized to run efficiently on graphics hardware. The result will be an
-optimized ray tracer, which will be used for evaluating the quality of kd-trees
-in \refchapter{chp:results}.
+optimized to run efficiently on GPUs using NVIDIA's CUDA framework. The result
+will be an optimized ray tracer, which will be used in \refchapter{chp:results}
+to evaluate the quality of kd-trees.
 
 A ray, $r$, is defined as a line which starts at its \textit{origin} and can be
 traced infinitely along a certain \textit{direction}, so $r = \{origin,
 direction\} \in \{R^3, R^3\}$. Before the actual ray tracing can be performed,
 the primary rays traced from the camera and into the scene must first be
-computed and stored in a Ray List, $rays$. How these rays can be generated is a
-large topic in itself and lies outside the scope of this thesis. Chapter 4 in
-\citebook{RTR3} provides good insight into the theory needed for creating the
+computed and stored in a list of rays, $rays$. How these rays can be generated
+is a large topic in itself and lies outside the scope of this thesis. Chapter 4
+in \citebook{RTR3} provides good insight into the theory needed for creating the
 primary rays.
 
 The generel structure for a ray tracer that handles reflective surfaces can be
@@ -41,20 +41,30 @@ determines the closest intersecting triangle, i.e. the triangle first
 \textit{seen} by the ray. It then computes the color of the point on the
 triangle seen by the ray and blends it with the color in $pixels[r]$ that has
 been accumulated so far. How the color is computed is not relevant to the
-kd-tree quality results in \refchapter{chp:results} and is therefore discussed
-in this thesis. Suffice it to say that the ray tracer produced as part of the
-thesis uses the \textit{generel lighting equation} described on page 83 in
-\citebook{RTR2}. Finally the algorithm checks if a triangle is reflective and if
-it is then a reflection ray is generated and added to the $nextRays$ list. If
-$nextRays$ contains one or more rays reflection rays, the process is repeated.
+kd-tree quality results in \refchapter{chp:results} and is therefore not
+discussed in this thesis. Suffice it to say that the ray tracer produced as part
+of the thesis uses the \textit{generel lighting equation} described on page 83
+in \citebook{RTR2}. Finally the algorithm checks if a triangle is reflective and
+if so then a reflection ray is generated and added to the $nextRays$ list. A
+reflection ray's direction, $dir_{ref}$ is calculated from the triangle's
+normal, $n$, and the old rays direction, $dir_{ray}$
+
+\begin{displaymath}
+  dir_{ref} = -2 (n \cdot dir_{ray}) n + dir_{ray}
+\end{displaymath}
+
+The new origin of the reflection ray is simply the intersection point of the old
+ray and the triangle.
+
+If $nextRays$ contains one or more reflection rays, then process is repeated.
 
 \begin{algorithm}
   \caption{A generel ray tracer.}
   \label{alg:generelRayTracer}
   \begin{algorithmic}
     \PROCEDURE{RayTracer}
-              {$rays$ : Ray List, $scene$ : Scene, $pixels$ : Frame}
-              {$pixels$ : Frame}{
+              {$rays$ : Ray List, $scene$ : Scene, $pixels$ : Image}
+              {$pixels$ : Image}{
                 \PARALLELFOR{$r$}{$rays$}
                   \ASSIGN{$triangle$}{ClosestIntersection$(r, Scene)$}
                   \ASSIGN{$pixels[r]$}{ComputeColor$(pixels[r], r, triangle)$}
@@ -72,7 +82,7 @@ $nextRays$ contains one or more rays reflection rays, the process is repeated.
 
 In this chapter i will present two methods for determining which triangle in a
 scene a ray intersects. In \refsection{sec:exhaustive} I present an exhaustive
-ray tracer implementation, which find the closest intersection point by
+ray tracer implementation, which finds the closest intersection point by
 comparing each ray with every triangle. In
 \refsection{sec:hierarchicalTraversal} I then present a hierarchical ray tracer,
 which will use the kd-tree to minimize the amount of triangles each ray needs to
@@ -109,7 +119,7 @@ take a look at an exhaustive ray tracer.
 The reason that an exhaustive ray tracer is interesting is that the GPU comes
 with high computational power, but little tolerance for branching, as was
 discussed in \refsection{sec:threadHierarchy}. An exhaustive ray tracer fits
-very well into such an architecture, since intersecting each ray with every
+very well onto such an architecture, since intersecting each ray with every
 triangle certainly requires a lot of computational power, and every ray in a
 warp will loop over the same triangles, so the triangle-loop will not cause
 thread divergence.
@@ -122,7 +132,7 @@ compute and return the ray's barycentric coordinates on the triangle, presented
 in \refsection{sec:intersection}, which is used for interpolating the normals at
 the triangle's vertices across its surface and needed to perform lighting
 calculations. But in order to keep the algorithms simple and instructive, this
-has been omitted and is assumed to be performed by ComputeColor method in
+has been omitted and is assumed to be performed by the ComputeColor method in
 \refalg{alg:generelRayTracer}.
 
 
@@ -174,18 +184,18 @@ can be seen in \refalg{alg:generelTracing}.
     \PROCEDURE{KDTraversal}
               {$ray$ : Ray, $tree$ : kd-tree}
               {$t_{near}$ : Triangle}{
-                \WHILE{ray hasn't intersected}
+                \ASSIGN{$t_{near}$}{$NULL$}
+                \WHILE{ray inside scene}
                   \COMMENTIT{Traverse the tree until the closest leaf is found
                     and store the distance to the closest splitting
                     plane in $d_{split}$.}
                   \ASSIGN{$(leaf, d_{split})$}{TraverseTree($ray, tree$)}
                   \COMMENTIT{Intersect triangles in leaf and return
                     closest intersection.}
-                  \ASSIGN{$d_{hit}$}{Intersect($ray, leaf.triangles$)}
+                  \ASSIGN{$t_{near}$}{Intersect($ray, leaf.triangles$)}
                   \COMMENTIT{Break if a closest intersection
                     is found and return it.}
-                  \IF{$d_{hit} < d_{split}$}
-                    \ASSIGN{$t_{near}$}{Closest triangle in $leaf.triangles$}
+                  \IF{$t_{near} \neq NULL$}
                     \STATE{\textbf{break}}
                   \ELSE
                     \ASSIGN{$ray.origin$}{$ray.origin + d_{split} * ray.direction$}
@@ -204,7 +214,7 @@ and \textit{farthest} along the rays direction. It then computes the signed
 distance from the ray to the nodes splitting plane. If this distance is below 0
 then the plane is located behind the ray and the farthest child must be
 visited. If the distance is above 0 then the nearest node needs to be visited
-next. In addition the distance, $d_{split}$ to the nearest splitting plane in
+next. In addition the distance, $d_{split}$, to the nearest splitting plane in
 front of the ray needs to be updated. $d_{split}$ is used to advance the ray
 beyond a visited leaf node if it did not intersect any primitives.
 
@@ -336,29 +346,29 @@ used to determine how far a ray has traveled.
   \begin{algorithmic}
     \PROCEDURE{KDRestart}
               {$ray$ : Ray, $tree$ : kd-tree}
-              {$t_{min}$ : Number}{
-                \ASSIGN{$t_{min}$}{$0$}
-                \WHILE{$t_{min} < \infty$}
-                  \ASSIGN{$t_{next}$}{$\infty$}
+              {$t_{near}$ : Triangle}{
+                \ASSIGN{$t_{near}$}{$NULL$}
+                \ASSIGN{$d_{min}$}{$0$}
+                \WHILE{$d_{min} < \infty$}
+                  \ASSIGN{$d_{next}$}{$\infty$}
                   \ASSIGN{$node$}{$tree.root$}
                   \COMMENTIT{Traverse the tree until a leaf node is reached}
                   \WHILE{$node \neq LEAF$}
-                    \ASSIGN{$t_{split}$}{($node.splitValue - ray.origin[node.axis]) / ray.direction[node.axis]$}
-                    \IF{$t_{min} < t_{split}$}
+                    \ASSIGN{$d_{split}$}{($node.splitPosition - ray.origin[node.axis]) / ray.direction[node.axis]$}
+                    \IF{$d_{min} < d_{split}$}
                       \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
-                      \ASSIGN{$t_{next}$}{min$(t_{split}, t_{next})$}
+                      \ASSIGN{$d_{next}$}{min$(d_{split}, d_{next})$}
                     \ELSE
                       \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.right$ : $node.left$}
                     \ENDIF
                   \ENDWHILE
-                  \COMMENTIT{Advance the ray to the next splitting plane.}
-                  \ASSIGN{$t_{min}$}{$t_{next}$}
                   \COMMENTIT{Test intersection with the leafs primitives}
-                  \FOREACH{$triangle$}{$node.triangles$}
-                    \ASSIGN{$t_{min}$}{\MIN{$(t_{min}}{$\textbf{Intersect}$(triangle, ray))$}}
-                  \ENDFOR
-                  \IF{$t_{min} < t_{next}$}
+                  \ASSIGN{$t_{near}$}{Intersect($ray, leaf.triangles$)}
+                  \IF{$t_{near} \neq NULL$}
                     \STATE{\textbf{break}}
+                  \ELSE
+                    \COMMENTIT{Advance the ray beyond the next splitting plane.}
+                    \ASSIGN{$d_{min}$}{$d_{next}$}
                   \ENDIF
                 \ENDWHILE
               }
@@ -410,36 +420,36 @@ implementation of kd-restart with the short-stack optimization is shown in
   \begin{algorithmic}
     \PROCEDURE{ShortStack}
               {$ray$ : Ray, $tree$ : kd-tree}
-              {$t_{min}$ : Number}{
-    \ASSIGN{$t_{min}$}{$0$}
-    \WHILE{$t_{min} < \infty$}
+              {$t_{near}$ : Triangle}{
+    \ASSIGN{$t_{near}$}{$NULL$}
+    \ASSIGN{$d_{min}$}{$0$}
+    \WHILE{$d_{min} < \infty$}
       \IF{$stack$.IsEmpty}
         \ASSIGN{$node$}{$tree.root$}
-        \ASSIGN{$t_{next}$}{$\infty$}
+        \ASSIGN{$d_{next}$}{$\infty$}
       \ELSE
-        \ASSIGN{$(node, t_{next})$}{$stack$.Pop}
+        \ASSIGN{$(node, d_{next})$}{$stack$.Pop}
       \ENDIF
       \COMMENTIT{Traverse the tree until a leaf node is reached}
       \WHILE{$node \neq LEAF$}
-        \ASSIGN{$t_{split}$}{($node.splitValue - ray.origin[node.axis]) / ray.direction[node.axis]$}
-        \IF{$t_{min} < t_{split}$}
+        \ASSIGN{$d_{split}$}{($node.splitPosition - ray.origin[node.axis]) / ray.direction[node.axis]$}
+        \IF{$d_{min} < d_{split}$}
           \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.left$ : $node.right$}
-          \IF{$t_{split} < t_{next}$}
-            \STATE{stack.push($upperChild, t_{next}$)}
+          \IF{$d_{split} < d_{next}$}
+            \STATE{stack.push($upperChild, d_{next}$)}
           \ENDIF
-          \ASSIGN{$t_{next}$}{min$(t_{split}, t_{next})$}
+          \ASSIGN{$d_{next}$}{min$(d_{split}, d_{next})$}
         \ELSE
           \ASSIGN{$node$}{$ray.direction[node.axis] > 0$ ? $node.right$ : $node.left$}
         \ENDIF
       \ENDWHILE
-      \COMMENTIT{Advance the ray to the next splitting plane.}
-      \ASSIGN{$t_{min}$}{$t_{next}$}
       \COMMENTIT{Test intersection with the leafs primitives}
-      \FOREACH{$triangle$}{$node.triangles$}
-        \ASSIGN{$t_{min}$}{\MIN{$(t_{min}}{$\bf{Intersect}$(triangle, ray))$}}
-      \ENDFOR
+      \ASSIGN{$t_{near}$}{Intersect($ray, leaf.triangles$)}
       \IF{$t_{min} < t_{next}$}
         \STATE{\textbf{break}}
+      \ELSE
+        \COMMENTIT{Advance the ray beyond the next splitting plane.}
+        \ASSIGN{$t_{min}$}{$t_{next}$}
       \ENDIF
     \ENDWHILE
               }
@@ -544,15 +554,14 @@ quite a performance improvement.
 % yield a speedup and did not provide any results. Aila2009 is against
 % packets as they in practice seem to make it slower.
 
-Using some form of \textit{packets} to accelerate ray tracing is quite
-a standard technique. Packets where introduced to CPU ray tracers by
-Wald et al.\citebook{Wald:2001:IRCRT}, who utilized
-\textit{SIMD}\footnote{Single instruction, multiple data.}
-instructions to trace four rays at a time. \horn{} extended the
-short-stack approach with packet tracing, where individual threads
-would trace multiple rays at a time to amortize the cost of traversing
-the tree. Unfortunatly tracing several rays in one thread increases
-thread incoherence across warps and \aila{} concludes that
+Using some form of \textit{packets} to accelerate ray tracing is quite a
+standard technique. Packets were introduced to CPU ray tracers by Wald et
+al.\citebook{Wald:2001:IRCRT}, who utilized \textit{SIMD}\footnote{Single
+  instruction, multiple data.} instructions to trace four rays at a time in
+packets. \horn{} extended their short-stack implementation with packet tracing,
+where individual threads would trace multiple rays at a time to amortize the
+cost of traversing the tree. Unfortunatly tracing several rays in one thread
+increases thread incoherence across warps and \aila{} concludes that
 
 \quotebook{It is worth noticing that [kd-restart] is faster than
   packet traversal in all cases, and with diffuse rays the difference
@@ -566,32 +575,31 @@ thread incoherence across warps and \aila{} concludes that
 % 4x8 packets to increase (spatial) ray coherence across warps.
 
 While \horn's approach to packet tracing might not have yielded the intended
-increase in performance, the warp constructions likeness to SIMD means that the
-GPU is already performing packet tracing. Instead of 4 rays per instruction, as
-is the case with SIMD, a warp will trace rays in packets of 32 at a time on
-current hardware.
+increase in performance, the GPU is still tracing rays in warp-sized packets and
+an effective ray tracer needs to address this.
 
-The rays are stored in rows from left to right in a linear array. Performing a
-\textit{sequantial ray/warp tracing} results in the ray/warp classification seen
-in \reffig{fig:sequentialRayWarp} for an image with a resolution of 64x48. As
-seen on the figure, a large number of warps are intersecting the detailed dragon
-geometry. The threads in those warps who quickly intersect their rays with the
-simple box will then have to idle, while waiting for the rays intersecting the
-detailed dragon to finish.
+On the GPU the rays are stored in rows from left to right in a linear
+array. Performing a \textit{sequantial ray/warp tracing} results in the ray/warp
+classification seen in \reffig{fig:sequentialRayWarp} for an image with a
+resolution of 64x48. As seen on the figure, a large number of warps are
+intersecting the detailed dragon geometry. The threads in those warps who
+quickly intersect their rays with the simple box will then have to idle, while
+waiting for the rays intersecting the detailed dragon to finish.
 
 Instead I propose to take advantage of the spatial coherence between
 neighbouring rays and structure them in warpsized screenspace packets as done in
-\reffig{fig:coherentRayWarp}. As the figure demonstrates not only does fewer
-warps ray trace the detailed dragon, but the spatial coherence between the rays
-in a warp causes more warps to ray trace only spatially local geometry.
+\reffig{fig:coherentRayWarp}, where the rays are traced in 4x8 packets. As the
+figure demonstrates not only does fewer warps ray trace the detailed dragon, but
+the spatial coherence between the rays in a warp causes more warps to ray trace
+only spatially local geometry.
 
 \begin{figure}
   \subfloat[Sequential ray/warp tracing. Notice how almost all of the
     warps overlap both the dragon and box.]{
     \begin{tikzpicture}[y=0.45cm, x=.45cm,font=\sffamily]
       \node {\includegraphics[width=7.2cm, height=5.4cm]{RefractionDragon}};
-      \foreach \x in {-8,0,...,8} \draw (\x,-6) -- (\x, 6);
-      \foreach \y in {-6,-5.75,...,6} \draw (-8,\y) -- (8, \y);
+      \foreach \x in {-8,0,...,8} \draw[color=black] (\x,-6) -- (\x, 6);
+      \foreach \y in {-6,-5.75,...,6} \draw[color=black] (-8,\y) -- (8, \y);
     \end{tikzpicture}
     \label{fig:sequentialRayWarp}
   }
@@ -614,9 +622,9 @@ are quite simple and can be seen in \refalg{alg:packet}, but the performance
 benefits of tracing coherent rays and sharing fetched global data among the rays
 in a warp are enormous, as seen in \reffig{fig:rayTracerEvaluation}.
 
-It should be noted that there exists a possibility that rays reflected multiple
-times may eventually diverge completely and no longer be spatially coherent, but
-this is no more of a problem than with the sequential ray/warp approach and the
+It should be noted that a possibility exists that rays reflected multiple times
+may eventually diverge completely and no longer be spatially coherent, but this
+is no more of a problem than with the sequential ray/warp approach and the
 screen packets will still speed up primary rays.
 
 \begin{algorithm}
@@ -644,36 +652,36 @@ screen packets will still speed up primary rays.
 % Inspired by empty space maximizing
 
 The final ray tracer optimization presented in this thesis is inspired by the
-early out option provided by empty space maximization.
+early out option provided by Empty Space Maximization.
 
 %% and combines the simple traversal of kd-trees with the bvh-tree's rigorous
 %% intersection checks.
 
-Since the only information available to ray traversing a kd-tree is the position
-of the splitting plane and not the bounding volume of the node, the ray can
-easily get sidetracked and end up in leaf nodes, whose bounding box it does not
-even intersect. \Reffig{fig:waywardRay} is a simple example of this. Extending
-the ray, $R(t) = t \vectwoT{1}{1} + \vectwoT{-4}{0}$, we can clearly see that it
-will intersect leaf node 2. Unfortunatly, when using kd-trees, the only
-information available to the ray is that the node is split along the y-axis at
-position 3, which means it needs to check everything below $y=3$ for
-intersection. This is a problem in scenes with large empty areas that a ray has
-to traverse. Each time the ray intersects a splitting plane in those empty
-areas, it can get sidetracked and traverse subtrees that it does not
+Since the only information available to rays traversing a kd-tree is the
+position of the splitting plane and not the bounding volume of the node, the ray
+can easily get sidetracked and end up in leaf nodes, whose bounding box it does
+not even intersect. \Reffig{fig:waywardRay} is a simple example of
+this. Extending the ray, $R(t) = t \vectwoT{1}{1} + \vectwoT{-4}{0}$, we can
+clearly see that it will intersect leaf node 2. Unfortunatly, when using
+kd-trees, the only information available to the ray is that the node is split
+along the y-axis at position 3, which means it needs to check everything below
+$y=3$ for intersection. This is a problem in scenes with large empty areas that
+a ray has to traverse. Each time the ray intersects a splitting plane in those
+empty areas, it can get sidetracked and traverse subtrees that it does not
 intersect. An example of this is the great hall in the Sponza scene, where
-applying this optimization will yield quite a performance increase, as evidenced
-in \reffig{fig:rayTracerEvaluation}.
+applying this optimization will yield quite a performance increase, as can be
+seen in \reffig{fig:rayTracerEvaluation}.
 
-Empty space maximization has shown us that providing an early out option for
+Empty Space Maximization has shown us that providing an early out option for
 rays that would otherwise get sidetracked can increase performance substantially
 and that also applies to this case. Since the leafs bounding box is known from
 the tree creation phase, it can be used to quickly skip leafs that the ray does
 not intersect and save a ray lots of triangle intersection testing.
 
-This optimization is not possible with the kd-tree alone and will thus not be a
-solution to static geometry, where the kd-tree is only calculated once and
-superfluous information is disgarded, such as the bounding box and parent
-node. Another solution to diverging rays is presented under Future Work in
+This optimization is only possible because I've stored the leafs bounding box
+and will not be applicable in scenes where only a kd-tree is available. It does
+however show a major flaw in the kd-tree acceleration structure and a more
+generel solution to diverging rays will be presented under Future Work in
 \refchapter{chp:future}.
 
 \begin{figure}
@@ -768,24 +776,28 @@ The algorithm presented in Möller-Trumbore\citebook{MollerTrumbore97} is one of
 the most popular algorithms for ray/triangle intersection, probably in no small
 part due to its appearence in chapter 16.8 of Real-Time
 Rendering\citebook{RTR3}, but also because it is one of the fastest ray/triangle
-intersection algorithms that do not rely on extra memory and/or precomputations.
+intersection algorithms that do not rely on extra memory or preprocessing the
+triangle before ray tracing.
 
 % Calculates the transformation that transform the triangle into the
 % unit triangle and applies this transformation to the ray.
 
-\fixme{This sounds more like woop does it not?}
+Möller-Trumbore\citebook{MollerTrumbore97} exploits the fact that computing the
+intersection between a triangle, $T(u, v)$ and ray, $R(t) = O + tD$ is
+equivalent to solving the linear system of equations, the \textit{ray/triangle
+  intersection equation}
 
-The basic idea of the algorithm is to find the affine transformation
-that, when applied to the triangle $T(u,v)$, transforms it into the unit
-triangle, $U$, which has vertices $\vecthreeT{0}{0}{0}$,
-$\vecthreeT{1}{0}{0}$ and $\vecthreeT{0}{1}{0}$. That affine
-transformation is then applied to the ray, $R(t) = O + tD$, which
-yields the vector $\vecthreeT{t}{u}{v}$, where $t$ is the distance to
-the plane spanned by $T(u,v)$ and $u$ and $v$ are the barycentric
-coordinates of the intersection point.
+%% The basic idea of the algorithm is to find the affine transformation
+%% that, when applied to the triangle $T(u,v)$, transforms it into the unit
+%% triangle, $U$, which has vertices $\vecthreeT{0}{0}{0}$,
+%% $\vecthreeT{1}{0}{0}$ and $\vecthreeT{0}{1}{0}$. That affine
+%% transformation is then applied to the ray, $R(t) = O + tD$, which
+%% yields the vector $\vecthreeT{t}{u}{v}$, where $t$ is the distance to
+%% the plane spanned by $T(u,v)$ and $u$ and $v$ are the barycentric
+%% coordinates of the intersection point.
 
-In short this boils down to solving the linear system of equations,
-the \textit{ray/triangle intersection equation}
+%% In short this boils down to solving the linear system of equations,
+%% the \textit{ray/triangle intersection equation}
 
 \begin{displaymath}
   \begin{array}{rl}
@@ -815,13 +827,14 @@ The implementation of this method is pretty straightforward using CUDA's vector
 primitives and can be seen in \refalg{alg:moellerTrumbore}. The implementation
 provided in \citebook{MollerTrumbore97} was optimized for the CPU and therefore
 provided a lot of early out options as soon as the algorithm detects that a ray
-has missed the triangle. Due to the wide SIMT architecture of GPUs, providing as
-many early out possibilities as \citebook{MollerTrumbore97} causes a branching
-overhead and results in reduced performance. This is understandable since only
-one ray needs to intersect its triangle in order for the entire warp to perform
-the complete intersection testing. For the ray tracers implemented as part of
-this thesis the sweet spot was found to be only providing one early exit after
-the ray/plane intersection and before copmuting the barycentric coordinates.
+has missed the triangle. Due to the synchonized behaviour of threads in the same
+warp, providing as many early out possibilities as \citebook{MollerTrumbore97}
+causes a branching overhead and results in reduced performance. This is
+understandable since only one ray needs to intersect its triangle in order for
+every thread in the warp to have to wait for it to finish. For the ray tracers
+implemented as part of this thesis the sweet spot was found to be only provide
+one early exit after the ray/plane intersection and before computing the
+barycentric coordinates.
 
 \begin{algorithm}
   \caption{Möller-Trumbore ray/triangle intersection test}
@@ -863,18 +876,26 @@ it needs to both store the ray's parameters aswell as the determinant and the
 matrix $\vecthreeT{Q \cdot E_2}{P \cdot T}{Q \cdot D}$. The high register usage
 can be remedied by performing precalulations per triangle as described in
 Chapter 5 of Sven Woops diploma thesis\citebook{woop:04:diplom}. The trade-off
-is a higher per triangle storage requirement of the scene's geometry.
+is a higher per triangle storage requirement for the scene's geometry.
 
 % Also translates the ray using the unit triangle.
 
-As was the case with the Möller-Trumbore approach, Woops approach also
-transforms the generel ray/triangle intersection problem into a
-ray/unit triangle intersection problem, where the solution is
-trivially calculated.
+%% Woop observed that 
 
-He observed that the triangle, $T$, can be transformed into the unit
-triangle, $U$, by applying an affine transformation, consisting of a rotation
-matrix, $m$, and a translation, $n$, on each of $T$'s vertices, $v$.
+%% As was the case with the Möller-Trumbore approach, Woops approach also
+%% transforms the generel ray/triangle intersection problem into a
+%% ray/unit triangle intersection problem, where the solution is
+%% trivially calculated.
+
+He observed that the triangle, $T$, can be transformed into the unit triangle
+
+\begin{displaymath}
+  U(u, v) = (1-u-v)\vecthreeT{0}{0}{0} + u\vecthreeT{1}{0}{0} + v\vecthreeT{0}{1}{0}
+\end{displaymath}
+
+by applying an affine transformation, consisting of a
+rotation matrix, $m$, and a translation, $n$, on each of $T$'s vertices $a$, $b$
+and $c$.
 
 \begin{displaymath}
   U_v = m T_v + n, v \in \{a, b, c\}
@@ -891,9 +912,11 @@ Given that we already know $T$ and $U$, $m'$ and $n'$ can be
 constructed as follows
 
 \begin{displaymath}
-  m' = \left[ T_a - T_c, T_b - T_c, (T_a - T_c) \times (T_b - T_c)
-    \right],
-  n = T_c
+  \begin{array}{l}
+    m' = \left[ T_a - T_c, T_b - T_c, (T_a - T_c) \times (T_b - T_c)
+      \right]\\
+    n' = T_c
+  \end{array}
 \end{displaymath}
 
 We can then derive $m$ and $n$ from $m'$ and $n'$. 
