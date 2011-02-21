@@ -38,8 +38,9 @@ namespace OpenEngine {
             CreateBunny(scene, cam, geomTrans);
         else if (name.compare("cornell") == 0)
             CreateCornell(scene, cam, geomTrans);
-        else
-            CreateSponza(scene, cam, geomTrans);
+        
+        logger.info << "Unknown scene, defaulting to Cornell Box" << logger.end;
+        CreateCornell(scene, cam, geomTrans);
     }
     
     void SceneCreator::CreateCornell(ISceneNode *sceneRoot, BoundedCamera *cam, 
@@ -65,8 +66,8 @@ namespace OpenEngine {
         cam->SetPosition(Vector<3, float>(-4.5f, 3.0f, 4.5f));
         cam->LookAt(Vector<3, float>(-0.8f, -1.0f, 0.0f));
 
-        //cam->SetMinimumBound(Vector<3, float>(-4.9f));
-        //cam->SetMaximumBound(Vector<3, float>(4.9f));
+        cam->SetMinimumBound(Vector<3, float>(-4.9f));
+        cam->SetMaximumBound(Vector<3, float>(4.9f));
         
         //cam->SetPosition(Vector<3, float>(0.0f, 2.0f, 9.5f));
         //cam->LookAt(Vector<3, float>(0.0f, 0.0f, 0.0f));

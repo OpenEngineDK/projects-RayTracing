@@ -130,9 +130,19 @@ int main(int argc, char** argv) {
     Logger::AddLogger(new StreamLogger(&std::cout));
 
     string sceneName = argc >= 2 ? string(argv[1]) : "";
-
+    
     // Print usage info.
     logger.info << "========= Efficient Ray Tracing of Dynamic Scenes on the GPU =========" << logger.end;
+
+    if (sceneName.compare("") == 0 || sceneName.compare("help") == 0){
+        logger.info << "Usage: ./build/PhotonMapping/PhotonMapping SCENE" << logger.end;
+        logger.info << "SCENEs:" << logger.end;
+        logger.info << "  cornell" << logger.end;
+        logger.info << "  sponza" << logger.end;
+        logger.info << "  dragon" << logger.end;
+        logger.info << "  bunny" << logger.end;
+        exit(0);
+    }
 
     // setup the engine
     Engine* engine = new Engine;
