@@ -1,9 +1,35 @@
 \chapter{Uptaining the source}
 
-This project has been developed in OpenEngine, which is needed to
-uptain the source code.
+This project has been developed in OpenEngine, which is needed to uptain the
+source code. The project has been compiled and tested on Max OS X and Ubuntu.
 
-A guide for installing OpenEngine can be found at
-\url{http://www.openengine.dk/trac/wiki/Download}.
+OpenEngine requires Python, CMake, Boost and the version control system Darcs to
+be installed on the system. My project additionally requires that SDL, CUDA 3.1
+and FreeImage be installed on the system.
 
-\fixme{Write this!}
+OpenEngine can be installed by opening a terminal and running the
+command
+
+\terminalCommand{darcs get http://openengine.dk/code/openengine}
+
+This will place the OpenEngine source in a folder named \textit{openengine} in
+the current working directory. cd into that directory and execute the commands
+
+\terminalCommand{chmod +x dist.py}
+
+\terminalCommand{chmod +x make.py}
+
+The project and its dependencies can then be installed with the command
+
+\terminalCommand{./dist.py install proj:PhotonMapping}
+
+The project can then be compiled by running 
+
+\terminalCommand{./make.py}
+
+and run with the command
+
+\terminalCommand{./build/PhotonMapping/PhotonMapping}
+
+A short demo of the project can be found on
+\url{http://www.youtube.com/watch?v=h9gecC5woxs}.
