@@ -17,21 +17,22 @@
 % Motivate!
 
 % An optimized ray tracer will be used to test whether or not more time
-% spend on creating a better kD tree will pay off in final rendering
+% spent on creating a better kD tree will pay off in final rendering
 % time.
-
-\fixme{Definer rays!}
 
 In this chapter we shall look at how to implement a ray tracer and how it can be
 optimized to run efficiently on graphics hardware. The result will be an
-optimized ray tracer, which will be used for evaluating the quality of kd-trees in
-\refchapter{chp:results}.
+optimized ray tracer, which will be used for evaluating the quality of kd-trees
+in \refchapter{chp:results}.
 
-Before the actual ray tracing can be performed, the primary rays traced from the
-camera and into the scene must first be computed and stored in a Ray List,
-$rays$. How these rays can be generated is a large topic in itself and lies
-outside the scope of this thesis. Chapter 4 in \citebook{RTR3} provides good
-insight into the theory needed for creating these primary rays.
+A ray, $r$, is defined as a line which starts at its \textit{origin} and can be
+traced infinitely along a certain \textit{direction}, so $r = \{origin,
+direction\} \in \{R^3, R^3\}$. Before the actual ray tracing can be performed,
+the primary rays traced from the camera and into the scene must first be
+computed and stored in a Ray List, $rays$. How these rays can be generated is a
+large topic in itself and lies outside the scope of this thesis. Chapter 4 in
+\citebook{RTR3} provides good insight into the theory needed for creating the
+primary rays.
 
 The generel structure for a ray tracer that handles reflective surfaces can be
 seen in \refalg{alg:generelRayTracer}. Each ray is independent of the other rays
@@ -373,7 +374,7 @@ of the same tree nodes as it did in its previous traversel. The reason for this
 is that kd-trees will often store spatially local nodes as local nodes in the
 tree. CPU ray tracers solve this problem by pushing the not-visited child of an
 interior node onto a stack and then restarting from the first node on that
-stack. This can save a lot of resources otherwise spend on traversing the tree,
+stack. This can save a lot of resources otherwise spent on traversing the tree,
 since the ray will now restart further down the kd-tree and closer to the next
 leaf that should be visited.
 
@@ -572,7 +573,7 @@ current hardware.
 
 The rays are stored in rows from left to right in a linear array. Performing a
 \textit{sequantial ray/warp tracing} results in the ray/warp classification seen
-in \reffig{fig:sequentialRayWarp} for a frame with a resolution of 64x48. As
+in \reffig{fig:sequentialRayWarp} for an image with a resolution of 64x48. As
 seen on the figure, a large number of warps are intersecting the detailed dragon
 geometry. The threads in those warps who quickly intersect their rays with the
 simple box will then have to idle, while waiting for the rays intersecting the
