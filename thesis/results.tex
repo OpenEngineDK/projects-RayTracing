@@ -11,8 +11,8 @@
 
 % Intro
 
-In this chapter I will compare the construction speed and the quality of the
-different kd-tree construction schemes implemented as part of this thesis.
+In this chapter I will compare the speed and quality of different kd-tree
+construction schemes implemented as part of this thesis.
 
 % Hardware
 
@@ -58,18 +58,21 @@ implementations and the impact of the optimizations described in
 \refsection{sec:hierarchicalTraversal}. I have chosen to implement the
 short-stack optimization as a seperat ray tracer, instead of applying it to the
 kd-restart ray tracer. This is merely a design decision and has no impact on the
-actual results presented below. 
-%, except for presenting them more clearly, but how is it clear?
-The overall fastest ray tracer will be used in the following sections to
-evaluate the quality of the kd-trees constructed. In
+actual results presented below. The overall fastest ray tracer will be used in
+the following sections to evaluate the quality of the kd-trees constructed. In
 \refsection{sec:evaluateUpperTree} I will compare quality and construction speed
 of the different construction schemes for the upper part of the kd-tree. The
 upper tree configuration that performs best, will be used in
 \refsection{sec:evaluateUpperTree}, where the kd-tree's lower parts will be
 constructed using SAH, SSAH and no construction scheme.
 
-\fixme{Dynamic scenes, so best kd-tree is the one with lowest summed
-  construction + ray tracing time.}
+As explained in the introduction, the worst-case scenario of dynamic scenes is a
+complete reconstruction of the acceleration structure. To ensure that my
+implementations are tested against thsis worst-case scenario, the acceleration
+structures are completely rebuild for each image rendered. The best kd-tree
+configuration is therefore the one that minimizes the total time spend
+constructing the kd-tree and afterwards ray tracing it.
+
 
 \section{Evaluate Ray Tracers}\label{sec:evaluateRayTracer}
 
@@ -153,12 +156,12 @@ described in the figure's caption.
     tracer configurations to render each of the three test scenes.  The bold
     faced render times performed the best for a given ray tracer and scene. The
     ones in red performed the worst. The kd-trees for the scenes were
-    constructed with empty space maximization enabled and a threshold of 25\%,
-    the triangle/node association scheme employed was dividing. The threshold for
-    the lower tree was 32, but no lower tree was constructed. The size of the
-    kd-tree is reported in parenthesis below the name of the scene. The size of
-    the short stack was 4 elements, which has been found to perform well in
-    practice.}
+    constructed with Empty Space Maximization enabled and a threshold of 25\%,
+    the triangle/node association scheme employed was Dividing. The threshold
+    for the lower tree was 32, but no lower tree was constructed. The number of
+    nodes in the kd-tree is reported in parenthesis below the name of the
+    scene. The size of the short stack was 4 elements, which has been found to
+    perform well in practice.}
   \label{fig:rayTracerEvaluation}
 \end{figure}
 
@@ -178,9 +181,9 @@ when using packets. This may be the result of fewer warps tracing reflection
 rays, but can also be caused by an acceptable deviation in timing precision.
 
 In the Cornell Box scene, the kd-restart implementation performed worse than the
-exhaustive ray tracer, even without taking the kd-tree construction time into
-account. This is not entirely unexpected, since the exhaustive ray tracer only
-needs to intersect every ray with 36 triangles, where the kd-restart
+exhaustive ray tracer, even without taking the kd-tree construction time of 1ms
+into account. This is not entirely unexpected, since the exhaustive ray tracer
+only needs to intersect every ray with 36 triangles, where the kd-restart
 implementation needs to first traverse the root node, before it can begin
 ray/triangle intersection in leafs that can reference up to 32 triangles. In the
 more complex scenes, kd-restart outperformed exhaustive ray tracing by a wide
@@ -209,21 +212,21 @@ quality of kd-trees in the following sections.
 \section{Evaluate Upper Tree Creation}\label{sec:evaluateUpperTree}
 
 Since the Cornell Box scene contains so few triangles and only shows that the
-exhaustive ray tracer is fastest for extremely simple scenes, I will not use it
-to evaluate the kd-tree constructor configurations. Instead I will only use the
-Reflecting Dragon and Sponza scenes.
+exhaustive ray tracer is fastest for extremely simple scenes, I will not be
+using it to evaluate the kd-tree constructor configurations. Instead I will only
+use the Reflecting Dragon and Sponza scenes.
 
 The results from creating the upper parts of the kd-tree with different
 configurations can be seen in \reffig{fig:upperResults}. The entries in the
-table shows kd-tree construction time, time used to render the scene and in
-parenthesis the amount of nodes in the final tree can be seen.
+table shows kd-tree construction time, the time used to render the scene and the
+number in parenthesis is the amount of nodes in the constructed kd-tree.
+
 
 \begin{figure}
   \centering
   \SetTabelTextSize
   \begin{tabular} {c | c | c || c || c ||}
-    % Titel bar: Association scheme | empty space maximization | threshold |
-    % Cornell | dragon | sponza
+    % Titel bar: Association scheme | empty space maximization | threshold | dragon | sponza
     \multicolumn{1}{c}{\begin{tabular}{c}\textit{Association} \\ \textit{scheme:}\end{tabular}} &
     \multicolumn{1}{c}{\begin{tabular}{c}\textit{Empty Space} \\ \textit{Maximization:}\end{tabular}} &
     \begin{tabular}{c}\textit{Empty}\\\textit{Space} \\ \textit{Threshold:}\end{tabular} &
@@ -269,20 +272,20 @@ Inclusion. In the above scenes this means that while Dividing produces the
 highest quality trees, Box Inclusion makes up for its slower ray tracing results
 by producing trees up to 19\% faster.
 
-As can be seen on the table, enabling empty space maximization adds 4-6ms to the
+As can be seen on the table, enabling Empty Space Maximization adds 4-6ms to the
 kd-tree construction time and a few thousand extra nodes to the tree. Enabling
 it also increase the tree quality though and ray tracing improvements lie in the
 range of 8\% for the Reflecting Dragon and 24\% in Sponza's great hall. The
 substantial increase in Sponza is a direct consequence of all the empty space in
-the middle of the scene that the rays have to traverse. As for setting the empty
-space threshold, 35\% seems to be marginally better than 25\%. They achieve
-roughly the same tree quality, but with a 35\% empty space threshold the tree
+the middle of the scene that the rays have to traverse. As for setting the Empty
+Space Threshold, 35\% seems to be marginally better than 25\%. They achieve
+roughly the same tree quality, but with a 35\% Empty Space Threshold the tree
 becomes 4-10\% smaller than a tree with a 25\% threshold. The tree will thus
 take up less memory, which can become important on GPU's where memory is
 limited.
 
-Overall configuring the tree constructor to use Box Inclusion and empty space
-maximization with a 35\% threshold yielded the best tradeoff between
+Overall configuring the tree constructor to use Box Inclusion and Empty Space
+Maximization with a 35\% threshold yielded the best tradeoff between
 construction speed and ray tracing time.
 
 \section{Evaluate Lower Tree Creation}\label{sec:evaluateLowerTree}
@@ -347,10 +350,11 @@ means storing an extra 32bit of information per thread, which results in more
 register spilling. The real performance hit however comes when creating the
 lower tree. The reason for this is that the register usage of the kernels
 implementing \refalg{alg:calcSplittingPlanes}, \refalg{alg:calcSAHCost} and
-\refalg{alg:calcBalancedCost} increase drastically when switching to 64bit bit
-masks. An example is \refalg{alg:calcSplittingPlanes} which increase from a
-register usage of 30 per thread when 32bit bit masks are used, to 53 registers
-per thread at 64 bits. Typing the register usge into the \textit{CUDA Occupancy
+\refalg{alg:calcBalancedCost} in \refsection{sec:lowerNodes} increase
+drastically when switching to 64bit bit masks. An example is
+\refalg{alg:calcSplittingPlanes} which increase from a register usage of 30 per
+thread when 32bit bit masks are used, to 53 registers per thread at 64
+bits. Inputting this register usage into the \textit{CUDA Occupancy
   Calculator}\footnote{\url{http://developer.download.nvidia.com/compute/cuda/3_2_prod/sdk/docs/CUDA_Occupancy_Calculator.xls}}
 we can see that 53 registers per thread results in an occupancy of 25\%, which
 is not enough to properly utilize the GPU's multiprocessors, nor enough to
@@ -358,20 +362,19 @@ efficient hide global memory latency. Trying to minimize the register usage by
 storing more computations in global memory only increases the global memory
 latency and does little for performance.
 
-Looking at the results for kd-trees wieth 32bit bit masks, constructing no lower
-tree performs best overall. Obviously kd-trees constructors that do not
-construct any lower tree will have the fastest construction time, but from
-\reffig{fig:lowerResults} we can also see that they have the fastest ray tracing
-time and therefore the highest tree quality. This data seems to verify my idea
-from the No Tree Construction subsection in \refsection{sec:lowerNodes}, that
-favoring larger leaf nodes on GPU's would reduce thread divergence and increase
-performance.
+Looking at the results for kd-trees with 32bit bit masks, constructing no lower
+tree performs best overall. Obviously kd-tree constructors that do not construct
+any lower tree will have the fastest construction time, but that they have the
+fastest ray tracing time and therefore the highest tree quality. This data seems
+to verify my idea from the No Tree Construction subsection in
+\refsection{sec:lowerNodes}, that favoring larger leaf nodes on GPUs can reduce
+thread divergence and increase performance.
 
-Using the surface area heuristic to construct the lower trees instead of no
+Using the Surface Area Heuristic to construct the lower trees instead of no
 construction increases construction time by up to 253\% in the worst case, while
 all the time yielding kd-trees of similar quality.
 
-Using my proposed simplified surface area heuristic instead only increases
+Using my proposed Simplified Surface Area Heuristic instead only increases
 construction time by 31-45\% compared to no tree construction, but also reduces
 the tree quality by up to 27\%, which makes it unsuitable compared to no tree
 construction.

@@ -1750,11 +1750,11 @@ access becomes harder for the multiprocessor to hide if the access pattern is
 fragmented. Warps of threads traversing the tree will most likely diverge at
 some point and start to require different global memory. This becomes an even
 bigger problem when they reach the leaf nodes and different threads have to test
-intersection with different triangles. Favoring larger\textit{larger?} leaf
-nodes would reduce this fragmentation and serve to streamline global data
+intersection with different triangles. Favoring leaf nodes with more triangles
+associated would reduce this fragmentation and serve to streamline global data
 fetching across warps. I therefore propose that no lower tree be created. This
 would save both the time spend preprocessing the nodes to compile the list of
-split candidates and the time spend actually creating the subtree. 
+split candidates and the time spend actually creating the subtree.
 
 Which of the lower tree construction methods proves the best will be evaluated
 in \refsection{sec:evaluateLowerTree}
