@@ -11,43 +11,54 @@ computational power and potential memory bandwidth over the last decade. This is
 evidenced by \reffig{fig:gpuCpuCompare}, which compares the development of
 NVIDIA's GPUs with that of Intel's CPUs. These figures illustrate the potential
 performance gain associated with implementing computationally heavy solutions on
-the todays GPUs instead of CPUs.
-
-\fixme{mere uddybende, FLOPS forskel, nogen hints?}
+the todays GPUs instead of CPUs. The first figure, \reffig{fig:gpuCpuGFLOPS},
+compares the computational capacity and shows how the theoretical number of
+floating point operations have increase over the last decade, with GPU's being
+able to perform nearly 1500G floating point operations per second as of the
+GeForce 480 GTX series, while Intel CPUs only reach around 200G operations. The
+second figure, \reffig{fig:gpuCpuThroughput}, compares the memory bandwith of
+GPUs and CPUs. Memory bandwidth is the rate at which data can be read from or
+stored into memory by one of the processing units and is around 6 times higher
+and the GPU than the CPU.
 
 \begin{figure}
   \centering 
 
-  \subfloat[Floating point operations per second.]{
+  \subfloat[Comparison of computational capacity in billions of floating point
+    operations per second.]{ 
     \includegraphics[width=0.45\textwidth]{GFLOPS}
+    \label{fig:gpuCpuGFLOPS}
   }
-  \subfloat[Memory bandwidth.]{
+  \subfloat[Comparison of memory bandwidth in gigabyte per second.]{
     \includegraphics[width=0.45\textwidth]{throughput}
+    \label{fig:gpuCpuThroughput}
   }
   
-  \caption[Comparison of FLOPS and throughput on GPU's and CPU's.]{A comparison
+  \caption[Comparison of FLOPS and memory bandwidth on GPUs and CPUs.]{A comparison
     of the development of floating point operations per second and memory
-    bandwidth on GPU's and CPU's. \\The figures are from Chapter 1 in
+    bandwidth on GPUs and CPUs over the last decade. \\The figures are from Chapter 1 in
     \citebook{CUDAPG}.}\label{fig:gpuCpuCompare}
 \end{figure}
 
 % What is different form CPUs
 
-Utilizing the GPU's computational power and throughput effectively, however, is
-not straightforward and in order to create algorithms on the GPU that run faster
-than their CPU counterparts, we need to understand how the GPU works.
+Utilizing the GPU's computational power and memory bandwidth effectively,
+however, is not straightforward and in order to create algorithms on the GPU
+that run faster than their CPU counterparts, we need to understand how the GPU
+works.
 
-The reason behind the difference in computational power and throughput seen in
-\reffig{fig:gpuCpuCompare}, is that the CPU is designed with a large cache at
-its disposal and efficient handling of control flow. This enables it to handle
-all kinds of applications, not just computationally intense ones. The GPU on the
-other hand is designed for high throughput of small, arithmetically intense,
-\textit{data parallel programs}\footnote{Each instruction is concurrently
-  applied on multiple data elements.} called \textit{kernels}, which is exactly
-what is required of a graphics card processing thousands of independent vertices
-and performing the same color calculations, or \textit{shading}, on hundreds of
-thousands of \textit{fragments}\footnote{A fragment contains all the data needed
-  to generate the color of geometry in a single raster cell.}.
+The reason behind the difference in computational power and memory bandwidth
+seen in \reffig{fig:gpuCpuCompare}, is that the CPU is designed with a large
+cache at its disposal and efficient handling of control flow. This enables it to
+handle all kinds of applications, not just computationally intense ones. The GPU
+on the other hand is designed for high throughput of small, arithmetically
+intense, \textit{data parallel programs}\footnote{Each instruction is
+  concurrently applied on multiple data elements.} called \textit{kernels},
+which is exactly what is required of a graphics card processing thousands of
+independent vertices and performing the same color calculations, or
+\textit{shading}, on hundreds of thousands of \textit{fragments}\footnote{A
+  fragment contains all the data needed to generate the color of geometry in a
+  single raster cell.}.
 
 Since the graphics card is designed to perform vertex and fragment processing
 independently of their respective neighbouring threads, this means that no
