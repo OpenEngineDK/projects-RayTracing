@@ -38,9 +38,10 @@ namespace OpenEngine {
             CreateBunny(scene, cam, geomTrans);
         else if (name.compare("cornell") == 0)
             CreateCornell(scene, cam, geomTrans);
-        
-        logger.info << "Unknown scene, defaulting to Cornell Box" << logger.end;
-        CreateCornell(scene, cam, geomTrans);
+        else        {
+            logger.info << "Unknown scene, defaulting to Cornell Box" << logger.end;
+            CreateCornell(scene, cam, geomTrans);
+        }
     }
     
     void SceneCreator::CreateCornell(ISceneNode *sceneRoot, BoundedCamera *cam, 
