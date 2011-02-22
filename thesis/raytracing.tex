@@ -92,7 +92,7 @@ will be added incrementally to the hierarchical ray tracer and implementation
 details to each specific optimization is therefore discussed alongside the
 theory. The optimized ray tracer will use the short-stack optimization from
 \horn, a packet scheme inspired by Wald et al.\citebook{Wald:2001:IRCRT} and an
-optimization inspired by empty space maximizing, that utilizes a leaf's bounding
+optimization inspired by Empty Space Maximizing, that utilizes a leaf's bounding
 box data computed while creating the kd-tree.
 
 The ray tracers and their optimization will be evaluated in
@@ -649,7 +649,7 @@ screen packets will still speed up primary rays.
 
 \subsection{Skipping Leaf Nodes}
 
-% Inspired by empty space maximizing
+% Inspired by Empty Space Maximizing
 
 The final ray tracer optimization presented in this thesis is inspired by the
 early out option provided by Empty Space Maximization.

@@ -237,7 +237,7 @@ it also means storing more data per node and in the case of slow memory access
 it can cause a memory latency bottleneck. However, when experimenting with
 different techniques for creating kd-trees, such as is done in this thesis, the
 added flexibility can be a benefit. In \refsection{sec:gpuEmptySpace} we shall
-see how this flexibility can be used to add the \textit{empty space maximizing}
+see how this flexibility can be used to add the \textit{Empty Space Maximizing}
 optimization, without modifications to the existing kd-tree construction
 implementation. This would not have been possible had the tree been balanced.
 
@@ -271,7 +271,7 @@ the splitting plane and when to end the recursion and create a leaf.
 % Different splitting planes heuristics.
 
 In the following section I present two algorithms that solves this problem and
-then I extend them with empty space maximizing, an optimization to the quality
+then I extend them with Empty Space Maximizing, an optimization to the quality
 of the tree that allows rays to skip large subtrees and more quickly find the
 geometry they intersect.
 
@@ -540,9 +540,9 @@ box, which creates optimal split candidates or \textit{perfect split
 
 \subsubsection{Empty Space Maximizing}\label{sec:emptySpace}
 
-An effective optimization to the quality of kd-trees is \textit{empty space
-  maximization} and it can be applied to both trees craeted with spatial median
-splitting or SAH. The idea behind the optimization is to cut away large empty
+An effective optimization to the quality of kd-trees is \textit{Empty Space
+  Maximization} and it can be applied to both trees created with Spatial Median
+Splitting or SAH. The idea behind the optimization is to cut away large empty
 parts of the scene near the top of the tree. This is done by injecting empty
 leaf nodes into the tree at interior nodes where the distance from their
 parent's bounding box to the associated geometry is above a certain
@@ -550,10 +550,10 @@ threshold. The empty nodes will then provide rays traversing the tree with an
 early out option, allowing them to skip a large portion of the geometry.
 
 \Reffig{fig:noEmptySpaceExample} shows a simple scene without empty space cut
-away and its corrosponding kd-tree. Without empty space maximization the ray
+away and its corrosponding kd-tree. Without Empty Space Maximization the ray
 entering the scene from the lower left cornor is forced to perform intersection
 tests with every triangle in leaf 1. In contrast the kd-tree in
-\reffig{fig:emptySpaceExample} has been created with empty space maximization
+\reffig{fig:emptySpaceExample} has been created with Empty Space Maximization
 enabled and the ray entering the scene now ends up in leaf 4. Leaf 4 is empty
 and allows the ray to advance forward while skipping every triangle in leaf 1.
 
@@ -602,9 +602,9 @@ and allows the ray to advance forward while skipping every triangle in leaf 1.
     \label{fig:noEmptySpaceTree}
   }
   
-  \caption[Scene without empty space maximization.]{A kd-tree
+  \caption[Scene without Empty Space Maximization.]{A kd-tree
     constructed around a simple scene. The kd-tree doesn't use the
-    empty space maximization optimization.}
+    Empty Space Maximization optimization.}
   \label{fig:noEmptySpaceExample}
 \end{figure}
 
@@ -638,7 +638,11 @@ and allows the ray to advance forward while skipping every triangle in leaf 1.
       \draw (0,6) -- (6,6);
       
       % Empty space
-      \draw[ball color=gray, color=green, shading=ball,gray] (0,0) -- (0,6) -- (6,6) -- (6,0) -- (0,0);
+%      \draw[ball color=gray, color=green, shading=ball,gray] (0,0) -- (0,6) -- (6,6) -- (6,0) -- (0,0);
+      \foreach \x in {0,0.2,...,6}
+        \draw[line width=0.5pt, dotted] (0, \x) -- (\x, 0);
+      \foreach \x in {0,0.2,...,5.8}
+        \draw[line width=0.5pt, dotted] (6, \x) -- (\x, 6);
       
       % Ray
       \drawRay{0,0}{6,4}
@@ -660,10 +664,10 @@ and allows the ray to advance forward while skipping every triangle in leaf 1.
     \label{fig:emptySpaceTree}
   }
   
-  \caption[Empty space maximization.]{An example of empty space
-    maximizing. The grey ball shaded area represents an empty node and
-    allows the ray to leap across it and skip intersection tests with
-    the 5 triangles above.}\label{fig:emptySpaceExample}
+  \caption[Empty Space Maximization.]{An example of Empty Space Maximizing. The
+    dotted region represents an empty node and allows the ray to leap across it,
+    thus skipping intersection tests with the 5 triangles
+    above.}\label{fig:emptySpaceExample}
 \end{figure}
 
 
@@ -706,7 +710,7 @@ acceleration structure.
 % What to do with the triangles caught in the splitting plane.
 
 
-\subsubsection{Triangle splitting}
+\subsubsection{Triangle Splitting}
 
 % Normally ppl split.
 
@@ -766,7 +770,7 @@ triangles. This last case however is highly unlikely and in generel it can be
 assumed that a split triangle always produces three new triangles.
 
 
-\subsubsection{Triangle dividing}
+\subsubsection{Triangle Dividing}
 
 \begin{figure}
   \centering
@@ -856,7 +860,7 @@ nodes geometry.
 
 % Simpler than splitting.
 
-Performing the triangle/bounding box overlap test required for triangle dividing
+Performing the triangle/bounding box overlap test required for Triangle Dividing
 can be a computationally heavy task. A cheaper splitting scheme is to test if
 the triangle's axis aligned bounding box, $t$, overlaps with the axis aligned
 bounding box of the node, $n$. Performing the overlap test between these axis
@@ -866,7 +870,8 @@ aligned bounding boxes is simply
   \text{overlap}(n,v) = n_{min} < v_{max} \wedge v_{min} < n_{max}
 \end{displaymath}
 
-\fixme{Is < defined for $R^3$?}
+where the infix operator $<: \{R^3, R^3\} \rightarrow bool$ is defined as $n < v
+= n.x < v.x \wedge n.y < v.y \wedge n.z < v.z$.
 
 \begin{figure}
   \centering
@@ -1059,7 +1064,7 @@ results in two leafs, which for the upper parts of the tree is almost always
 wrong. This makes SAH an undesirable algorithm for choosing splitting planes for
 the upper tree, since we need to be able to decide on which splitting plane to
 use fast to accomodate dynamic scenes. Instead \zhou{} proposes to use spatial
-median splitting with empty space maximization. Parallizing the splitting plane
+median splitting with Empty Space Maximization. Parallizing the splitting plane
 decision over the geometry then becomes reducing an axis aligned bounding box
 from a node's associated triangles, again as described in
 \refsection{sec:reduce}, and then each node can use that bounding box to decide
@@ -1169,7 +1174,7 @@ subsequent threads can access nodes sequentially.
                  \ENDFOR
 
                  \STATE{}
-                 \COMMENTIT{Perform empty space maximization.}
+                 \COMMENTIT{Perform Empty Space Maximization.}
                  \COMMENTIT{See \refalg{alg:emptySpaceMaximizing}.}
                  \STATE{...}
                  \STATE{}
@@ -1293,20 +1298,19 @@ a child node.
 
 
 
-\subsubsection{Adding empty space maximizing}\label{sec:gpuEmptySpace}
+\subsubsection{Adding Empty Space Maximizing}\label{sec:gpuEmptySpace}
 
 % Plugable solution, add the new nodes after the ones in nextlist.
 
-To experiment with the empty space maximization optimization it needs to be
-implemented as a plugable solution\fixme{another word for plugable?}, which can
-be turned on and off at will. This has been achieved with the design found in
-\refalg{alg:emptySpaceMaximizing}, which injects new nodes created by empty
-space maximizing into the tree. In order to perform empty space maximizing a
-\textit{loose bounding box} needs to be propagated down the tree. A loose
-bounding box is computed by splitting a parents bounding box with its splitting
-plane. Since the geometry inside a child might not touch all sides of a parents
-bounding box, this propagated bounding box provides a loose upper bound on the
-geometry.
+To experiment with the Empty Space Maximization optimization it needs to be
+implemented as a solution that can be turned on and off at will. This has been
+achieved with the design found in \refalg{alg:emptySpaceMaximizing}, which
+injects new nodes created by Empty Space Maximizing into the tree. In order to
+perform Empty Space Maximizing a \textit{loose bounding box} needs to be
+propagated down the tree. A loose bounding box is computed by splitting a
+parents bounding box with its splitting plane. Since the geometry inside a child
+might not touch all sides of a parents bounding box, this propagated bounding
+box provides a loose upper bound on the geometry.
 
 \begin{algorithm}
   \caption{Calculate Empty Space Maximization}
@@ -1324,7 +1328,7 @@ geometry.
                  \STATE{...}
 
                  \STATE{}
-                 \COMMENTIT{Perform empty space maximization.}
+                 \COMMENTIT{Perform Empty Space Maximization.}
                  \IF{$performEmptySpaceMaximization$}
                  \DECLARE{$emptySplitNodes, emptyAddr$}{List}
                  \DECLARE{$emptySides$}{Plane List}
@@ -1362,9 +1366,9 @@ geometry.
 
 % Explain
 
-The algorithm for performing empty space splitting is inserted right after
+The algorithm for performing Empty Space Maximization is inserted right after
 computing the nodes' tight bounding boxes and before the new child nodes are
-created. Whether or not empty space maximization should be performed on any of
+created. Whether or not Empty Space Maximization should be performed on any of
 the nodes in $activeNodes$ is then checked in parallel for all nodes. Each side
 of a node is checked sequentially and if it is found that the amount of empty
 space between the tight bounding box and the loose bounding box on a given side
@@ -1376,7 +1380,7 @@ active list. This injection is depicted in \reffig{fig:noEmptySpaceExample} and
 
 Once the amount of empty splits per node has been determined, where to place
 those nodes is computed by calculating the prefix-sum of
-$emptySplitNodes$. Empty space maximization nodes are injected into to the list
+$emptySplitNodes$. Empty Space Maximization nodes are injected into to the list
 of nodes shown in \reffig{fig:nodeStructure} as described on
 \reffig{fig:emptyNodeStructure}, which again preserves the invariant that the
 next batch of active nodes are located at the end of the list. The arrows in
@@ -1416,9 +1420,9 @@ tree.
     \draw[rounded corners=20mm, ->] (12,0) -- (19.25,-1.4) -- (26.5,-0.1);
 
   \end{tikzpicture}
-  \caption[The structure of the kd-trees nodes in memory with empty space
-    maximization.]{The structure of the kd-trees nodes in memory with empty
-    space maximization. The arrows symbolize the parent$\rightarrow$child
+  \caption[The structure of the kd-trees nodes in memory with Empty Space
+    Maximization.]{The structure of the kd-trees nodes in memory with Empty
+    Space Maximization. The arrows symbolize the parent$\rightarrow$child
     relationship}
   \label{fig:emptyNodeStructure}
 \end{figure}
@@ -1426,12 +1430,12 @@ tree.
 
 % Propagating aabb's downwards
 
-With the addresses of the nodes produced by empty space maximization computed, a
+With the addresses of the nodes produced by Empty Space Maximization computed, a
 kernel can be launched that creates the actual empty space nodes and rewires the
 parent node to point to the empty space nodes instead of its current child node.
 
-This construction is very flexible and all computations needed by empty space
-maximization can be turned on and off at will, which allows me to easily compare
+This construction is very flexible and all computations needed by Empty Space
+Maximization can be turned on and off at will, which allows me to easily compare
 the quality and construction speed of trees with and without this optimization.
 
 \subsection{Lower Tree Creation}\label{sec:lowerNodes}

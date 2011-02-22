@@ -66,9 +66,9 @@ upper tree configuration that performs best, will be used in
 \refsection{sec:evaluateUpperTree}, where the kd-tree's lower parts will be
 constructed using SAH, SSAH and no construction scheme.
 
-As explained in the introduction, the worst-case scenario of dynamic scenes is a
-complete reconstruction of the acceleration structure. To ensure that my
-implementations are tested against thsis worst-case scenario, the acceleration
+As explained in the introduction, the worst-case scenario for a dynamic scene is
+a complete reconstruction of the acceleration structure. To ensure that my
+implementations are tested against the worst-case scenario, the acceleration
 structures are completely rebuild for each image rendered. The best kd-tree
 configuration is therefore the one that minimizes the total time spent
 constructing the kd-tree and afterwards ray tracing it.
@@ -76,7 +76,7 @@ constructing the kd-tree and afterwards ray tracing it.
 
 \section{Evaluate Ray Tracers}\label{sec:evaluateRayTracer}
 
-\Reffig{fig:rayTracerEvaluation} shows the time it took different ray tracer
+\Reffig{fig:rayTracerEvaluation} shows the time it took the different ray tracer
 configurations to render each of the three test scenes. The kd-tree
 configuration used to produce kd-trees for the hierarchical ray tracers is
 described in the figure's caption.
@@ -100,7 +100,7 @@ described in the figure's caption.
       \tabelScene{Cornell \\ Box \\ 1.0ms (3)} & 
       \tabelScene{Reflecting \\ Dragon \\ 150ms (49909)} & 
       \tabelScene{Sponza \\ 263ms (98779)}\\
-      \hline
+      \hline\hline
       \multirow{4}{*}{Exhaustive\footnote{The exhaustive ray tracer only ray traces the first 4096 triangles in a scene. Even with this hard upper limit it is clear that an exhaustive approach will not work for detailed scenes.}} & 
         \multirow{2}{*}{\tabelMoeller} & No & N/A & 11.2ms & \worstResult{1118ms} & \worstResult{964ms} \\
       \cline{3-7}
@@ -172,13 +172,14 @@ tracer generelly performs worst of all the ray tracers. This was to be expected,
 since the exhaustive ray tracers time complexity is $O(nm)$ and the hierarchical
 ray tracers' are $O(n \log m)$, for $n$ rays and $m$ triangles. As expected
 Woop's simpler Triangle/Ray intersection performs better than Moeller-Trumbore's
-in all cases. The screen space packet optimization has also been applied to the
-exhaustive ray tracer, but generelly causes a small overhead instead of a
-performance improvement. This was to be expected, since all rays intersect the
-triangles in the same order, and therefore it does not matter which rays are
-traced together. In the Reflecting Dragon scene we see a small speed increase
-when using packets. This may be the result of fewer warps tracing reflection
-rays, but can also be caused by an acceptable deviation in timing precision.
+for all exhaustive ray tracer configurations. The screen space packet
+optimization has also been applied to the exhaustive ray tracer, but generelly
+causes a small overhead instead of a performance improvement. This was to be
+expected, since all rays intersect the triangles in the same order, and
+therefore it does not matter which rays are traced together. In the Reflecting
+Dragon scene we see a small speed increase when using packets. This may be the
+result of fewer warps tracing reflection rays, but can also be caused by an
+acceptable deviation in timing precision.
 
 In the Cornell Box scene, the kd-restart implementation performed worse than the
 exhaustive ray tracer, even without taking the kd-tree construction time of 1ms
@@ -191,22 +192,33 @@ margin. Unsurprisingly the configuration consisting of Moeller-Trumbore
 intersection, no packets and no leaf skipping performed the worst. It was a bit
 more surprising to see that with packets and leaf skipping enabled, it did not
 matter much if Moeller-Trumbore's or Woop's intersection method was
-used. However, this makes sense since the rays in the same warp are spatially
-close and are therefore able to skip most of the leaf nodes they visit, and thus
-a lot of intersection computations, before reaching their intersection point.
+used. Especially since Woop's intersection test generelly outperformed
+Moeller-Trumbore. However, this makes sense since the rays in the same warp are
+spatially close and are therefore able to skip most of the leaf nodes they
+visit, and thus a lot of intersection computations, before reaching their
+intersection point.
+
+The packet size 4x8 was found to perform best and is therefore the only packet
+size represented in \reffig{fig:rayTracerEvaluation} to keep the table
+simple. In generel enabling Packets decreased rendering time by 27-37\%.
+
+Enabling Leaf Skipping decrased rendering time by 28-54\%. The largest decrease
+in rendering time was seen in configurations that used Moeller-Trumbore's
+ray/triangle intersection tests, again confirming that Moeller-Trumbore is the
+slowest ray/triangle intersectiong compared to Woop's.
 
 The short-stack implementation performed very similar to kd-restart. In the
 simple Cornell Box scene it performed slightly worse, due to the overhead of
 maintaining a stack. In the Reflecting Dragon scene, it performed roughly
 similar to kd-restart and in the Sponza scene it outperformed both the
-exhaustive ray tracer, kd-restart and was about 70\% faster than the an
-unoptimized kd-restart implementation.
+exhaustive ray tracer, kd-restart and was about 70\% faster than an unoptimized
+kd-restart implementation.
 
-Overall the short-stack implementation performed the best. While it may have
-been outperformed in the Cornell Box, it was by far the best ray tracer in the
-complex Sponza scene. I will therefore use the short-stack implementation, with
-Moeller-Trumber intersection, packets and leaf skipping enabled, to evaluate the
-quality of kd-trees in the following sections.
+Overall the short-stack implementation with Moeller-Trumber intersection,
+packets and leaf skipping enabled performed the best. While it may have been
+outperformed in the Cornell Box, it was by far the best ray tracer in the
+complex Sponza scene. I will therefore use it to evaluate the quality of
+kd-trees in the following sections.
 
 
 \section{Evaluate Upper Tree Creation}\label{sec:evaluateUpperTree}
@@ -232,7 +244,7 @@ number in parenthesis is the amount of nodes in the constructed kd-tree.
     \begin{tabular}{c}\textit{Empty}\\\textit{Space} \\ \textit{Threshold:}\end{tabular} &
     \tabelScene{Reflecting \\ Dragon} &
     \tabelScene{Sponza}\\
-    \hline % Titel end
+    \hline\hline % Titel end
     \multirow{4}{*}{Dividing} & No & N/A & \worstResult{146/385ms (38k)} & \worstResult{258/220ms (87k)}\\
     \cline{2-5}
     & \multirow{3}{*}{Yes} & 15\% & 150/376ms (56k) & 263/167ms (104k) \\
@@ -301,7 +313,7 @@ construction speed and ray tracing time.
     \tabelParam{c||}{$C_N/C_i:$} &
     \tabelScene{Reflecting \\ Dragon} &
     \tabelScene{Sponza}\\
-    \hline % Titel end
+    \hline\hline % Titel end
     \multirow{7}{*}{32bit} & None & N/A & \bestResult{121/357ms (48.1k)} & \bestResult{219/179ms (120k)}\\
     \cline{2-5}
     & \multirow{3}{*}{SAH} & 24 & 273/358ms (48.2k) & 616/180ms (121k)\\

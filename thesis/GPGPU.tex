@@ -505,8 +505,6 @@ show how this specific sorting problem can be solved.
 
 \section{Optimization Techniques: Reduction}\label{sec:reduce}
 
-\fixme{Optimization results}
-
 % Motivation: Reduction was important in the previous step and will be again for
 % median splitting
 
@@ -519,15 +517,17 @@ list of data in some order while building a return value.
 %% boxes of the kd-tree's nodes, used when performing median splits.
 
 In this section I present a naïve reduction algorithm and incrementally apply
-CUDA specific optimizations to it. The reduction example will process the data
-using the binary operator \textbf{min}, with identity element $\infty$, and
-return the smallest value from the input list, but the algorithm presented can
-easily be generalized to any binary operator and its identity element. The naïve
-algorithm is based on the reduction algorithm presented above and will have a
-time complexity of $O(n)$, which is the best we can hope for. Instead of
-improving the time complexity, the following optimizations will instead focus on
-making better use of the GPU by hiding latency, using faster memory where
-available and reduce the number of calculations made.
+CUDA specific optimizations to it. At the end of the section I present a table
+summarizing the performance increase of each optimization. The reduction example
+will process the data using the binary operator \textbf{min}, with identity
+element $\infty$, and return the smallest value from the input list, but the
+algorithm presented can easily be generalized to any binary operator and its
+identity element. The naïve algorithm is based on the reduction algorithm
+presented above and will have a time complexity of $O(n)$, which is the best we
+can hope for. Instead of improving the time complexity, the following
+optimizations will instead focus on making better use of the GPU by hiding
+latency, using faster memory where available and reduce the number of
+calculations made.
 
 % Works on individual blocks, must be run twice if input is too large for one
 % block to handle.
@@ -560,8 +560,8 @@ is returned by the first thread.
               {$values$ : Number List; $id$ : Integer; $elements$ : Integer}
               {$result$ : Number}
               {\ASSIGN{$offset$}{$1$}
-                \WHILE{$offset < elements$}
-                  \IF{$id$ \MOD  $offset = 0$}
+                \WHILE{$id + offset < elements$}
+                  \IF{$id$ \MOD $(offset * 2) = 0$}
                   \ASSIGN{$values[id]$}{\MIN{$values[id]$}{$values[id + offset]$}}
                   \ENDIF
                   \ASSIGN{$offset$}{$offset * 2$}
@@ -600,7 +600,7 @@ previous implementation.
               {$values$ : Number List; $id$ : Integer; $elements$ : Integer}
               {$result$ : Number}
               {\ASSIGN{$offset$}{$elements / 2$}
-                \WHILE{$offset > 1$}
+                \WHILE{$offset > 0$}
                   \IF{$id < offset$}
                   \ASSIGN{$values[id]$}{\MIN{$values[id]$}{$values[id + offset]$}}
                   \ENDIF
@@ -641,7 +641,7 @@ coalesced memory fetches.
                 \ASSIGN{$sValues[id]$}{$values[id]$}
                 \SYNC
                 \ASSIGN{$offset$}{$elements / 2$}
-                \WHILE{$offset > 1$}
+                \WHILE{$offset > 0$}
                   \IF{$id < offset$}
                   \ASSIGN{$sValues[id]$}{\MIN{$sValues[id]$}{$sValues[id + offset]$}}
                   \ENDIF
@@ -681,7 +681,7 @@ can be seen in \refalg{alg:registerReduct}.
                 \ASSIGN{$rValue \leftarrow sValues[id]$}{$values[id]$}
                 \SYNC
                 \ASSIGN{$offset$}{$elements / 2$}
-                \WHILE{$offset > 1$}
+                \WHILE{$offset > 0$}
                   \IF{$id < offset$}
                   \ASSIGN{$rValue \leftarrow sValues[id]$}{\MIN{$rValue$}{$sValues[id + offset]$}}
                   \ENDIF
@@ -747,7 +747,7 @@ takes a lot of space and has therefore been omitted here.
                 \ASSIGN{$rValue \leftarrow sValues[id]$}{\MIN{$values[id]$}{$values[id + offset]$}}
                 \SYNC
                 \ASSIGN{$offset$}{$offset / 2$}
-                \WHILE{$offset > 2$}
+                \WHILE{$offset > 1$}
                   \IF{$id < offset$}
                   \ASSIGN{$rValue \leftarrow sValues[id]$}{\MIN{$rValue$}{$sValues[id + offset]$}}
                   \ENDIF
@@ -760,3 +760,47 @@ takes a lot of space and has therefore been omitted here.
               }
   \end{algorithmic}
 \end{algorithm}
+
+\subsection{Optimization results}\label{sec:optimizationResults}
+
+The reduction algorithms above have been tested as part of a kd-tree
+construction from a scene consisting of 70k triangles. During kd-tree
+construction the reduce kernels were executed 20 times and their total execution
+time can be seen in \reffig{fig:optimizationResults} aswell as the decrease in
+execution time for each optimized kernel relative to the performance of
+Reduce0. The final Reduce4 algorithm decreased execution time by 85.2\% compared
+to the naive implementation. This shows us that knowledge of how the GPU works
+is essential to creating efficient GPU implementations. In the rest of the
+thesis it can be assumed that the above optimizations have been applied to
+kernels that could benefit from them. In some cases the very nature of an
+algorithm makes it impossible to apply certain optimizations, such as coalescing
+data fetches for several threads traversing different parts of the kd-tree. In
+these cases I will note the lack of optimization and may present other
+optimizations that can be applied instead.
+
+\begin{figure}
+  \centering
+  \begin{tabular}{r | c | c |}
+    \textit{Algorithm:} & 
+    \begin{tabular}{c}\textit{Total} \\ \textit{execution time:}\end{tabular} &
+    \begin{tabular}{c}\textit{Decrease in} \\ \textit{execution time:}\end{tabular} \\
+    \hline\hline
+    Reduce0: & 59822.1$\mu$s & 0.0\% \\
+    \hline
+    Reduce1: & 26515.1$\mu$s & 55.7\% \\
+    \hline
+    Reduce2: & 13410.3$\mu$s & 77.6\% \\
+    \hline
+    Reduce3: & 12474.4$\mu$s & 79.1\% \\
+    \hline
+    Reduce4: & 8839.62$\mu$s & 85.2\% \\
+    \hline
+  \end{tabular}
+  
+  \vspace{3mm}
+  \parbox{9cm}{\caption[Result of CUDA optimizations.]{This table shows the
+      total execution time of the different reduce kernels presented in
+      \refsection{sec:reduce}. The final column shows the reduction in execution
+      time compared with Reduce0.}\label{fig:optimizationResults}}
+\end{figure}
+
