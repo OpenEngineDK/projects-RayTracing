@@ -45,7 +45,7 @@ quality of the kd-trees in \refchapter{chp:rayTracing}.
 
 Before diving into specifics about implementing kd-trees on the GPU, I will
 first use the next section to illustrate the recursive kd-tree construction
-algorithm in generel terms and describe the representation of tree nodes in
+algorithm in general terms and describe the representation of tree nodes in
 memory. The following subsections will then describe different established
 algorithms for choosing a splitting plane and how to associate geometry with
 child nodes after a split has occured. The latter part of this chapter deals
@@ -57,7 +57,7 @@ a dataparallel algorithm.
 \section{Building KD-trees}
 
 A kd-tree is a binary tree that recursively subdivides geometry into
-smaller tree nodes. \refalg{alg:kdTreeCreator} describes a generel
+smaller tree nodes. \refalg{alg:kdTreeCreator} describes a general
 recursive kd-tree construction scheme.
 
 \begin{algorithm}
@@ -206,7 +206,7 @@ straightforward.
 
 % Left balanced non pointer vs pointers
 
-In generel there are two ways a node can reference its child
+In general there are two ways a node can reference its child
 nodes. The first is through the use of \textit{balanced trees}, where
 children of a node can be addressed implicitly without the use of
 pointers. The reason for this is that nodes at the same tree level are
@@ -409,7 +409,7 @@ $C_N/C_i$.
 
 Inspite of the assumptions made by SAH's about ray distribution and that in
 practice a local greedy approximation is used, it is still considered one of the
-best heuristics and can generelly produces trees of the highest quality.
+best heuristics and can generally produces trees of the highest quality.
 
 % SAH calculation optimizations include axis round robin and some damn
 % paper I can't remember.
@@ -766,7 +766,7 @@ vertices are located to the right of the splitting plane. In both of these cases
 a triangle split will produce three new triangles. The last case in
 \reffig{fig:splittingCase2} shows one of the vertices directly intersected by
 the splitting plane and splits the triangle perfectly into two new
-triangles. This last case however is highly unlikely and in generel it can be
+triangles. This last case however is highly unlikely and in general it can be
 assumed that a split triangle always produces three new triangles.
 
 
@@ -939,7 +939,7 @@ Having explored the different methods for deciding which splitting plane to use
 and how to associate geometry with a node in the kd-tree, it is time to look at
 the actual implementation of a kd-tree construction algorithm on the GPU.
 
-The generel kd-tree construction method presented in \refalg{alg:kdTreeCreator}
+The general kd-tree construction method presented in \refalg{alg:kdTreeCreator}
 recursively constructs \textit{one} tree node at a time in a
 \textit{depth-first} manor. In order to efficiently utilize the GPU, as many of
 it's multiprocessors as possible must be fully occupied. This means
@@ -1237,7 +1237,7 @@ associated with each active node into fixed-size segments. This may seem odd at
 first, but recall that the upper nodes are split along the spatial median, that
 finding the spatial median means computing a tight bounding box around the
 geometry associated with a node and that to do this we need to apply the
-reduction described in \refsection{sec:reduce}. Generelly having fixed-size
+reduction described in \refsection{sec:reduce}. Generally having fixed-size
 segments will also make it easy to choose a kernels block size, so that each
 segment is processed by one block. A segment contains information about which
 triangles it contains, which node its triangles are associated with and, incase

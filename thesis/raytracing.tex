@@ -34,8 +34,8 @@ is a large topic in itself and lies outside the scope of this thesis. Chapter 4
 in \citebook{RTR3} provides good insight into the theory needed for creating the
 primary rays.
 
-The generel structure for a ray tracer that handles reflective surfaces can be
-seen in \refalg{alg:generelRayTracer}. Each ray is independent of the other rays
+The general structure for a ray tracer that handles reflective surfaces can be
+seen in \refalg{alg:generalRayTracer}. Each ray is independent of the other rays
 and can therefore be traced in parallel by the GPU. The algorithm first
 determines the closest intersecting triangle, i.e. the triangle first
 \textit{seen} by the ray. It then computes the color of the point on the
@@ -43,7 +43,7 @@ triangle seen by the ray and blends it with the color in $pixels[r]$ that has
 been accumulated so far. How the color is computed is not relevant to the
 kd-tree quality results in \refchapter{chp:results} and is therefore not
 discussed in this thesis. Suffice it to say that the ray tracer produced as part
-of the thesis uses the \textit{generel lighting equation} described on page 83
+of the thesis uses the \textit{general lighting equation} described on page 83
 in \citebook{RTR2}. Finally the algorithm checks if a triangle is reflective and
 if so then a reflection ray is generated and added to the $nextRays$ list. A
 reflection ray's direction, $dir_{ref}$ is calculated from the triangle's
@@ -59,8 +59,8 @@ ray and the triangle.
 If $nextRays$ contains one or more reflection rays, then process is repeated.
 
 \begin{algorithm}
-  \caption{A generel ray tracer.}
-  \label{alg:generelRayTracer}
+  \caption{A general ray tracer.}
+  \label{alg:generalRayTracer}
   \begin{algorithmic}
     \PROCEDURE{RayTracer}
               {$rays$ : Ray List, $scene$ : Scene, $pixels$ : Image}
@@ -133,7 +133,7 @@ in \refsection{sec:intersection}, which is used for interpolating the normals at
 the triangle's vertices across its surface and needed to perform lighting
 calculations. But in order to keep the algorithms simple and instructive, this
 has been omitted and is assumed to be performed by the ComputeColor method in
-\refalg{alg:generelRayTracer}.
+\refalg{alg:generalRayTracer}.
 
 
 \begin{algorithm}
@@ -174,12 +174,12 @@ node is reached. The ray then needs to intersect each triangle in the leaf and
 determine which intersected triangle, if any, is closest. If the ray intersects
 a triangle, then it reports this intersection, if not then it needs to continue
 traversing the tree. How this is done is the topic of \refsection{sec:kdRestart}
-and \refsection{sec:shortStack}. The generel algorithm for ray tracing a kd-tree
-can be seen in \refalg{alg:generelTracing}.
+and \refsection{sec:shortStack}. The general algorithm for ray tracing a kd-tree
+can be seen in \refalg{alg:generalTracing}.
 
 \begin{algorithm}
-  \caption{A generel kd-tree traversal algorithm for ray tracing}
-  \label{alg:generelTracing}
+  \caption{A general kd-tree traversal algorithm for ray tracing}
+  \label{alg:generalTracing}
   \begin{algorithmic}
     \PROCEDURE{KDTraversal}
               {$ray$ : Ray, $tree$ : kd-tree}
@@ -208,7 +208,7 @@ can be seen in \refalg{alg:generelTracing}.
 % Traversal method
 
 The method used to determine which of an interior node's children to visit next
-can be seen in \refalg{alg:generelTraversal}. For each interior node the ray
+can be seen in \refalg{alg:generalTraversal}. For each interior node the ray
 first needs to determine which of the two children are placed \textit{nearest}
 and \textit{farthest} along the rays direction. It then computes the signed
 distance from the ray to the nodes splitting plane. If this distance is below 0
@@ -220,7 +220,7 @@ beyond a visited leaf node if it did not intersect any primitives.
 
 \begin{algorithm}
   \caption{A basic kd-tree traversal algorithm}
-  \label{alg:generelTraversal}
+  \label{alg:generalTraversal}
   \begin{algorithmic}
     \PROCEDURE{Traversal}
               {$ray$ : Ray, $tree$ : kd-tree}
@@ -681,7 +681,7 @@ not intersect and save a ray lots of triangle intersection testing.
 This optimization is only possible because I've stored the leafs bounding box
 and will not be applicable in scenes where only a kd-tree is available. It does
 however show a major flaw in the kd-tree acceleration structure and a more
-generel solution to diverging rays will be presented under Future Work in
+general solution to diverging rays will be presented under Future Work in
 \refchapter{chp:future}.
 
 \begin{figure}
@@ -719,7 +719,7 @@ generel solution to diverging rays will be presented under Future Work in
   \label{fig:waywardRay}
 \end{figure}
 
-% Is not a generel kd-tree optimization. Only works because we already
+% Is not a general kd-tree optimization. Only works because we already
 % have the bounding boxes from the tree creation phase and won't
 % deallocate the space.
 
@@ -883,7 +883,7 @@ is a higher per triangle storage requirement for the scene's geometry.
 %% Woop observed that 
 
 %% As was the case with the Möller-Trumbore approach, Woops approach also
-%% transforms the generel ray/triangle intersection problem into a
+%% transforms the general ray/triangle intersection problem into a
 %% ray/unit triangle intersection problem, where the solution is
 %% trivially calculated.
 

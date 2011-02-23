@@ -168,12 +168,12 @@ described in the figure's caption.
 % Evaluate the ray tracers for the individual scenes
 
 From \reffig{fig:rayTracerEvaluation} it can be seen that the exhaustive ray
-tracer generelly performs worst of all the ray tracers. This was to be expected,
+tracer generally performs worst of all the ray tracers. This was to be expected,
 since the exhaustive ray tracers time complexity is $O(nm)$ and the hierarchical
 ray tracers' are $O(n \log m)$, for $n$ rays and $m$ triangles. As expected
 Woop's simpler Triangle/Ray intersection performs better than Moeller-Trumbore's
 for all exhaustive ray tracer configurations. The screen space packet
-optimization has also been applied to the exhaustive ray tracer, but generelly
+optimization has also been applied to the exhaustive ray tracer, but generally
 causes a small overhead instead of a performance improvement. This was to be
 expected, since all rays intersect the triangles in the same order, and
 therefore it does not matter which rays are traced together. In the Reflecting
@@ -192,7 +192,7 @@ margin. Unsurprisingly the configuration consisting of Moeller-Trumbore
 intersection, no packets and no leaf skipping performed the worst. It was a bit
 more surprising to see that with packets and leaf skipping enabled, it did not
 matter much if Moeller-Trumbore's or Woop's intersection method was
-used. Especially since Woop's intersection test generelly outperformed
+used. Especially since Woop's intersection test generally outperformed
 Moeller-Trumbore. However, this makes sense since the rays in the same warp are
 spatially close and are therefore able to skip most of the leaf nodes they
 visit, and thus a lot of intersection computations, before reaching their
@@ -200,7 +200,7 @@ intersection point.
 
 The packet size 4x8 was found to perform best and is therefore the only packet
 size represented in \reffig{fig:rayTracerEvaluation} to keep the table
-simple. In generel enabling Packets decreased rendering time by 27-37\%.
+simple. In general enabling Packets decreased rendering time by 27-37\%.
 
 Enabling Leaf Skipping decrased rendering time by 28-54\%. The largest decrease
 in rendering time was seen in configurations that used Moeller-Trumbore's
@@ -276,7 +276,7 @@ number in parenthesis is the amount of nodes in the constructed kd-tree.
 
 From the results it is clear that using the Dividing triangle/node association
 scheme produces trees of trees of highest quality. In the Reflecting Dragon
-scene, trees build with Dividing are generelly ray traced 10ms, or 2.5\%, faster
+scene, trees build with Dividing are generally ray traced 10ms, or 2.5\%, faster
 and contain 3k fewer nodes than their Box Inclusion counterparts. In the Sponza
 scene the difference is even more noticeable at up to 8.7\%. Unfortunatly
 producing kd-trees using the Dividing scheme is a lot slower than using Box
@@ -355,7 +355,7 @@ construction speed and ray tracing time.
   \label{fig:lowerResults}
 \end{figure}
 
-For the lower tree creation phase, using a bit mask of size 32 generelly
+For the lower tree creation phase, using a bit mask of size 32 generally
 performs better than one of size 64. One of the reasons for this is the added
 register usage from having larger bit masks. In the case of the ray tracers it
 means storing an extra 32bit of information per thread, which results in more

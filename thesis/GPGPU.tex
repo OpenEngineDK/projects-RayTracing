@@ -68,7 +68,7 @@ thread depends on information from all previous $n-1$ threads, e.g. when
 shuffling data or calculating the minimum or maximum values of $N$
 vertices. NVIDIA's CUDA framework remedies this somewhat by providing
 synchronization primitives, but these can only synchronize a subset of the
-running threads. The generel problem of passing information from the first $n-1$
+running threads. The general problem of passing information from the first $n-1$
 threads to the $n$'th thread is therefore not solved by CUDA's synchronization
 primitive alone.
 
@@ -103,7 +103,7 @@ primitive for GPU computing. In this section I will show why this new primitive
 is useful and present a case where the data in a list is shuffled by threads
 running in parallel. Something that could not have been done effectively without
 the scan primitive. In the chapters final section I will discuss a couple of
-generel CUDA optimization techniques, while applying them to a case study.
+general CUDA optimization techniques, while applying them to a case study.
 
 \section{The Architecture of CUDA}
 
