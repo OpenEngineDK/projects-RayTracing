@@ -184,7 +184,7 @@ position 4, which corrosponds to what is seen in the scene.
 \end{figure}
 
 
-\subsection{Tree Representation}
+\subsection{Tree Representation}\label{sec:treeRepresentan}
 
 Each interior node in a kd-tree must provide access to three pieces of
 information.
@@ -232,7 +232,7 @@ balanced trees.
 % easier to work with them.
 
 To avoid balanced trees we can instead use pointers to reference the
-children. This allows for more flexibility when creating the tree.  Unfortunatly
+children. This allows for more flexibility when creating the tree. Unfortunately
 it also means storing more data per node and in the case of slow memory access
 it can cause a memory latency bottleneck. However, when experimenting with
 different techniques for creating kd-trees, such as is done in this thesis, the
@@ -671,7 +671,7 @@ and allows the ray to advance forward while skipping every triangle in leaf 1.
 \end{figure}
 
 
-Unfortunatly, the percentage of a node that should be empty space before it is
+Unfortunately, the percentage of a node that should be empty space before it is
 cut away is highly scene specific, making this optimization less usefull in the
 general case. \zhou found that a cutting away 25\% or more empty space produced
 optimal trees, but instead of simply using their threshold I will test it with
@@ -944,7 +944,7 @@ recursively constructs \textit{one} tree node at a time in a
 \textit{depth-first} manor. In order to efficiently utilize the GPU, as many of
 it's multiprocessors as possible must be fully occupied. This means
 \refalg{alg:kdTreeCreator} must be restructured to work on multiple nodes at a
-time. Fortunatly this is exactly what \zhou{} did by changing the kd-tree
+time. Fortunately this is exactly what \zhou{} did by changing the kd-tree
 constructor to work on a list of nodes and recursively create the tree in
 \textit{breadth-first} order, as outlined in \refalg{alg:bfsKDTreeCreator}.
 
@@ -1057,7 +1057,7 @@ surface area heuristic provides an algorithm that easily can be parallelized
 over the geometry. Each triangle would then be responsible for computing the
 expected cost of splitting a node with its 6 bounding box planes and afterwards
 the best possible plane could be reduced with the same method described in
-\refsection{sec:reduce}. Unfortunatly there can be hundreds of thousand of
+\refsection{sec:reduce}. Unfortunately there can be hundreds of thousand of
 triangles associated with the tree's upper nodes, so comparing a split candidate
 to all of them becomes computationally heavy. SAH also assumes that each split
 results in two leafs, which for the upper parts of the tree is almost always
@@ -1469,6 +1469,8 @@ anyway is
 \subsubsection{Lower Tree Split Candidates}
 
 % Explain the Plane struct
+
+\fixme{Explain that this amounts to box inclusion.}
 
 Before splitting any nodes however, the split condidate structure used in the
 lower node phase must be explained. To efficiently compute the size of a nodes

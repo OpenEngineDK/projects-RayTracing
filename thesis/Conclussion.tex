@@ -30,9 +30,9 @@ dynamic scenes.
 
 In \refchapter{chp:results} I tested an exhaustive ray tracer and compared it
 against hierarchical ray tracer solutions. The result was that the exhaustive
-ray tracer did not scale nearly as well as hierarchical approaches and I can
-therefore conclude that acceleration structures should still be used for dynamic
-scenes.
+ray tracer did not scale nearly as well with scene complexity as the
+hierarchical approaches and I can therefore conclude that acceleration
+structures should still be used for dynamic scenes.
 
 % Short stack overhead making it only useful in large scenes.
 
@@ -43,22 +43,21 @@ stable increase in speed. Even for the fairly complex reflecting dragon scene,
 the overhead from maintaining a stack was still too much to provide any
 performance boost. However in the Sponza scene, where the tree was twice as
 large compared to the dragon scene, adding a short-stack allowed the rays to
-avoid traversing large parts of the tree and thus improve their overall
-performance. We can thus conclude that while the short-stack optimization may
+avoid re-traversing large parts of the tree and thus improve their overall
+performance. I can therefore conclude that while the short-stack optimization may
 not always provide a decreased rendering time, using it allows the ray tracer to
-perform better in large scenes.
+perform better in complex scenes.
 
 
 % Conclude on kd-trees
 
-I have during this thesis presented 4 different algorithms for splitting a node
-in a kd-tree and 2 schemes for associating triangles with the resulting child
-nodes.
+I have during this thesis presented four different algorithms for splitting the
+nodes in a kd-tree and two schemes for associating triangles with the resulting
+child nodes.
 
 %% Conclude overall! evaluate the tradeoff between construction speed and tree
 %% quality.
 
-QED
 
 
 
@@ -78,11 +77,51 @@ QED
   weighs nothing, and obeys the Second Law of Thermodynamics; i.e., it
   always increases.}{Norman Augustine}
 
-New node layout
+While I am quite content with the performance of the kd-trees and ray tracers
+produced as part of this project, there is still room for optimizations.
 
-Optimize triangle divide by excluding uninteresting test cases.
+% New node layout
 
-Optimize SAH/SSAH
+First of all the layout of the individual nodes can be optimized. As stated in
+\refsection{sec:treeRepresentation} my nodes contain a pointer to each of its
+children, which provided me with the flexibility I needed to inject nodes
+produced by Empty Space Maximization into the tree. The standard layout of nodes
+in a kd-tree is to place sibling nodes next to each other, so they can both be
+referenced by one pointer. Compared to the standard layout my kd-tree therefore
+takes up four extra bytes per node, which must be loaded each time a ray
+traverses a node. It is therefore quite possible that converting my current
+kd-tree constructor to work with the standard layout would improve ray tracing
+performance, since less data would have to be fetched from global memory per
+node visited.
+
+
+% Optimize triangle divide by excluding uninteresting test cases.
+
+In \reffig{fig:upperResults} we saw that the Dividing triangle/node association
+scheme produced kd-trees of superior quality compared with Box
+Inclusion. Therefore improving the execution time of the Dividing approach to
+produce trees at a speed comparable to Box Inclusion would be worthwile. This
+might be done by utilizing the knowledge we have about the splitting axis. When
+splitting an interior node by a splitting plane, the resulting childrens
+bounding box will consist of five of the same sides as their parent node's
+bounding box. This knowledge can be utilized to skip som of the intersection
+tests described in \citebook{Moller:2005} and thus decrease construction
+time. It would be implemented by a switch with a case for each axis and since
+all triangles in a segment belong to the same node, all threads in a warp would
+follow the same execution path. Unfortunately my preliminary attempts at
+implementing this optimization has been hindered by the compiler, which inlines
+the switch to avoid branching and thus creates a large overhead.
+
+% Speed up empty space splitting
+
+Finally I might be able to speed up Empty Space Maximization by caching the
+empty space nodes in a list in shared memory and then dumping them that list
+coalesced to global memory once every thread in a warp is done creating empty
+space node. Since the time spend creating empty space nodes is already relative
+low, 4-6ms in the test scenes, this optimization has a very low priority.
+
+
+% Optimize SAH/SSAH
 
 
 

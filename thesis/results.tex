@@ -47,9 +47,9 @@ simple scene. The \textit{Sponza} scene was chosen for its complexity. At 279k
 triangles it will test both the quality and the construction speed of the
 kd-tree constructors in large scenes. The last scene tested is \textit{The
   Reflecting Stanford Dragon} consisting of 203k triangles. The reflecting
-geometry in the scene spawns 189572 reflection rays and is used to test
-the importance of a high quality kd-tree when more rays than just the primary
-are traced.
+geometry in the scene spawns 189572 reflection rays and these will be used test
+the importance of the kd-tree's quality when more rays than just the primary are
+traced.
 
 % Rest of this chapter
 
@@ -278,7 +278,7 @@ From the results it is clear that using the Dividing triangle/node association
 scheme produces trees of trees of highest quality. In the Reflecting Dragon
 scene, trees build with Dividing are generally ray traced 10ms, or 2.5\%, faster
 and contain 3k fewer nodes than their Box Inclusion counterparts. In the Sponza
-scene the difference is even more noticeable at up to 8.7\%. Unfortunatly
+scene the difference is even more noticeable at up to 8.7\%. Unfortunately
 producing kd-trees using the Dividing scheme is a lot slower than using Box
 Inclusion. In the above scenes this means that while Dividing produces the
 highest quality trees, Box Inclusion makes up for its slower ray tracing results

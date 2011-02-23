@@ -560,7 +560,7 @@ al.\citebook{Wald:2001:IRCRT}, who utilized \textit{SIMD}\footnote{Single
   instruction, multiple data.} instructions to trace four rays at a time in
 packets. \horn{} extended their short-stack implementation with packet tracing,
 where individual threads would trace multiple rays at a time to amortize the
-cost of traversing the tree. Unfortunatly tracing several rays in one thread
+cost of traversing the tree. Unfortunately tracing several rays in one thread
 increases thread incoherence across warps and \aila{} concludes that
 
 \quotebook{It is worth noticing that [kd-restart] is faster than
@@ -662,7 +662,7 @@ position of the splitting plane and not the bounding volume of the node, the ray
 can easily get sidetracked and end up in leaf nodes, whose bounding box it does
 not even intersect. \Reffig{fig:waywardRay} is a simple example of
 this. Extending the ray, $R(t) = t \vectwoT{1}{1} + \vectwoT{-4}{0}$, we can
-clearly see that it will intersect leaf node 2. Unfortunatly, when using
+clearly see that it will intersect leaf node 2. Unfortunately, when using
 kd-trees, the only information available to the ray is that the node is split
 along the y-axis at position 3, which means it needs to check everything below
 $y=3$ for intersection. This is a problem in scenes with large empty areas that
@@ -871,7 +871,7 @@ barycentric coordinates.
 
 While Möller-Trumbore's ray/triangle intersection approach requires minimal
 storage, in the sense that it takes as input the vertex positions already stored
-in global memory, it does unfortunatly require quite a lot of registers, since
+in global memory, it does unfortunately require quite a lot of registers, since
 it needs to both store the ray's parameters aswell as the determinant and the
 matrix $\vecthreeT{Q \cdot E_2}{P \cdot T}{Q \cdot D}$. The high register usage
 can be remedied by performing precalulations per triangle as described in
