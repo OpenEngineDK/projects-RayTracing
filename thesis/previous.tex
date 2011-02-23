@@ -18,73 +18,67 @@
 
 % Early ray tracing
 
-Arthur Appel is credited as the being the first to describe the basic
-idea of ray casting\citebook{Appel:1968}, using it to solve the
-\textit{hidden surface problem} and to enhance the perception of depth
-by computing shadows in opaque polygonal scenes. Whitted extended the
-idea of ray casting into the general recursive ray tracing algorithm
-still used today\citebook{Whitted:1979}. If a ray would hit a surface,
-then depending on the surface's material proporties it could generate
-any number of new rays, reflection, refraction or shadow.
+Arthur Appel\citebook{Appel:1968} is credited as the being the first to describe
+the basic idea of ray casting, using it to solve the \textit{hidden surface
+  problem} and to enhance the perception of depth by computing shadows in opaque
+polygonal scenes. Whitted\citebook{Whitted:1979} extended the idea of ray
+casting into the general recursive ray tracing algorithm still used today. If a
+ray would hit a surface, then depending on the surface's material proporties it
+could generate any number of new rays, reflection, refraction or shadow.
 
 
 % Data structures for acceleration
 
-Since then a lot of time and effort has gone into improving the
-performance of ray tracing and several data structures have been
-proposed with this in mind. In 1976 Clark was the first to suggest
-using \textit{bounding volumes} to perform geometry culling and in
-1986 Goldsmith and Salmon extended this idea with an algorithm for
-automatically building \textit{bounding volume hierarchies},
-\textit{BVH}'s, topdown\citebook{Goldsmith:1987}. Fujimoto, Tanaka and
-Iwata introduced the use of \textit{uniform voxel grids} in
-1986\citebook{Fujimoto:1986}. Kaplan introduced the use of kd-trees as
-a spatial partitioning scheme\citebook{Kaplan:1985}. To decide where
-to place the splitting plane he used the now standard \textit{spatial
-  median splitting} algorithm. Spatial median splitting places the
-splitting plane at the middle of a node's bounding box along some
-axis, usually either the longest or an axis chosen in a \textit{round
-  robin} fassion.
+Since then a lot of time and effort has gone into improving the performance of
+ray tracing and several data structures have been proposed with this in mind. In
+1976 Clark\citebook{Clark:1976:HGM:360349.360354} was the first to suggest using
+\textit{bounding volumes} to perform geometry culling and in 1986 Goldsmith and
+Salmon\citebook{Goldsmith:1987} extended this idea with an algorithm for
+automatically building \textit{bounding volume hierarchies}, \textit{BVH}'s,
+topdown. Fujimoto, Tanaka and Iwata\citebook{Fujimoto:1986} introduced the use
+of \textit{uniform voxel grids} in 1986. Kaplan\citebook{Kaplan:1985} introduced
+the use of kd-trees as a spatial partitioning scheme. To decide where to place
+the splitting plane he used the now standard \textit{spatial median splitting}
+algorithm. Spatial median splitting places the splitting plane at the middle of
+a node's bounding box along some axis, usually either the longest or an axis
+chosen in a \textit{round robin} fassion.
 
 
 % Surface Area Heuristic 
 
-The idea of automatically creating hierarchical acceleration
-structures have since been revisited and improved upon countless
-times. One of the most important improvements was the introduction of
-the \textit{surface area heuristic}, \textit{SAH}, generally
-attributed to MacDonald and Booth\citebook{MacDonald:1990}. SAH
-estimates the expected cost of ray tracing a node's 2 child nodes with
-respect to some splitting plane. Given a list of splitting planes, the
-expected cost for all these planes can then be calculated and the
-plane with least cost is chosen as the splitting plane. How exactly
-this list of splitting planes is created in the first place will be
-discussed in \refsection{sec:splittingPlane}.
+The idea of automatically creating hierarchical acceleration structures have
+since been revisited and improved upon countless times. One of the most
+important improvements was the introduction of the \textit{surface area
+  heuristic}, \textit{SAH}, generally attributed to MacDonald and
+Booth\citebook{MacDonald:1990}. SAH estimates the expected cost of ray tracing a
+node's 2 child nodes with respect to some splitting plane. Given a list of
+splitting planes, the expected cost for all these planes can then be calculated
+and the plane with least cost is chosen as the splitting plane.
+%% How exactly this list of splitting planes is created in the first place will be
+%% discussed in \refsection{sec:splittingPlane}.
 
 
 % Havran and kd trees are best?
 
-In his PHD-thesis\citebook{Havran:PhD} from 2000, Havran argued that
-the kd-tree was the best known acceleration structure for ray
-tracing. While a lot of new data structures have since appeared in the
-last decade, the kd-tree is still one of the most widely used
-structures due to it's low memory footprint, fast ray/plane
-intersection and countless research papers devoted to both optimal
-creation and ray tracing. For these same reasons this thesis will also
-focus on the use of kd-trees as its acceleration structure.
+In his PHD-thesis\citebook{Havran:PhD} from 2000, Havran argued that the kd-tree
+was the best known acceleration structure for ray tracing. While a lot of new
+data structures have since appeared in the last decade, the kd-tree is still one
+of the most widely used structures due to its low memory footprint, fast
+ray/plane intersection and countless research papers devoted to both optimal
+creation and ray tracing. For these same reasons this thesis will also focus on
+the use of kd-trees as its acceleration structure.
 
 
 
 % GPU acceleration structures
 
-Because of the lack of looping and branching on early programmable
-graphics hardware, the first all GPU based ray tracers had to make use
-of non hierarchical acceleration structures like
-grids\citebook{844181}. Grid's, however, do not scale aswell as
-hierarchical structures and, in large sparse scenes, finegrained grids
-run the risk of wasting memory on a lot of empty cells, while more
-coursely grained grids might store most of the geometry in a few cells
-and thus not partition it effectively.
+Because of the lack of looping and branching on early programmable graphics
+hardware, the first all GPU based ray tracers had to make use of non
+hierarchical acceleration structures like grids\citebook{844181}. Grid's,
+however, do not scale aswell as hierarchical structures and, in large sparse
+scenes, fine-grained grids run the risk of wasting memory on a lot of empty
+cells, while more coursely grained grids might store most of the geometry in a
+few cells and thus not partition it effectively.
 
 % Traversing the tree and doing it fast
 
@@ -92,20 +86,20 @@ With the addition of branching and looping on graphics hardware, several GPU
 based hierarchical ray tracers where proposed. A known optimization to CPU based
 hierarchical ray tracers is to use a stack of neighbouring nodes that the ray
 could possibly traverse. This is used as a means to prevent restarting ray
-tracing from the root of the acceleration tree, if a ray does not intersect any
-primitives in a leaf. Small amounts of available memory per thread on the
-graphics card made this optimization technique infeasable for GPU
+tracing from the root of the acceleration structure, if a ray does not intersect
+any primitives in its current leaf. Small amounts of available memory per thread
+on the graphics card made this optimization technique infeasable for GPU
 solutions. Instead Popov et al.\citebook{popov:07:GPURT} in 2007 introduced a
 stackless ray tracer rivalling CPU ray tracers in speed, which preprocessed the
-kd-tree and added neighbour pointers to each node. Concurrently Horn et
-al.\citebook{1230129} proposed a different but equally effective
-solution. Instead of storing the entire stack of possible neighbouring nodes, a
-\textit{short-stack} of only the $N$ lowest possible nodes was stored in
-memory. Horn et al. also introduced an optimization called \textit{push-down},
-where each ray did not restart at the root of the tree, but instead at the root
-of the smallest subtree enclosing the ray. Finally they showed how to this could
-be implemented together with \textit{packet tracing}, where several rays are
-traced in packets to amortize the cost of traversing the tree.
+kd-tree and added neighbour pointers to each node. Concurrently \horn{} proposed
+a different but equally effective solution. Instead of storing the entire stack
+of possible neighbouring nodes, a \textit{short-stack} of only the $N$ lowest
+possible nodes was stored in memory. Horn et al. also introduced an optimization
+called \textit{push-down}, where each ray did not restart at the root of the
+tree, but instead at the root of the smallest subtree enclosing the ray. Finally
+they showed how this could be implemented together with \textit{packet tracing},
+where several rays are traced in packets by one thread to amortize the cost of
+traversing the tree.
 
 %% In this thesis I've adopted Horn et al.'s idea of a short stack to
 %% improve our ray tracer. In a worst case scenario where all the rays
@@ -124,24 +118,22 @@ traced in packets to amortize the cost of traversing the tree.
 % Previously constructing the KD-tree was most effective on the CPU,
 % optimized and fast for multi core CPU's
 
-Although ray tracing on graphics hardware had been made as fast as
-it's CPU counterparts by 2007, creating kd-trees on the GPU had still
-not been done efficiently.
+Although ray tracing on graphics hardware had been made as fast as its CPU
+counterparts by 2007, creating kd-trees on the GPU had still not been done
+efficiently.
 
 % Recent research has made it possible to construct KD-trees
 % efficiently on GPU's
 
-This changed in 2008 when Zhou et al.\citebook{1409079} introduced
-\textit{breath-first} tree creation on the GPU. Instead of creating
-kd-trees in \textit{depth-first} manner, in which only one node was processed
-at a time, their breath-first algorithm made it possible to work on
-hundreds or thousands of nodes in parallel, allowing it to scale much
-better with the architecture of graphics cards. For the uppermost
-nodes in the tree they proposed to parallelize the calculation of the
-node split cost across all geometric primitives, creating thousands of
-threads. For the lower part of the tree, where thousands of nodes
-needed to calculate their split cost, computations where simply
-parallelized over all available nodes.
+This changed in 2008 when \zhou{} introduced \textit{breath-first} tree creation
+on the GPU. Instead of creating kd-trees in \textit{depth-first} manner, in
+which only one node was processed at a time, their breath-first algorithm made
+it possible to work on hundreds or thousands of nodes in parallel, allowing it
+to scale much better with the architecture of graphics cards. For the uppermost
+nodes in the tree they proposed to parallelize the calculation of the node split
+cost across all geometric primitives, creating thousands of threads. For the
+lower part of the tree, where thousands of nodes needed to calculate their split
+cost, computations where simply parallelized over all available nodes.
 
 
 % KD-tree work and what we've made differently
