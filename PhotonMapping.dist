@@ -16,7 +16,6 @@ dist /extensions/Assimp/Assimp.dist               http://www.openengine.dk/code/
 dist /extensions/InspectionBar/InspectionBar.dist       http://www.openengine.dk/code/extensions/InspectionBar/InspectionBar.dist
 
 # required extensions
-darcs /extensions/HUD                    http://openengine.dk/code/extensions/HUD
 darcs /extensions/SDL                    http://openengine.dk/code/extensions/SDL
 darcs /extensions/FreeImage       	 http://openengine.dk/code/extensions/FreeImage
 darcs /extensions/CairoResource          http://openengine.dk/code/extensions/CairoResource
@@ -45,6 +44,6 @@ win32 /libraries http://openengine.dk/data/libraries/dlls-win32.zip
 
 # project data
 
-any /projects/PhotonMapping/data/       http://openengine.dk/data/models/stanford-dragon.tar.gz
-any /projects/PhotonMapping/data/       http://openengine.dk/data/models/stanford-bunny.tar.gz
-any /projects/PhotonMapping/data/       http://openengine.dk/data/models/sponza.tar.gz
+any /resources/models/       http://openengine.dk/data/models/stanford-dragon.tar.gz
+any /resources/models/       http://openengine.dk/data/models/stanford-bunny.tar.gz
+any /resources/models/       http://openengine.dk/data/models/sponza.tar.gz

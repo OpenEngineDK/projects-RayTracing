@@ -67,18 +67,6 @@ using namespace OpenEngine::Renderers::OpenGL;
 using namespace OpenEngine::Scene;
 using namespace OpenEngine::Utils;
 
-ISceneNode* CreateForest() {
-    IModelResourcePtr mdl = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/fairyForest/fairyForest.obj");
-    mdl->Load();
-    return mdl->GetSceneNode();
-}
-
-ISceneNode* CreateSibenik() {
-    IModelResourcePtr mdl = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/sibenik/sibenik.obj");
-    mdl->Load();
-    return mdl->GetSceneNode();
-}
-
 TransformationNode *geomTrans = new TransformationNode();
 
 ISceneNode* SetupScene(std::string name, BoundedCamera* cam){
@@ -153,6 +141,8 @@ int main(int argc, char** argv) {
     engine->DeinitializeEvent().Attach(*env);
     
     IRenderer* renderer = new Renderer();
+
+    DirectoryManager::AppendPath("resources/models/");
 
     ResourceManager<IModelResource>::AddPlugin(new AssimpPlugin());
     ResourceManager<ITexture2D>::AddPlugin(new FreeImagePlugin());

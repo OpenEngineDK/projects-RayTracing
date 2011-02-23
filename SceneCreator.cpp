@@ -171,13 +171,13 @@ namespace OpenEngine {
     }
 
     ISceneNode* SceneCreator::LoadSponza() {
-        IModelResourcePtr mdl = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/sponza/Sponza.obj");
+        IModelResourcePtr mdl = ResourceManager<IModelResource>::Create("sponza/Sponza.obj");
         mdl->Load();
         return mdl->GetSceneNode();
     }
 
     ISceneNode* SceneCreator::LoadDragon() {
-        IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/dragon/dragon_vrip_res2.ply");
+        IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("dragon/dragon_vrip_res2.ply");
         duckRes->Load();
         MeshNode* dragon = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0)->GetNode(0);
 
@@ -193,7 +193,7 @@ namespace OpenEngine {
     }
 
     ISceneNode* SceneCreator::LoadBunny() {
-        IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("projects/PhotonMapping/data/bunny/bun_zipper_res2.ply");
+        IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("bunny/bun_zipper.ply");
         duckRes->Load();
         MeshNode* bunny = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0)->GetNode(0);
 
