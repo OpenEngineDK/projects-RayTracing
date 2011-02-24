@@ -730,7 +730,7 @@ general solution to diverging rays will be presented under Future Work in
 
 The inherent diverging behaviour of rays traversing the kd-tree makes them hard
 to parallize efficiently on the graphics card, since data access will be nearly
-impossible to coallesce. The solution is to have enough active warps to
+impossible to coalesce. The solution is to have enough active warps to
 effectively hide the latency from global data fetching. This means that each
 rays register usage must be kept to a minimum, in order to have room for as many
 active warps as possible.

@@ -40,7 +40,7 @@ are called \textit{vertex attributes}.
 When real-time rendering is needed, the technique of choice for the last one and
 a half decade has been \textit{rasterization}. In rasterization a geometric
 primitive's vertex attributes are mapped onto a \textit{raster}\footnote{A flat,
-  2D grid.} and used to calculate the color of individual grid cells. This
+  2D grid.} and used to calculate the color of individual raster cells. This
 technique is so popular in the gaming industry that processing units were
 created specifically for rasterization, the \textit{Graphics Processing Unit} or
 \textit{GPU} for short. Due to the industry's ever increasing demand for more
@@ -89,17 +89,6 @@ caustics and color bleeding.
 \fixme{Write something about how all figures are my own unless explicitly
   stated!}
 
-
-% High cost used to make it unattractive for interactive scenes
-
-The increased realism that can be achieved by using ray tracing does come at a
-high computational cost, which has previously made it unattractive for
-interactive applications or dynamic scenes. Nonetheless, the recent increase in
-computational power coupled with research into the area of \textit{interactive
-  ray tracing} has yielded some remarkable results, and scenes of approximately
-100k triangles can now be ray traced in real-time, even with effects such as
-shadows, reflection and refraction added.
-
 \begin{figure}
   \centering
   \subfloat[A cube mapped reflecting dragon.]{
@@ -119,17 +108,24 @@ shadows, reflection and refraction added.
 \end{figure}
 
 
-% What I will show, doing it dynamically, which is interesting for
-% games and movie development
+% High cost used to make it unattractive for interactive scenes.  What I will
+% show, doing it dynamically, which is interesting for games and movie
+% development
 
-With the continued increase in computational power of both CPUs and GPUs, ray
-tracing is becoming an increasingly interesting alternative to rasterization. In
-this thesis I will examine \textit{ray tracing of dynamic scenes}, with the
-express goal to minimize the time between modifying the scene and presenting a
-user with visual feedback of the change. This would be very interesting in the
-film industry where ray tracers are used to create
-\textit{CGI}\footnote{Computer-generated Imagery} effects and the 3D artists
-need fast visual feedback while modifying the scene.
+The increased realism that can be achieved by using ray tracing does come at a
+high computational cost, which has previously made it unattractive for
+interactive applications or dynamic scenes. Nonetheless, the continued increase
+in computational power of both CPUs and GPUs, coupled with research into the
+area of \textit{interactive ray tracing}, has yielded some remarkable results.
+Scenes of approximately 100k triangles can now be ray traced in real-time, even
+with effects such as shadows, reflection and refraction added. This makes ray
+tracing an increasingly more interesting alternative to rasterization. In this
+thesis I will examine \textit{ray tracing of dynamic scenes}, with the express
+goal to minimize the time between modifying the scene and presenting a user with
+visual feedback of the change. This would be very interesting in the film
+industry, where ray tracers are used to create
+\textit{CGI}\footnote{Computer-generated Imagery} effects and 3D artists need
+fast visual feedback while modifying the scene.
 
 %% In this thesis I will examine \textit{ray tracing of dynamic scenes}, which is
 %% becoming an interesting alternative to rasterization in the gaming industry in
@@ -152,10 +148,10 @@ beyond that leaf and performs another traversal of the structure.
 
 The structure employed in this thesis is the \textit{kd-tree}, a binary, space
 partitioning tree-structure, which recursively subdivides $k$-dimensional
-geometry by splitting it with \textit{axis aligned splitting planes}. Each
+geometry by splitting it with an \textit{axis aligned splitting plane}. Each
 interior node in the tree contains a splitting plane and a reference to the
 location of its left and right children, while the leafs contain references to
-the geometry associated with them. 
+the geometry associated with them.
 %% An example of a subdivided scene and the corrosponding tree can be seen on
 %% \reffig{fig:kdIteration} in \refchapter{chp:kdTrees}, where kd-trees will be
 %% introduced thoroughly. 

@@ -11,15 +11,15 @@ computational power and potential memory bandwidth over the last decade. This is
 evidenced by \reffig{fig:gpuCpuCompare}, which compares the development of
 NVIDIA's GPUs with that of Intel's CPUs. These figures illustrate the potential
 performance gain associated with implementing computationally heavy solutions on
-the todays GPUs instead of CPUs. The first figure, \reffig{fig:gpuCpuGFLOPS},
+todays GPUs instead of CPUs. The first figure, \reffig{fig:gpuCpuGFLOPS},
 compares the computational capacity and shows how the theoretical number of
-floating point operations have increase over the last decade, with GPU's being
+floating point operations have increase over the last decade, with GPUs being
 able to perform nearly 1500G floating point operations per second as of the
 GeForce 480 GTX series, while Intel CPUs only reach around 200G operations. The
 second figure, \reffig{fig:gpuCpuThroughput}, compares the memory bandwith of
 GPUs and CPUs. Memory bandwidth is the rate at which data can be read from or
 stored into memory by one of the processing units and is around 6 times higher
-and the GPU than the CPU.
+for the GPU than the CPU.
 
 \begin{figure}
   \centering 
@@ -29,6 +29,7 @@ and the GPU than the CPU.
     \includegraphics[width=0.45\textwidth]{GFLOPS}
     \label{fig:gpuCpuGFLOPS}
   }
+  \hspace{0.05\textwidth}
   \subfloat[Comparison of memory bandwidth in gigabyte per second.]{
     \includegraphics[width=0.45\textwidth]{throughput}
     \label{fig:gpuCpuThroughput}
@@ -43,9 +44,9 @@ and the GPU than the CPU.
 % What is different form CPUs
 
 Utilizing the GPU's computational power and memory bandwidth effectively,
-however, is not straightforward and in order to create algorithms on the GPU
-that run faster than their CPU counterparts, we need to understand how the GPU
-works.
+however, is not straightforward and in order to create algorithms for the GPU
+that are executed faster than their CPU counterparts, we need an understanding
+of how the GPU works.
 
 The reason behind the difference in computational power and memory bandwidth
 seen in \reffig{fig:gpuCpuCompare}, is that the CPU is designed with a large
@@ -54,7 +55,7 @@ handle all kinds of applications, not just computationally intense ones. The GPU
 on the other hand is designed for high throughput of small, arithmetically
 intense, \textit{data parallel programs}\footnote{Each instruction is
   concurrently applied on multiple data elements.} called \textit{kernels},
-which is exactly what is required of a graphics card processing thousands of
+which is exactly what is required of a graphics card that processes thousands of
 independent vertices and performing the same color calculations, or
 \textit{shading}, on hundreds of thousands of \textit{fragments}\footnote{A
   fragment contains all the data needed to generate the color of geometry in a
@@ -65,12 +66,11 @@ independently of their respective neighbouring threads, this means that no
 assumptions can be made about which thread is where in its execution when
 programming the graphics card. This presents a problem in cases where the $n$'th
 thread depends on information from all previous $n-1$ threads, e.g. when
-shuffling data or calculating the minimum or maximum values of $N$
+shuffling data or calculating the minimum or maximum values of a list of
 vertices. NVIDIA's CUDA framework remedies this somewhat by providing
 synchronization primitives, but these can only synchronize a subset of the
-running threads. The general problem of passing information from the first $n-1$
-threads to the $n$'th thread is therefore not solved by CUDA's synchronization
-primitive alone.
+running threads. The general problem of passing information between threads is
+therefore not solved by CUDA's synchronization primitive alone.
 
 % Why not use GPU/CPU solutions
 
@@ -80,12 +80,12 @@ the following quote comes to mind:
 
 \quotebook{ It is important to include the overhead of transferring data to and
   from the device in determining whether operations should be performed on the
-  host or on the device.  }{CUDABPG}
+  host or on the device.}{CUDABPG}
 
-So once it has been decided to use the graphics card, one cannot simply transfer
-data back and forth between the CPU and GPU at will. The transfer overhead would
-in many cases outweigh the performance increase gained by using the GPU in the
-first place.
+So once it has been decided to use the graphics card, data should not be
+transfered back and forth between the CPU and GPU too often. The transfer
+overhead would in many cases outweigh the performance increase gained by using
+the GPU in the first place.
 
 %% Fortunately Sengupta et al. has come up with a solution to the
 %% scattering problem, which will be discussed further in
@@ -182,12 +182,16 @@ without fearing race conditions
 
 Blocks are themselves arranged into the uppermost part of the thread hierarchy,
 a 2 dimensional \textit{grid}. The amount of data being processed usually
-defines how large the grid will be. Just like a thread can access its index or
-id, it can also lookup its block index inside the grid through the built-in
-variable \textit{blockIdx}. A 2 dimensional thread hierarchy can be seen on
+defines how large the grid will be. Just like a thread can access its index, it
+can also lookup its \textit{block index} inside the grid through the built-in
+variable \textit{blockIdx}. A two dimensional thread hierarchy can be seen on
 \reffig{fig:threadLayout}. The kernels in this thesis will usually process the
-data as 1D linear array, where a threads global id can be calculated as $id
-\leftarrow blockDim.x * blockIdx.x + threadIdx.x$.
+data as one dimensional linear lists, where a threads global index can be
+calculated as 
+
+\begin{displaymath}
+  id = blockDim.x * blockIdx.x + threadIdx.x
+\end{displaymath}
 
 \begin{figure}
   \centering
@@ -205,7 +209,7 @@ data as 1D linear array, where a threads global id can be calculated as $id
 With the thread hierarchy explained, the different memory spaces made available
 through CUDA can be described.
 
-CUDA provides the programmer with 3 overall types of memory:
+CUDA provides the programmer with three overall types of memory:
 
 \begin{itemize}
 \item \textit{global memory} - which can be accessed by any thread at any time
@@ -222,16 +226,18 @@ In the following I have devoted a subsection to each memory space.
 
 % Slow, coalescene of data types with size 1, 2, 4, 8, and 16 bytes.
 
+\fixme{Rewrite: is the slowest form}
+
 Global memory, or \textit{device memory}, is the slowest form of memory on CUDA
 devices. As mentioned above it persists across kernel launches and is therefore
 perfect for storing input data to kernels and their results. To avoid making
 lots of memory transactions to and from global memory, a warp will try to
 \textit{coalesce} its threads' global memory accesses into as few transactions
-as possible. How well transactions are coalesced depends on the \textit{compute
-  capability} of the graphics hardware, with the coalescence restrictions on
-newer GPUs being more flexible. Suffice it to say here that it is preferable to
-access global memory sequentially, i.e. the $n$'th thread in a warp accesses the
-$n$'th data element.
+as possible. How well global memory access can be coalesced depends on the
+\textit{compute capability} of the graphics hardware, with the coalescence
+restrictions on newer GPUs being more flexible. Suffice it to say here that it
+is preferable to access global memory sequentially, i.e. the $n$'th thread in a
+warp accesses the $n$'th data element.
 
 % Coalesced memory access, float4 instead of float3 The alignment requirement
 % can be forced: stuct __align__(8) {
@@ -239,7 +245,7 @@ $n$'th data element.
 Another restriction on global memory is that data accessed must be of size 1, 2,
 4, 8 or 16 bytes, otherwise memory transactions will be broken up into multiple
 requests with an interleaved access pattern. Accesseing global data with an
-interleaved access pattern hinders effective coallescence and should therefore
+interleaved access pattern hinders effective coalescence and should therefore
 be avoided. Due to this, global memory access can be performed more efficiently
 when using the CUDA built-in struct \textit{float4} instead of \textit{float3},
 since \textit{float3} takes up 12 bytes and will be split into two memory
@@ -251,7 +257,7 @@ described.
 
 % hiding latency
 
-The scheduler will also help with hiding latency from a global memory access. If
+The scheduler will also help with hiding latency from global memory access. If
 one warp is stalled while waiting for data, another warp that is resident on the
 same multiprocessor and ready to execute can be scheduled instead. Utilization
 of the graphics hardware is therefore heavily dependent on the number of
@@ -285,8 +291,8 @@ A normal usecase for shared memory is local caching of global data, which is
 shared by multiple threads in the block. In this case the threads in a kernel
 will cooperate on loading the data into shared memory, then the kernel will
 perform a block-wide synchronization and proceed with operating on the data in
-shared memory. When the kernel has finished it's computations, the data can then
-be dumped back into global memory.
+shared memory. When the kernel has finished its computations, the data can then
+be written back into global memory.
 
 % Can be used as global cache on never CUDA architectures isntead of textures
 % and shared mem. nice we laike
@@ -307,21 +313,20 @@ memory on the device. Since there is only a fixed amount of registers available
 per multiprocessor, the register usage of a kernel's threads can have a high
 impact on \textit{occupancy}\footnote{The number of warps resident on a
   multiprocessor, relative to the maximum amount possible.}, which in turn can
-have an impack on the schedulers ability to hide latency.
+have an impack on the schedulers ability to hide memory latency.
 
 % launch bounds
 
-The compiler employs different heuristics to minimize register usage,
-while keeping the kernel running efficiently. Sometimes though,
-programmers may want to use even fewer registers for specific kernels,
-in order to maximize occupancy and global memory latency hiding. To
-this end they can aid the compilers heuristics by providing
-\textit{launch bounds}. In CUDA two arguments can be given as launch
-bounds. The first tells the compiler the maximum number of threads per
-block that the kernel will ever be invoked with. The second argument
-tells the compiler how many blocks should be resident on a
-multiprocessor. The compiler can then use this information to derive
-upper bounds for the registers available per thread.
+The compiler employs different heuristics to minimize register usage, while
+ensuring that the kernel runs efficiently. Sometimes though, programmers may
+want to use even fewer registers for specific kernels, in order to maximize
+occupancy and global memory latency hiding. To this end they can aid the
+compilers heuristics by providing \textit{launch bounds}. In CUDA two arguments
+can be given as launch bounds. The first tells the compiler the maximum number
+of threads per block that the kernel will ever be invoked with. The second
+argument tells the compiler how many blocks should be resident on a
+multiprocessor. The compiler can then use this information to derive upper
+bounds for the registers available per thread.
 
 % TODO? example
 
@@ -359,14 +364,13 @@ memory are:
 
 % Motivate
 
-As explained above problems where the n’th thread requires information from all
-previous $n-1$ threads can be quite hard to solve on data parallel hardware. In
-this section I will outline a solution to the problem as presented by
-\sengupta{} and give an example of how this solution can be used to sort a list
-of data into two lists. In \refsection{sec:kdTreeImpl} we shall see that being
-able to perform such sorting is important when associating triangles with a
-split node's children.
-
+As explained above problems where the $n$’th thread requires information from
+all previous $n-1$ threads can be quite hard to solve on data parallel
+hardware. In this section I will outline a solution to the problem as presented
+by \sengupta{} and give an example of how this solution can be used to sort a
+list of data into two lists. In \refsection{sec:kdTreeImpl} we shall see that
+being able to perform such sorting is important when associating triangles with
+the children of a node that has been split.
 
 % Prefix sum
 
@@ -376,7 +380,7 @@ a \textit{prefix-sum}, which is a special case of \textit{exclusive
 and a binary operator, $\oplus$, with an identity element, $i$. The result of
 exclusive scan is then a new array with values $[i, a_0, a_0 \oplus a_1, a_0
   \oplus a_1 \oplus a_2, ...]$. For prefix-sum the operator is + and the
-identity element is 0.
+identity element is 0. An example of prefix-sum can be seen below.
 
 \begin{displaymath}
   \begin{array}{r r r r r r r r r r}
@@ -385,44 +389,264 @@ identity element is 0.
   \end{array}
 \end{displaymath}
 
-Calculating the prefix-sum for $n$ elements on the CPU is trivial and
-can naïvely be done in $O(n)$ time by iterating over the data array
-from start to finish. A naïve implementation in the GPU however would
-require each thread to sum up every previous value on its own,
-yielding a time complexity of $O(n^2)$. Instead a data parallel
-algorithm has to be devised that allows threads to cooperatively solve
-the problem and doing that as efficiently as the CPU, i.e. in $O(n)$
-time.
+Calculating the prefix-sum for $n$ elements on the CPU is trivial and can
+naïvely be done with $O(n)$ memory accesses by iterating over the data array
+from start to finish. A naïve implementation in the GPU however would require
+each thread to sum up every previous value on its own, which would require
+$O(n^2)$ memory accesses. Instead a data parallel algorithm has to be devised
+that allows threads to cooperatively solve the problem and doing that as
+efficiently as the CPU, i.e. with $O(n)$ memory accesses.
 
 
 % Algorithm
 
-\sengupta{}'s work-efficient prefix-sum requires two passes over the data, one
-called \textit{reduce} and another called \textit{down-sweep}. The algorithm is
-depicted on \reffig{fig:segScan}. The figure shows scan being applied to an
-array containing 8 elements. Cells with the same color represent threads
-belonging to the same block. The arrows show how data is moved, one arrow
-entering a cell represents a copy, while two arraws entering represents the
-application of $\oplus$ to the data. The reduce phase in \reffig{fig:segScan}
-shows how each block's threads are responsible for cooperating on reducing their
-own values. If there is more data elements than a single block can reduce on its
-own, then the reduce kernel is simply recursively applied to the result of the
-previous reduce until the original input has been reduced to a single element.
+As can be seen on \reffig{fig:segScan}, \sengupta{}'s work-efficient prefix-sum
+requires two passes over the data, one called \textit{reduce} and another called
+\textit{downsweep}. The object of the reduction phase is to calculate the sum of
+all elements in the input list. It does so by applying the \textit{divide and
+  conquer paradigm} and first solving the problem for subsections of the
+list. Since only threads belonging to the same block can only be synchonized,
+reduce only works on elements belonging to the same block. If the input list
+holds more elements than can be reduced by a single block, then reduce is simple
+applied to the result of the previous reduction until all values have been
+reduced. The downsweep phase then makes use of the values computed by reduce to
+produce the prefix-sum of the input list.
+
+This is best described by the prefix-sum example on \reffig{fig:segScan}, where
+the prefix-sum of a list of 8 elements is computed. I have chosen to reduce two
+blocks to show how the first reduction result is combined into a new list and
+then reduced further. Cells with the same color represent threads belonging to
+the same block. The flow of data is represented as arrows, one arrow entering a
+cell represents the data being copied, while two arrows entering a cell
+represents an application of + on the two data elements and the result is then
+stored in the cell pointed to. After three steps each individual block has
+reduced its own elements and the results are therefore copied to a new array for
+further reduction. When reduce is complete, the downsweep phase
+begins. Downsweep first sets the last element in the current list to the
+identity element, 0 in the case of prefix-sum, and then proceeds to iteratively
+compute the prefix-sum. The result of applying the reduce and downsweep is the
+prefix-sum of the input list, which can be seen in the final list in
+\reffig{fig:segScan}.
+
+
+%% The algorithm is depicted on \reffig{fig:segScan}. The figure shows scan
+%% being applied to an array containing 8 elements. Cells with the same color
+%% represent threads belonging to the same block. The arrows show how data is
+%% moved, one arrow entering a cell represents a copy, while two arraws entering
+%% represents the application of $\oplus$ to the data. The reduce phase in
+%% \reffig{fig:segScan} shows how each block's threads are responsible for
+%% cooperating on reducing their own values. If there are more data elements
+%% than a single block can reduce on its own, then the reduce kernel is simply
+%% applied repeatedly to the result of the previous reduce until the original
+%% input has been reduced to a single element.
+
+%% During down-sweep the data is pumped back out into the array and the values
+%% calculated during the reduce phase are reused. The result of this is an array
+%% containing the exclusive scan values. It can be quite instructive in data
+%% parallel programming to go through this algorithm.
+
+
+ 
+\newcommand{\drawArray}[4]{
+  \draw (#1,#2) -> (#3,#2);
+  \draw (#1,#4) -> (#3,#4);
+  \foreach \x in {#1,...,#3} \draw (\x,#2) -> (\x,#4);
+}
 
 \begin{figure}
   \centering
-  \includegraphics[width=4cm]{SegmentedScan}
+  \begin{tikzpicture}[y=0.5cm, x=0.5cm,font=\sffamily]
+    \node at (4, 1) {threads};
+    \draw (0,0.5) -- (8, 0.5);
+    \draw (0,0.3) -- (0,0.7);
+    \draw (8,0.3) -- (8,0.7);
 
-  \parbox{5cm}{\caption[Multi-block segmented scan communication.]{An
-      example of multi-block segmented scan communication. Cells with
-      the same shading belong to the same block. \\The figure is
-      borrowed from \citebook{Sengupta:2007}.}\label{fig:segScan}}
+    \draw[-stealth] (10.5,-3) -- (10.5,-16);
+    \node[rotate=-90] at (11,-9.5) {steps};
+    
+    \draw (8.8,0) -- (9.2,0);
+    \draw (9,0) -- (9,-5);
+    \draw (8.8,-5) -- (9.2,-5);
+    \node[rotate=-90] at (9.5,-2.5) {1. reduce};
+
+    % list
+    \draw[line width=0.0pt, fill=lightgray] (8,0) -- (4,0) -- (4,-1) -- (8,-1);
+    \drawArray{0}{0}{8}{-1}
+    \draw (0.5,-0.5) node {0};
+    \draw (1.5,-0.5) node {2};
+    \draw (2.5,-0.5) node {3};
+    \draw (3.5,-0.5) node {6};
+    \draw (4.5,-0.5) node {9};
+    \draw (5.5,-0.5) node {3};
+    \draw (6.5,-0.5) node {5};
+    \draw (7.5,-0.5) node {7};
+    
+    % Arrows
+    \draw[applyOp] (0.5,-1) -> (1.5,-2);
+    \draw[applyOp] (1.5,-1) -> (1.5,-2);
+    \draw[applyOp] (2.5,-1) -> (3.5,-2);
+    \draw[applyOp] (3.5,-1) -> (3.5,-2);
+    \draw[applyOp] (4.5,-1) -> (5.5,-2);
+    \draw[applyOp] (5.5,-1) -> (5.5,-2);
+    \draw[applyOp] (6.5,-1) -> (7.5,-2);
+    \draw[applyOp] (7.5,-1) -> (7.5,-2);
+
+    % list
+    \draw[line width=0.0pt, fill=lightgray] (8,-2) -- (4,-2) -- (4,-3) -- (8,-3);
+    \drawArray{0}{-2}{8}{-3}
+    \draw (0.5,-2.5) node {0};
+    \draw (1.5,-2.5) node {2};
+    \draw (2.5,-2.5) node {3};
+    \draw (3.5,-2.5) node {9};
+    \draw (4.5,-2.5) node {9};
+    \draw (5.5,-2.5) node {12};
+    \draw (6.5,-2.5) node {5};
+    \draw (7.5,-2.5) node {12};
+
+    % arrows
+    \draw[applyOp] (1.5,-3) -> (3.5,-4);
+    \draw[applyOp] (3.5,-3) -> (3.5,-4);
+    \draw[applyOp] (5.5,-3) -> (7.5,-4);
+    \draw[applyOp] (7.5,-3) -> (7.5,-4);
+    
+    % list
+    \draw[line width=0.0pt, fill=lightgray] (8,-4) -- (4,-4) -- (4,-5) -- (8,-5);
+    \drawArray{0}{-4}{8}{-5}
+    \draw (0.5,-4.5) node {0};
+    \draw (1.5,-4.5) node {2};
+    \draw (2.5,-4.5) node {3};
+    \draw (3.5,-4.5) node {11};
+    \draw (4.5,-4.5) node {9};
+    \draw (5.5,-4.5) node {12};
+    \draw (6.5,-4.5) node {5};
+    \draw (7.5,-4.5) node {24};
+
+    % arrows
+    \draw[applyOp] (3.5,-5) -> (0.5,-6);
+    \draw[applyOp] (7.5,-5) -> (1.5,-6);
+
+    \draw (-0.8,-6) -- (-1.2,-6);
+    \draw (-1,-6) -- (-1,-13);
+    \draw (-0.8,-13) -- (-1.2,-13);
+    \node[rotate=-90] at (-1.5,-9.5) {Intermediate result.};
+
+    \draw (2.8,-6) -- (3.2,-6);
+    \draw (3,-6) -- (3,-9);
+    \draw (2.8,-9) -- (3.2,-9);
+    \node[rotate=-90] at (3.5,-7.5) {2. reduce};
+
+    % list
+    \drawArray{0}{-6}{2}{-7}
+    \draw (0.5,-6.5) node {11};
+    \draw (1.5,-6.5) node {24};
+    
+    % arrows
+    \draw[applyOp] (0.5,-7) -> (1.5,-8);
+    \draw[applyOp] (1.5,-7) -> (1.5,-8);
+
+    % list
+    \drawArray{0}{-8}{2}{-9}
+    \draw (0.5,-8.5) node {11};
+    \draw (1.5,-8.5) node {35};
+
+    \draw (2.8,-10) -- (3.2,-10);
+    \draw (3,-10) -- (3,-13);
+    \draw (2.8,-13) -- (3.2,-13);
+    \node[rotate=-90] at (3.5,-11.5) {1. d.s.};
+
+    % list
+    \drawArray{0}{-10}{2}{-11}
+    \draw (0.5,-10.5) node {11};
+    \draw (1.5,-10.5) node {0};
+
+    % arrows
+    \draw[applyOp] (0.5,-11) -> (1.5,-12);
+    \draw[applyOp] (1.5,-11) -> (1.5,-12);
+    \draw[applyOp] (1.5,-11) -> (0.5,-12);
+
+    % list
+    \drawArray{0}{-12}{2}{-13}
+    \draw (0.5,-12.5) node {0};
+    \draw (1.5,-12.5) node {11};
+
+    % arrows
+    \draw[applyOp] (0.5,-13) -> (3.5,-14);
+    \draw[applyOp] (1.5,-13) -> (7.5,-14);
+
+    \draw (8.8,-14) -- (9.2,-14);
+    \draw (9,-14) -- (9,-19);
+    \draw (8.8,-19) -- (9.2,-19);
+    \node[rotate=-90] at (9.5,-16.5) {2. downsweep};
+
+    % list
+    \draw[line width=0.0pt, fill=lightgray] (8,-14) -- (4,-14) -- (4,-15) -- (8,-15);
+    \drawArray{0}{-14}{8}{-15}
+    \draw (0.5,-14.5) node {0};
+    \draw (1.5,-14.5) node {2};
+    \draw (2.5,-14.5) node {3};
+    \draw (3.5,-14.5) node {0};
+    \draw (4.5,-14.5) node {9};
+    \draw (5.5,-14.5) node {12};
+    \draw (6.5,-14.5) node {5};
+    \draw (7.5,-14.5) node {11};
+
+    % arrows
+    \draw[applyOp] (1.5,-15) -> (3.5,-16);
+    \draw[applyOp] (3.5,-15) -> (3.5,-16);
+    \draw[applyOp] (3.5,-15) -> (1.5,-16);
+    \draw[applyOp] (5.5,-15) -> (7.5,-16);
+    \draw[applyOp] (7.5,-15) -> (7.5,-16);
+    \draw[applyOp] (7.5,-15) -> (5.5,-16);
+    
+
+    % list
+    \draw[line width=0.0pt, fill=lightgray] (8,-16) -- (4,-16) -- (4,-17) -- (8,-17);
+    \drawArray{0}{-16}{8}{-17}
+    \draw (0.5,-16.5) node {0};
+    \draw (1.5,-16.5) node {0};
+    \draw (2.5,-16.5) node {3};
+    \draw (3.5,-16.5) node {2};
+    \draw (4.5,-16.5) node {9};
+    \draw (5.5,-16.5) node {11};
+    \draw (6.5,-16.5) node {5};
+    \draw (7.5,-16.5) node {23};
+
+    % arrows
+    \draw[applyOp] (0.5,-17) -> (1.5,-18);
+    \draw[applyOp] (1.5,-17) -> (1.5,-18);
+    \draw[applyOp] (1.5,-17) -> (0.5,-18);
+    \draw[applyOp] (2.5,-17) -> (3.5,-18);
+    \draw[applyOp] (3.5,-17) -> (3.5,-18);
+    \draw[applyOp] (3.5,-17) -> (2.5,-18);
+    \draw[applyOp] (4.5,-17) -> (5.5,-18);
+    \draw[applyOp] (5.5,-17) -> (5.5,-18);
+    \draw[applyOp] (5.5,-17) -> (4.5,-18);
+    \draw[applyOp] (6.5,-17) -> (7.5,-18);
+    \draw[applyOp] (7.5,-17) -> (7.5,-18);
+    \draw[applyOp] (7.5,-17) -> (6.5,-18);
+
+    % list
+    \draw[line width=0.0pt, fill=lightgray] (8,-18) -- (4,-18) -- (4,-19) -- (8,-19);
+    \drawArray{0}{-18}{8}{-19}
+    \draw (0.5,-18.5) node {0};
+    \draw (1.5,-18.5) node {0};
+    \draw (2.5,-18.5) node {2};
+    \draw (3.5,-18.5) node {5};
+    \draw (4.5,-18.5) node {11};
+    \draw (5.5,-18.5) node {20};
+    \draw (6.5,-18.5) node {23};
+    \draw (7.5,-18.5) node {28};
+
+  \end{tikzpicture}
+
+  %% \centering
+  %% \includegraphics[width=4cm]{SegmentedScan}
+
+  \parbox{8cm}{\caption[Segmented scan data flow.]{An example of segmented scan
+      data flow. Cells with the same shading belong to the same block and the
+      arrows represent data movement, either a copy or an application of
+      $\oplus$.}\label{fig:segScan}}
 \end{figure}
-
-During down-sweep the data is pumped back out into the array and the
-values calculated during the reduce phase are reused. The result of
-this is an array containing the exclusive scan values. It can be quite
-instructive in data parallel programming to go through this algorithm.
 
 For specific details and further implementation optimizations see
 \sengupta{}.
@@ -430,10 +654,9 @@ For specific details and further implementation optimizations see
 
 % time complexity
 
-For $n$ elements the time complexity of the parallel scan is $2 * O(n
-+ n/2 + n/4 + ... + 1) = O(n)$, since the workload is cut in half for
-each iteration of the reduce and down-sweep kernels.
-
+As can be seen on \reffig{fig:segScan}, the parallel scan performs $2 * O(n + n/2
++ n/4 + ... + 1) = O(n)$ memory accesses, since the memory accessed is cut in
+half for each iteration of the reduce and down-sweep kernels.
 
 % Useful for splitting data
 
@@ -475,14 +698,13 @@ example above the prefix-sum becomes
   \end{array}
 \end{displaymath}
 
-where the last element in $prefix\text{-}sum$ represents the total number of
-triangles moved left, $nf$.
+where the last element in $prefix\text{-}sum$, $nf$, represents the total number
+of triangles moved left.
 
-The observant reader will have noticed that the prefix-sum actually
-calculates the addresses where the triangles on the left side should
-be moved to. All that remains is then to calculate the addresses of
-the triangles moved right. This is done using $right_i = threadId_i -
-prefix_i + nf$.
+The observant reader will have noticed that the prefix-sum actually calculates
+the addresses where the triangles on the left side should be moved to. All that
+remains is then to calculate the addresses of the triangles moved right. This is
+done using $right_i = i - prefix\text{-}sum_i + nf$.
 
 \begin{displaymath}
   \begin{array} {r r r r r r r}
@@ -505,8 +727,8 @@ we wanted.
 
 Sometimes the splitting planes used to split the nodes of a kd-tree will
 intersect with some of the triangles in the scene and the triangle needs to be
-copied to both the left and right side. In \refsection{sec:upperNodes} I will
-show how this specific sorting problem can be solved.
+associated with both the left and right side. In \refsection{sec:upperNodes} I
+will show how this specific sorting problem can be solved.
 
 
 % TODO? the data keeps it's relation to other elements, which is good
@@ -534,7 +756,7 @@ will process the data using the binary operator \textbf{min}, with identity
 element $\infty$, and return the smallest value from the input list, but the
 algorithm presented can easily be generalized to any binary operator and its
 identity element. The naïve algorithm is based on the reduction algorithm
-presented above and will have a time complexity of $O(n)$, which is the best we
+presented above and will perform $O(n)$ memory accesses, which is the best we
 can hope for. Instead of improving the time complexity, the following
 optimizations will instead focus on making better use of the GPU by hiding
 latency, using faster memory where available and reduce the number of
@@ -543,14 +765,13 @@ calculations made.
 % Works on individual blocks, must be run twice if input is too large for one
 % block to handle.
 
-The reduction algorithm will reduce values correctly for individual blocks. If
-the input list is too large to be reduced by one block, then the algorithm can
-be run recursively on its own output, until a single result is found.
+The reduction algorithm will reduce values for individual blocks. If the input
+list is too large to be reduced by one block, then the algorithm can be run
+recursively on its own output, until a single result is found.
 
-The algorithm presented assumes that the length of the input list is a
-power of 2. If that is not the case then either the data could be
-preprocessed or the kernel itself can pad the data with the binary
-operators identity element.
+The algorithm presented assumes that the length of the input list is a power of
+two. If that is not the case then either the data could be preprocessed or the
+kernel itself can pad the data with the binary operators identity element.
 
 \subsection{Naïve implementation}
 
@@ -589,8 +810,8 @@ is returned by the first thread.
 
 Of course there are several inefficiencies to correct in
 \refalg{alg:naiveReduct}. To start with we will focus on global memory access
-and update it to allow the warp to perform coalesced memory access. Since we're
-interested in a global reduction it won't matter in which order values are
+and update it to allow the warp to perform coalesced memory access. Since we are
+interested in a global reduction it will not matter in which order values are
 compared. This allows the interleaved access pattern to be exchanged with a
 sequential one, which then lets the warp perform coalesced memory access.
 
@@ -602,6 +823,9 @@ Two pleasent side effects to this change, which is shown in
 and warp utilization has dramatically increased, since the first $offset$
 threads in a block are now live, compared to every $offset$'th thread in the
 previous implementation.
+
+\fixme{Can be this be written as interleaaved access pattern and sequantiel
+  access pattern instead of $offset$'th?}
 
 \begin{algorithm}
   \caption{Coalesced reduction}
@@ -677,7 +901,7 @@ the statement
 we can see that the $id$'th thread will always access the value stored in
 $sValues[id]$ and is the only thread writting to that cell. This provides us
 with the possibility to use a register to store this value in instead of shared
-memory. We still nedd to store the reduced value in shared memory though, for
+memory. We still need to store the reduced value in shared memory though, for
 when another thread needs the value in its next iteration. The resulting changes
 can be seen in \refalg{alg:registerReduct}.
 
@@ -780,7 +1004,7 @@ construction the reduce kernels were executed 20 times and their total execution
 time can be seen in \reffig{fig:optimizationResults} aswell as the decrease in
 execution time for each optimized kernel relative to the performance of
 Reduce0. The final Reduce4 algorithm decreased execution time by 85.2\% compared
-to the naive implementation. This shows us that knowledge of how the GPU works
+to the naïve implementation. This shows us that knowledge of how the GPU works
 is essential to creating efficient GPU implementations. In the rest of the
 thesis it can be assumed that the above optimizations have been applied to
 kernels that could benefit from them. In some cases the very nature of an

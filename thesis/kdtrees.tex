@@ -341,7 +341,7 @@ does, however, make up for its suboptimal splitting planes by being quite fast.
 % SAH assumptions can be seen in Wald07
 
 A far better splitting plane position can be obtained by applying the
-\textit{surface area heuristic}, \textit{SAH}. Instead of only considering the
+\textit{Surface Area Heuristic}, \textit{SAH}. Instead of only considering the
 bounding volume surrounding the geometry, SAH considers the entire geometry
 associated with a node. In essence SAH computes the \textit{expected cost},
 $C_{SAH}$, of traversing a node, $N$, that has been split into the child nodes
@@ -1053,7 +1053,7 @@ plane across the geometry will utilize the GPU effectively.
 % the spatial median of the nodes longest axis.
 
 The issue is then which algorithm to use when choosing the splitting plane. The
-surface area heuristic provides an algorithm that easily can be parallelized
+Surface Area Heuristic provides an algorithm that easily can be parallelized
 over the geometry. Each triangle would then be responsible for computing the
 expected cost of splitting a node with its 6 bounding box planes and afterwards
 the best possible plane could be reduced with the same method described in

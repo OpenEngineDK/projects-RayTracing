@@ -11,12 +11,14 @@
 %% something like ”In contrast to method X, my method...”, or ”The main
 %% difference between my work and X is...”.
 
+\newpage
+\fixme{Make sure this starts on a newline if needed}
+
 \section{Previous Work}
 
 \chapterquote{If you want to make an apple pie from scratch, you must
   first create the universe.}{Carl Sagan}
 
-\fixme{Make sure this starts on a newline if needed}
 
 % Early ray tracing
 
@@ -50,8 +52,8 @@ chosen in a \textit{round robin} fassion.
 
 The idea of automatically creating hierarchical acceleration structures have
 since been revisited and improved upon countless times. One of the most
-important improvements was the introduction of the \textit{surface area
-  heuristic}, \textit{SAH}, generally attributed to MacDonald and
+important improvements was the introduction of the \textit{Surface Area
+  Heuristic}, \textit{SAH}, generally attributed to MacDonald and
 Booth\citebook{MacDonald:1990}. SAH estimates the expected cost of ray tracing a
 node's two child nodes with respect to some splitting plane. Given a list of
 splitting planes, the expected cost for all these planes can then be calculated

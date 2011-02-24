@@ -25,13 +25,13 @@ structures for ray tracing, specifically binary kd-trees, and how to create
 these efficiently on graphics processing units.
 
 The quality of a kd-tree is defined as the speed with which it can be used to
-ray trace a scene and a lot of previous research into kd-trees has been focused
-on creating acceleration structures of high quality, which usually results in an
-increased construction time. The goal of this thesis is to explore the
-relationship between construction speed and tree quality for kd-trees. I will
-focus on dynamic scenes, where the kd-tree must be rebuild before an image is
-rendered, and investigate if the overall time to ray trace a scene can be
-increased by producing acceleration structures faster, but at a lower quality.
+ray trace a scene and a lot of previous research has been focused on creating
+kd-trees of high quality, which usually results in an increased construction
+time. The goal of this thesis is to explore the relationship between
+construction speed and tree quality for kd-trees. I will focus on dynamic
+scenes, where the kd-tree must be rebuild before an image is rendered, and
+investigate if the overall time to ray trace a scene can be increased by
+producing acceleration structures faster, but at a lower quality.
 
 As part of the thesis I will therefore develop an optimized ray tracer to
 evaluate the quality of the kd-trees produced. The total time spent constructing
