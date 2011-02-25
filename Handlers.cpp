@@ -212,7 +212,10 @@ namespace OpenEngine {
         printTree->name = "Print kd-tree";
         values.push_back(printTree);
 
-        atb->AddBar(new InspectionBar("Ray Tracing", values));
+        InspectionBar* ibar = new InspectionBar("Ray Tracing", values);
+        ibar->SetIconify(false);
+
+        atb->AddBar(ibar);
     }
 
 
