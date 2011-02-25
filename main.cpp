@@ -132,6 +132,8 @@ int main(int argc, char** argv) {
         exit(0);
     }
 
+    logger.info << "Press F5 to bring up the menu." << logger.end;
+
     // setup the engine
     Engine* engine = new Engine;
     IEnvironment* env = new SDLEnvironment(SCREEN_WIDTH, SCREEN_HEIGHT, 32);
