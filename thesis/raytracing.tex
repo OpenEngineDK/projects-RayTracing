@@ -559,9 +559,9 @@ standard technique. Packets were introduced to CPU ray tracers by Wald et
 al.\citebook{Wald:2001:IRCRT}, who utilized \textit{SIMD}\footnote{Single
   instruction, multiple data.} instructions to trace four rays at a time in
 packets. \horn{} extended their short-stack implementation with packet tracing,
-where individual threads would trace multiple rays at a time to amortize the
-cost of traversing the tree. Unfortunately tracing several rays in one thread
-increases thread incoherence across warps and \aila{} concludes that
+where individual threads would trace multiple rays to amortize the cost of
+traversing the tree. Unfortunately tracing several rays in one thread increases
+thread incoherence across warps and \aila{} concludes that
 
 \quotebook{It is worth noticing that [kd-restart] is faster than
   packet traversal in all cases, and with diffuse rays the difference

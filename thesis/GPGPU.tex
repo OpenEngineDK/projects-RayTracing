@@ -400,6 +400,8 @@ efficiently as the CPU, i.e. with $O(n)$ memory accesses.
 
 % Algorithm
 
+\fixme{Mention that prefix-sum works on the same list.}
+
 As can be seen on \reffig{fig:segScan}, \sengupta{}'s work-efficient prefix-sum
 requires two passes over the data, one called \textit{reduce} and another called
 \textit{downsweep}. The object of the reduction phase is to calculate the sum of
@@ -456,6 +458,21 @@ prefix-sum of the input list, which can be seen in the final list in
 \begin{figure}
   \centering
   \begin{tikzpicture}[y=0.5cm, x=0.5cm,font=\sffamily]
+    \draw (-0.8,0) -- (-1.2,0);
+    \draw (-1,0) -- (-1,-5);
+    \draw (-0.8,-5) -- (-1.2,-5);
+    \node[rotate=-90] at (-1.5,-2.5) {Input List};
+
+    \draw (-0.8,-6) -- (-1.2,-6);
+    \draw (-1,-6) -- (-1,-13);
+    \draw (-0.8,-13) -- (-1.2,-13);
+    \node[rotate=-90] at (-1.5,-9.5) {Intermediate List};
+
+    \draw (-0.8,-14) -- (-1.2,-14);
+    \draw (-1,-14) -- (-1,-19);
+    \draw (-0.8,-19) -- (-1.2,-19);
+    \node[rotate=-90] at (-1.5,-16.5) {Input List};
+
     \node at (4, 1) {threads};
     \draw (0,0.5) -- (8, 0.5);
     \draw (0,0.3) -- (0,0.7);
@@ -524,11 +541,6 @@ prefix-sum of the input list, which can be seen in the final list in
     % arrows
     \draw[applyOp] (3.5,-5) -> (0.5,-6);
     \draw[applyOp] (7.5,-5) -> (1.5,-6);
-
-    \draw (-0.8,-6) -- (-1.2,-6);
-    \draw (-1,-6) -- (-1,-13);
-    \draw (-0.8,-13) -- (-1.2,-13);
-    \node[rotate=-90] at (-1.5,-9.5) {Intermediate result.};
 
     \draw (2.8,-6) -- (3.2,-6);
     \draw (3,-6) -- (3,-9);

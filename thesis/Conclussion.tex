@@ -57,8 +57,8 @@ During the the upper tree creation phase I have shown that using Empty Space
 Maximization adds very little overhead to the tree creation phase, but
 significantly improves the quality of the tree. I have also shown that while
 kd-trees produced with Box Inclusion are larger and slower to ray trace compared
-with the Dividing scheme, they can be produced mush faster and generally speed
-up the overall cost of ray tracing.
+with the Triangle/Node Overlap scheme, they can be produced mush faster and
+generally speed up the overall cost of ray tracing.
 
 In the lower tree creation phase I was surprised to see that applying the
 Surface Area Heuristic during tree construction yielded trees of roughly the
@@ -117,7 +117,7 @@ node visited.
 
 % Optimize triangle divide by excluding uninteresting test cases.
 
-In \reffig{fig:upperResults} we saw that the Dividing triangle/node association
+In \reffig{fig:upperResults} we saw that the Triangle/Node Overlap association
 scheme produced kd-trees of superior quality compared with Box
 Inclusion. Therefore improving the execution time of the Dividing approach to
 produce trees at a speed comparable to Box Inclusion would be worthwile. This

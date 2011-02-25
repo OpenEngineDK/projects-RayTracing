@@ -92,6 +92,7 @@ described in the figure's caption.
   \begin{minipage}{\textwidth}
     \centering
     \SetTabelTextSize
+    \makebox[\textwidth]{
     \begin{tabular} {r | c | c | c || c || c || c ||}
       \tabelParam{c}{\textit{Ray} \\ \textit{Tracer:}} &
       \tabelParam{c}{\textit{Ray/triangle}\\\textit{intersection:}} &
@@ -148,7 +149,7 @@ described in the figure's caption.
       \cline{4-7}
       & & & Yes & 18.1ms & 368ms & 171ms \\
       \hline
-    \end{tabular}\par
+    \end{tabular}}\par
     \vspace{-0.75\skip\footins}
     \renewcommand{\footnoterule}{}
   \end{minipage}
@@ -157,11 +158,11 @@ described in the figure's caption.
     faced render times performed the best for a given ray tracer and scene. The
     ones in red performed the worst. The kd-trees for the scenes were
     constructed with Empty Space Maximization enabled and a threshold of 25\%,
-    the triangle/node association scheme employed was Dividing. The threshold
-    for the lower tree was 32, but no lower tree was constructed. The number of
-    nodes in the kd-tree is reported in parenthesis below the name of the
-    scene. The size of the short stack was 4 elements, which has been found to
-    perform well in practice.}
+    the triangle/node association scheme employed was Triangle/Node Overlap. The
+    threshold for the lower tree was 32, but no lower tree was constructed. The
+    number of nodes in the kd-tree is reported in parenthesis below the name of
+    the scene. The size of the short stack was 4 elements, which has been found
+    to perform well in practice.}
   \label{fig:rayTracerEvaluation}
 \end{figure}
 
@@ -245,7 +246,7 @@ number in parenthesis is the amount of nodes in the constructed kd-tree.
     \tabelScene{Reflecting \\ Dragon} &
     \tabelScene{Sponza}\\
     \hline\hline % Titel end
-    \multirow{4}{*}{Dividing} & No & N/A & \worstResult{146/385ms (38k)} & \worstResult{258/220ms (87k)}\\
+    \multirow{4}{*}{\begin{tabular}{c}Triangle/Node\\Overlap\end{tabular}} & No & N/A & \worstResult{146/385ms (38k)} & \worstResult{258/220ms (87k)}\\
     \cline{2-5}
     & \multirow{3}{*}{Yes} & 15\% & 150/376ms (56k) & 263/167ms (104k) \\
     \cline{3-5}
@@ -274,15 +275,16 @@ number in parenthesis is the amount of nodes in the constructed kd-tree.
   \label{fig:upperResults}
 \end{figure}
 
-From the results it is clear that using the Dividing triangle/node association
+From the results it is clear that using the Triangle/Node Overlap association
 scheme produces trees of trees of highest quality. In the Reflecting Dragon
-scene, trees build with Dividing are generally ray traced 10ms, or 2.5\%, faster
-and contain 3k fewer nodes than their Box Inclusion counterparts. In the Sponza
-scene the difference is even more noticeable at up to 8.7\%. Unfortunately
-producing kd-trees using the Dividing scheme is a lot slower than using Box
-Inclusion. In the above scenes this means that while Dividing produces the
-highest quality trees, Box Inclusion makes up for its slower ray tracing results
-by producing trees up to 19\% faster.
+scene, trees build with Triangle/Node Overlap are generally ray traced 10ms, or
+2.5\%, faster and contain 3k fewer nodes than their Box Inclusion
+counterparts. In the Sponza scene the difference is even more noticeable at up
+to 8.7\%. Unfortunately producing kd-trees using the Triangle/Node Overlap scheme
+is a lot slower than using Box Inclusion. In the above scenes this means that
+while Triangle/Node Overlap produces the highest quality trees, Box Inclusion
+makes up for its slower ray tracing results by producing trees up to 19\%
+faster.
 
 As can be seen on the table, enabling Empty Space Maximization adds 4-6ms to the
 kd-tree construction time and a few thousand extra nodes to the tree. Enabling
@@ -310,7 +312,7 @@ construction speed and ray tracing time.
   \begin{tabular}{c |c | c || c || c ||}
     \tabelParam{c}{\textit{Bit Mask:}} &
     \tabelParam{c}{\textit{Splitting} \\ \textit{Scheme:}} &
-    \tabelParam{c||}{$C_N/C_i:$} &
+    \tabelParam{c||}{$C_{trav}/C_i:$} &
     \tabelScene{Reflecting \\ Dragon} &
     \tabelScene{Sponza}\\
     \hline\hline % Titel end
