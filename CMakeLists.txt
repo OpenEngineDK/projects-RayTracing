@@ -1,6 +1,6 @@
 # Project name. Should be the same as the project directory name and
 # will become the name of the binary target.
-SET( PROJECT_NAME "PhotonMapping")
+SET( PROJECT_NAME "RayTracing")
 
 # Project source code list
 SET( PROJECT_SOURCES
