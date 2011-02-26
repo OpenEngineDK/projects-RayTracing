@@ -7,7 +7,7 @@ darcs-dev / fh.daimi.au.dk:/users/cgd/code/openengine
 
 # project repository
 # (uncomment the following two lines after uploading your project)
-darcs /projects/PhotonMapping http://openengine.dk/code/projects/RayTracing
+darcs /projects/RayTracing http://openengine.dk/code/projects/RayTracing
 darcs-dev /projects/PhotonMapping fh.daimi.au.dk:/users/cgd/code/projects/RayTracing
 
 # dist dependencies
