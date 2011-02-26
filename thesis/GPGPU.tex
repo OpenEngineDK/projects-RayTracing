@@ -226,18 +226,18 @@ In the following I have devoted a subsection to each memory space.
 
 % Slow, coalescene of data types with size 1, 2, 4, 8, and 16 bytes.
 
-\fixme{Rewrite: is the slowest form}
+\fixme{highest or slowest?}
 
-Global memory, or \textit{device memory}, is the slowest form of memory on CUDA
-devices. As mentioned above it persists across kernel launches and is therefore
-perfect for storing input data to kernels and their results. To avoid making
-lots of memory transactions to and from global memory, a warp will try to
-\textit{coalesce} its threads' global memory accesses into as few transactions
-as possible. How well global memory access can be coalesced depends on the
-\textit{compute capability} of the graphics hardware, with the coalescence
-restrictions on newer GPUs being more flexible. Suffice it to say here that it
-is preferable to access global memory sequentially, i.e. the $n$'th thread in a
-warp accesses the $n$'th data element.
+Global memory, or \textit{device memory}, has the slowest access time of the
+three memory spaces on CUDA devices. As mentioned above it persists across
+kernel launches and is therefore perfect for storing input data to kernels and
+their results. To avoid making lots of memory transactions to and from global
+memory, a warp will try to \textit{coalesce} its threads' global memory accesses
+into as few transactions as possible. How well global memory access can be
+coalesced depends on the \textit{compute capability} of the graphics hardware,
+with the coalescence restrictions on newer GPUs being more flexible. Suffice it
+to say here that it is preferable to access global memory sequentially, i.e. the
+$n$'th thread in a warp accesses the $n$'th data element.
 
 % Coalesced memory access, float4 instead of float3 The alignment requirement
 % can be forced: stuct __align__(8) {
@@ -399,8 +399,6 @@ efficiently as the CPU, i.e. with $O(n)$ memory accesses.
 
 
 % Algorithm
-
-\fixme{Mention that prefix-sum works on the same list.}
 
 As can be seen on \reffig{fig:segScan}, \sengupta{}'s work-efficient prefix-sum
 requires two passes over the data, one called \textit{reduce} and another called

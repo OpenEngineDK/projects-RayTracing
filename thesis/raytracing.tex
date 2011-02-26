@@ -30,9 +30,9 @@ traced infinitely along a certain \textit{direction}, so $r = \{origin,
 direction\} \in \{R^3, R^3\}$. Before the actual ray tracing can be performed,
 the primary rays traced from the camera and into the scene must first be
 computed and stored in a list of rays, $rays$. How these rays can be generated
-is a large topic in itself and lies outside the scope of this thesis. Chapter 4
-in \citebook{RTR3} provides good insight into the theory needed for creating the
-primary rays.
+is a large topic in itself and lies outside the scope of this thesis. Chapter 6
+in \citebook{PBR:2010} provides good insight into the theory needed for creating
+the primary rays.
 
 The general structure for a ray tracer that handles reflective surfaces can be
 seen in \refalg{alg:generalRayTracer}. Each ray is independent of the other rays
@@ -63,10 +63,13 @@ If $nextRays$ contains one or more reflection rays, then process is repeated.
   \label{alg:generalRayTracer}
   \begin{algorithmic}
     \PROCEDURE{RayTracer}
-              {$rays$ : Ray List, $scene$ : Scene, $pixels$ : Image}
+              {$rays$ : Ray List, $scene$ : Scene Description, $pixels$ : Image}
               {$pixels$ : Image}{
                 \PARALLELFOR{$r$}{$rays$}
-                  \ASSIGN{$triangle$}{ClosestIntersection$(r, Scene)$}
+                  \COMMENTIT{The scene description can be either a list of
+                    triangles in the scene, or a kd-tree created from those
+                    triangles.}
+                  \ASSIGN{$triangle$}{ClosestTriangle$(r, scene)$}
                   \ASSIGN{$pixels[r]$}{ComputeColor$(pixels[r], r, triangle)$}
                   \DECLARE{$nextRays$}{Ray List}
                   \IF{IsReflective$(triangle)$}
@@ -140,12 +143,12 @@ has been omitted and is assumed to be performed by the ComputeColor method in
   \caption{Exhaustive ray tracer}
   \label{alg:exhaustive}
   \begin{algorithmic}
-    \PROCEDURE{Exhaustive}
+    \PROCEDURE{ClostestTriangle}
               {$R$ : Ray, $Ts$, Triangle List}
               {$t_{near}$ : Triangle}{
-                \ASSIGN{$t_{near}$}{$Ts[0]y$}
+                \ASSIGN{$t_{near}$}{$Ts[0]$}
                 \FOREACH{$t$}{$Ts$}
-                  \ASSIGN{$t_{near}$}{ClosestIntersecting$(t, t_{near})$}
+                  \ASSIGN{$t_{near}$}{ClosestHit$(t, t_{near})$}
                 \ENDFOR
               }
   \end{algorithmic}
@@ -181,7 +184,7 @@ can be seen in \refalg{alg:generalTracing}.
   \caption{A general kd-tree traversal algorithm for ray tracing}
   \label{alg:generalTracing}
   \begin{algorithmic}
-    \PROCEDURE{KDTraversal}
+    \PROCEDURE{ClostestTriangle}
               {$ray$ : Ray, $tree$ : kd-tree}
               {$t_{near}$ : Triangle}{
                 \ASSIGN{$t_{near}$}{$NULL$}
@@ -222,7 +225,7 @@ beyond a visited leaf node if it did not intersect any primitives.
   \caption{A basic kd-tree traversal algorithm}
   \label{alg:generalTraversal}
   \begin{algorithmic}
-    \PROCEDURE{Traversal}
+    \PROCEDURE{TraverseTree}
               {$ray$ : Ray, $tree$ : kd-tree}
               {$leaf$ : Node, $d_{far}$ : Number}{
                 \ASSIGN{$d_{far}$}{$\infty$}
@@ -341,10 +344,10 @@ of advancing the ray by updating it's origin, a signed distance, $d_{min}$, is
 used to determine how far a ray has traveled.
 
 \begin{algorithm}
-  \caption{KD Restart}
+  \caption{A kd-restart implementation of ClosestTriangle}
   \label{alg:KDRestart}
   \begin{algorithmic}
-    \PROCEDURE{KDRestart}
+    \PROCEDURE{ClostestTriangle}
               {$ray$ : Ray, $tree$ : kd-tree}
               {$t_{near}$ : Triangle}{
                 \ASSIGN{$t_{near}$}{$NULL$}
@@ -415,10 +418,10 @@ implementation of kd-restart with the short-stack optimization is shown in
 \refalg{alg:ShortStack}.
 
 \begin{algorithm}
-  \caption{Short stack}
+  \caption{A short stack implementation of ClosestTriangle}
   \label{alg:ShortStack}
   \begin{algorithmic}
-    \PROCEDURE{ShortStack}
+    \PROCEDURE{ClostestTriangle}
               {$ray$ : Ray, $tree$ : kd-tree}
               {$t_{near}$ : Triangle}{
     \ASSIGN{$t_{near}$}{$NULL$}
@@ -476,18 +479,18 @@ triangle 2.
 
 In this simple example having a short-stack only allows the ray to skip one node
 at the cost of maintaining and using a short-stack, which will cause a
-significant overhead. Consequently having a short-stack will probably not provide any
-speedup in this small example. But imagine this simple tree as a subtree in a
-much larger scene, with perhaps 10 levels of nodes above it. Then a short-stack
-implementation allows the ray to skip those first 11 nodes, which can yield
-quite a performance improvement.
+significant overhead. Consequently having a short-stack will probably not
+provide any speedup in this small example. But imagine this simple tree as a
+subtree in a much larger scene, with perhaps ten levels of nodes above it. Then
+a short-stack implementation allows the ray to skip those first eleven nodes,
+which can yield quite a performance improvement.
 
 \begin{figure}
   \centering
 
   \subfloat[The short stack algorithm's first traversal of the scene
     from \reffig{fig:simpleSceneTree}. When the ray traversed node 0
-    it pushed  node 2 onto the short-stack.]{
+    it pushed node 2 onto the short-stack.]{
     \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
         level/.style={sibling distance=40mm/#1}]
       \node [visitedNode] (0){$\begin{array}{c}0\\x:4\end{array}$}

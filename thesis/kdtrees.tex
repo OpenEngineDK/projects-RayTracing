@@ -183,7 +183,7 @@ which corrosponds to what is seen in the scene.
 \end{figure}
 
 
-\subsection{Tree Representation}\label{sec:treeRepresentan}
+\subsection{Tree Representation}\label{sec:treeRepresentation}
 
 Each interior node in a kd-tree must contain three pieces of information.
 
@@ -1208,13 +1208,14 @@ subsequent threads can access nodes sequentially.
                  \ENDFOR
                  \ASSIGN{$associateAddr$}{\textbf{Prefix-Sum}($associateSide$)}
                  \COMMENTIT{Sort the triangles.}
-                 \PARALLELFOR{$segment$}{$segmentList$}
-                   \PARALLELFOR{$triangle$}{$segment.triangles$}
-                     \STATE{Sort the triangles to have triangles
-                       associated with the same node placed
-                       sequentially.}
-                   \ENDFOR
-                 \ENDFOR
+                 \ASSIGN{$triangles$}{TriangleSort$(triangles, associateSide, associateAddr)$}
+                 %% \PARALLELFOR{$segment$}{$segmentList$}
+                 %%   \PARALLELFOR{$triangle$}{$segment.triangles$}
+                 %%     \STATE{Sort the triangles to have triangles
+                 %%       associated with the same node placed
+                 %%       sequentially.}
+                 %%   \ENDFOR
+                 %% \ENDFOR
 
                  \STATE{}
 
@@ -1606,7 +1607,7 @@ has been left out.
   \begin{algorithmic}
     \PROCEDURE{PreprocessLowerNodes}
               {$upperLeafs$ : Node List}
-              {$splitCandidates$ : Plane List}{
+              {}{
                 \PARALLELFOR{$node$}{$upperLeafs$}
                   \PARALLELFOR{$triangle$}{$node.Triangles$}
                     \ASSIGN{$aabb_p$}{GetAabb($triangle$)}
@@ -1619,8 +1620,8 @@ has been left out.
                       \ASSIGN{$x_{high}.left[t]$}{$aabb_t.min.x <= aabb_p.max.x$}
                       \ASSIGN{$x_{high}.right[t]$}{$aabb_p.max.x < aabb_t.max.x$}
                     \ENDFOR
-                    \STATE{$splitCandidates$.Add($x_{low}$)}
-                    \STATE{$splitCandidates$.Add($x_{high}$)}
+                    \STATE{$node.splitCandidates$.Add($x_{low}$)}
+                    \STATE{$node.splitCandidates$.Add($x_{high}$)}
                     \STATE{...}
                     \COMMENTIT{Perform similar plane constructions for the y and z axis.}
                     \STATE{...}
@@ -1701,7 +1702,7 @@ created at address 0 and 2 respectively.
   \begin{array}{r c c c c l}
     node: & [n_0 & n_1 & n_2 & n_3]\\
     leafs: & [1 & 0 & 1 & 0]\\
-    prefix\text{-}sum: & [0 & 1 & 1 & 2]\\
+    prefix\text{-}sum: & [0 & 1 & 1 & 2 & 2]\\
     address: & [0 & 2 & 2 & 4] & // prefix\text{-}sum * children\text{ }per\text{ } node\\
   \end{array}
 \end{displaymath}

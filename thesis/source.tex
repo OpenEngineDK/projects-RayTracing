@@ -1,18 +1,25 @@
-\chapter{Uptaining the Project}
+\chapter{Obtaining the Project}
 
 A short demo of the project can be found on
 \url{http://www.youtube.com/watch?v=h9gecC5woxs} or the root of the accompanying
-cd.
+CD.
 
-This project has been developed in OpenEngine, which is needed to uptain the
-source code. The project has been compiled and tested on Max OS X and Ubuntu.
+The source code for this master's thesis is also located on the accompanying CD
+in the folder RayTracingDynamicScenes. The project has been developed in the
+open source 3D engine OpenEngine and I have therefore not implemented everything
+found in RayTracingDynamicScenes. The implementation of my ray tracer can be
+found under the project/RayTracing folder, which contains the scene setup, and
+under extensions/PhotonMapping, where the code for construction kd-trees and ray
+tracing them is located. The project has been compiled and tested on Max OS X
+and Ubuntu.
 
-OpenEngine requires Python, CMake, Boost and the version control system Darcs to
-be installed on the system. My project additionally requires that SDL, CUDA 3.1
-and FreeImage be installed on the system.
+If the CD is not present, then the project can be obtained by installing
+OpenEngine and then installing the project. OpenEngine requires Python, CMake,
+Boost and the version control system Darcs to be installed on the system. My
+project additionally requires that SDL, CUDA 3.1 and FreeImage be installed on
+the system.
 
-OpenEngine can be installed by opening a terminal and running the
-command
+To install OpenEngine simply run the following command in a terminal
 
 \terminalCommand{darcs get http://openengine.dk/code/openengine}
 
