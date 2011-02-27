@@ -131,7 +131,7 @@ million threads per kernel launched.
 
 At the lowest level, threads are scheduled and executed completely parallel in
 small groups called \textit{warps}\footnote{The term originates from weaving,
-  the first parallel thread technology.\citebook{CUDAPG}}, with a warpsize of 32
+  the first parallel thread technology.\citebook{CUDAPG}}, with a warp size of 32
 threads on current generation hardware. A thread in a warp has its own
 instruction counter and register state, and can therefore branch independently
 of neighbouring threads. However, a warp can only execute one specific
@@ -226,18 +226,16 @@ In the following I have devoted a subsection to each memory space.
 
 % Slow, coalescene of data types with size 1, 2, 4, 8, and 16 bytes.
 
-\fixme{highest or slowest?}
-
-Global memory, or \textit{device memory}, has the slowest access time of the
-three memory spaces on CUDA devices. As mentioned above it persists across
-kernel launches and is therefore perfect for storing input data to kernels and
-their results. To avoid making lots of memory transactions to and from global
-memory, a warp will try to \textit{coalesce} its threads' global memory accesses
-into as few transactions as possible. How well global memory access can be
-coalesced depends on the \textit{compute capability} of the graphics hardware,
-with the coalescence restrictions on newer GPUs being more flexible. Suffice it
-to say here that it is preferable to access global memory sequentially, i.e. the
-$n$'th thread in a warp accesses the $n$'th data element.
+Global memory persists across kernel launches and is therefore perfect for
+storing input data to kernels and their results. Unfortunatly it also has the
+highest access time of the three memory spaces on CUDA devices. To avoid making
+lots of memory transactions to and from global memory, a warp will try to
+\textit{coalesce} its threads' global memory accesses into as few transactions
+as possible. How well global memory access can be coalesced depends on the
+\textit{compute capability} of the graphics hardware, with the coalescence
+restrictions on newer GPUs being more flexible. Suffice it to say here that it
+is preferable to access global memory sequentially, i.e. the $n$'th thread in a
+warp accesses the $n$'th data element.
 
 % Coalesced memory access, float4 instead of float3 The alignment requirement
 % can be forced: stuct __align__(8) {
@@ -829,9 +827,9 @@ sequential one, which then lets the warp perform coalesced memory access.
 %% rid of the slow mod operator.
 
 Two pleasent side effects to this change, which is shown in
-\refalg{alg:coalescedReduct}, is that the slow modulo operator has disappeared
-and warp utilization has dramatically increased, since the first $offset$
-threads in a block are now live, compared to every $offset$'th thread in the
+\refalg{alg:coalescedReduct}, is that the slow modulo operator has disappeared.
+Warp utilization has also increased dramatically, since the first $offset$
+threads in a block are now live, compared with every $offset$'th thread in the
 previous implementation.
 
 \fixme{Can be this be written as interleaaved access pattern and sequantiel
@@ -947,24 +945,21 @@ can be seen in \refalg{alg:registerReduct}.
 % Unroll the loops: Only works if the number of reductions are known
 % beforehand (or if we pad the input)
 
-The final optimization that will be applied to the reduction algorithm
-is \textit{loop unrolling}. As stated above one of the assumptions
-made is that the kernel knows beforehand how many elements a block
-will need to reduce. We now extend this assumption with the condition
-that all blocks reduce the same number of elements. Again this can be
-accomplished quite easily by padding the input values when copying
-them to shared memory. 
+The final optimization that will be applied to the reduction algorithm is
+\textit{loop unrolling}. As stated above one of the assumptions made is that the
+kernel knows beforehand how many elements a block will need to reduce. We now
+extend this assumption with the condition that all blocks reduce the same number
+of elements. Again this can be accomplished quite easily by padding the input
+values when copying them to shared memory.
 
 There are several reason as to why loop unrolling can increase
-performance. Firstly looping requires indirection and even though most
-of the threads in our warps will loop the same amount of times, the
-warps still incur an overhead by having to perform the
-indirection. Secondly unrolling removes the overhead of updating the
-$offset$ variable, which is a quite significant portion of the work
-performed by the kernel when the body inside the loop is this
-small. Thirdly we can take advantage of warp synchronization and
-remove explicit synchronization invocations when offset becomes less
-than the warpsize.
+performance. Firstly looping requires indirection and even though most of the
+threads in our warps will loop the same amount of times, the warps still incur
+an overhead by having to perform the indirection. Secondly unrolling removes the
+overhead of updating the $offset$ variable, which is a quite significant portion
+of the work performed by the kernel when the body inside the loop is this
+small. Thirdly we can take advantage of warp synchronization and remove explicit
+synchronization invocations when offset becomes less than the warp size.
 
 % Then move the first up to where data is loaded into shared mem. And
 % move the last reduction down where the final result is written.
@@ -974,7 +969,7 @@ After having unrolled the loop, it is now also possible to move thread
 result is output. We are also able to inline he first reduction, where
 the data is copied from global memory to shared memory, reducing the
 shared memory requirements by half per
-block. \refalg{alg:unrollReduct} shows the inlining of the first and
+block. \Refalg{alg:unrollReduct} shows the inlining of the first and
 final reduction. Unrolling the loop is quite straightforward, but
 takes a lot of space and has therefore been omitted here.
 

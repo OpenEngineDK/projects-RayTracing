@@ -57,7 +57,7 @@ a dataparallel algorithm.
 \section{Building KD-trees}
 
 A kd-tree is a binary tree that recursively subdivides k-dimensional geometry
-into smaller tree nodes. \refalg{alg:kdTreeCreator} describes a general
+into smaller tree nodes. \Refalg{alg:kdTreeCreator} describes a general
 recursive kd-tree construction scheme.
 
 \begin{algorithm}
@@ -425,9 +425,11 @@ along either axis, some method is needed to distinguish the useful splitting
 planes from unimportant ones. The interesting splitting planes are those
 finitely many planes, where the geometry association in the resulting left and
 right child nodes change. These splitting planes are called \textit{split
-  candidates} and are \textit{tangent planes} to the geometry inside a node's
-bounding volume. A tangent plane lies perpendicular to a geometric primitives
-surface and only touches the surface of the triangle without intersecting it.
+  candidates}.
+
+%% and are \textit{tangent planes} to the geometry inside a node's bounding
+%% volume. A tangent plane lies perpendicular to a geometric primitives surface
+%% and only touches the surface of the triangle without intersecting it.
 
 % Take planes from bounding volumes
 
@@ -1053,8 +1055,8 @@ the best possible plane could be reduced with the method described in
 \refsection{sec:reduce}. Unfortunately there can be hundreds of thousand of
 triangles associated with the tree's upper nodes, so comparing a split candidate
 to all of them becomes computationally heavy. SAH also assumes that the created
-children will be leaf nodes in the final tree and that their cost can be
-computed using $C_{leaf}$, which is almost never true at the top of the
+children will be leaf nodes in the final tree and therefore that their cost can
+be computed using $C_{leaf}$, which is almost never true at the top of the
 tree. This makes SAH an undesirable algorithm for choosing splitting planes for
 the upper tree, since we need to be able to decide on which splitting plane to
 use fast to accomodate dynamic scenes. Instead \zhou{} proposes to use spatial
@@ -1072,14 +1074,14 @@ triangles associated with a node must be placed sequentially in memory, the
 triangles need to be sorted after the triangle/node association has been
 determined. To parallelize this sorting over all triangels, I again make use of
 the scan primitive described in \refsection{sec:GPUprims}. Since a triangle can
-be associated with both child nodes, the left-right division in
+be associated with both child nodes, the left-right sorting in
 \refsection{sec:GPUprims} is not directly applicable. Instead I will be using a
 variant where the prefix-sum calculation is applied to a list of size $2 \cdot
 \|triangles\|$. In the first half of the list I will then use 0's and 1's to
 represent whether the $t$'th triangle overlapped its current node's left
-child. The last half of the list does the same but with the right
+child. The last half of the list does the same but for the right
 child. Computing the prefix-sum of this list then yields the addresses,
-$associateAddr$, that the triangles should be sorted to. Below is an example of
+$associateAddr$, where the triangles should be copied to. Below is an example of
 this
 
 \begin{displaymath}
@@ -1093,7 +1095,7 @@ this
 
 where the $triangles$ list is duplicated to easily show the association between
 the entries in $left/right$ and the triangles. With the $left/right$ and
-$prefix-sum$ lists it is possible to parallelize the triangle sorting
+$associateAddr$ lists it is possible to parallelize the triangle sorting
 effectively over all triangles using the algorithm in \refalg{alg:triangleSort}.
 
 \begin{algorithm}
@@ -1148,19 +1150,20 @@ effectively over all triangles using the algorithm in \refalg{alg:triangleSort}.
   \label{fig:nodeStructure}
 \end{figure}
 
-The nodes themselves are placed in one large array with the structure
-shown in \reffig{fig:nodeStructure}. The already processed nodes are
-placed in one sequential chunk from index 0. The currently active
-nodes are located right after them. The child nodes created by
-\refalg{alg:kdUpperNodeCreator} are then placed after the active
-nodes, with the leaf nodes to the left and next set of active nodes to
-the right. This preserves the invariant that the $n$ currently active
-nodes, if any, are always the $n$ last nodes in the array after an
-iteration of the construction algorithm. This is a desirable property
-as it means I do not need to maintain a list of indices to active
-nodes, but instead I can describe the list $activeNodes$ by a range
-and an index into the node list. This also improves coalescence when
-subsequent threads can access nodes sequentially.
+\fixme{Place this somewhere else?}
+
+Like the triangles, the nodes themselves are placed in one large array with the
+structure shown in \reffig{fig:nodeStructure}. The already processed nodes are
+placed in one sequential chunk from index 0. The currently active nodes are
+located right after them. The child nodes created by
+\refalg{alg:kdUpperNodeCreator} are then placed after the active nodes, with the
+leaf nodes to the left and next set of active nodes to the right. This preserves
+the invariant that the $n$ currently active nodes, if any, are always the $n$
+last nodes in the array after an iteration of the construction algorithm. This
+is a desirable property as it means I do not need to maintain a list of indices
+to active nodes, but can instead describe the list $activeNodes$ by a range and
+an index into the node list. This also improves coalescence when subsequent
+threads can access nodes sequentially.
 
 
 \begin{algorithm}
@@ -1184,7 +1187,7 @@ subsequent threads can access nodes sequentially.
                    \STATE{Compute the bounding box of the triangles in
                      each segment.}
                  \ENDFOR
-                 \STATE{Usee segmented reduction as described in
+                 \STATE{Use segmented reduction as described in
                    \zhou{} to compute each nodes bounding box.}
                  \PARALLELFOR{$node$}{$activeNodes$}
                    \STATE{Split $node$ along its spatial median.}
@@ -1254,22 +1257,22 @@ The first thing that \refalg{alg:kdUpperNodeCreator} does is split the triangles
 associated with each active node into fixed-size segments. This may seem odd at
 first, but recall that the upper nodes are split along the spatial median, that
 finding the spatial median means computing a tight bounding box around the
-geometry associated with a node and that to do this we need to apply the
+geometry associated with a node, and that to do this we need to apply the
 reduction described in \refsection{sec:reduce}. Generally having fixed-size
-segments will also make it easy to choose a kernels block size, so that each
+segments will also make it easier to choose a kernels block size, so that each
 segment is processed by one block. A segment contains information about which
 triangles it contains, which node its triangles are associated with and, incase
 there are not enough triangles to fill it, it also stores how many triangles it
 actually contains. The reduction kernel can use this information to pad the data
 loaded into shared memory with identity elements.
 
-After having segmented the triangles, the nodes' bounding boxes can be computed
-as shown in \refsection{sec:reduce} by using the operators \textbf{min} and
-\textbf{max} with their identity elements. Then performing a segmented reduction
-on the result, as described in Algorithm 3 in \zhou, will compute a tight
-bounding box for each node in activeList. A kernel working on all active nodes
-can then use this bounding box to place the nodes splitting planes along their
-spatial median.
+After having segmented the triangles, the bounding boxes of teh individual
+segments can be computed as shown in \refsection{sec:reduce} by using the
+operators \textbf{min} and \textbf{max} with their identity elements. Then
+performing a segmented reduction on the result, as described in Algorithm 3 in
+\zhou, will compute a tight bounding box for each node in activeList. A kernel
+working on all active nodes can then use this bounding box to place the nodes
+splitting planes along their spatial median.
 
 With the splitting plane determined for each node, the triangles will be able to
 determine their triangle/node association with the nodes children and sort
@@ -1279,15 +1282,15 @@ themselves into a new list as described above.
 %% method for calculating them directly. This leads to lots of uncoalesced
 %% lookups, so argue if the GPU is able to properly hide these.
 
-Lastly the nodes in active list are split into their child nodes in
+Lastly the nodes in $activeList$ are split into their child nodes in
 parallel. For node $n$, the values in $associateAddr$ can be used to calculate
 the triangle index and range of the child nodes, $left$ and $right$, as seen in
 \refalg{alg:childIndices}. The idea behind \refalg{alg:childIndices} is that
 using the triangle index of the parent nodes we are able to extract the triangle
-index of its left and right child nodes. Then by adding the parents triangle
-amount to its index, we can lookup the starting index of the next child node's
-triangles. Subtracting these two values yields the range of triangles spanned by
-a child node.
+index of its left and right child nodes. Then by adding the number of triangles
+in the parent node to its index, we can lookup the starting index of the next
+child node's triangles. Subtracting these two values yields the range of
+triangles spanned by a child node.
 
 \begin{algorithm}
   \caption{Compute child node triangle index and range}
@@ -1327,8 +1330,8 @@ injects new nodes created by Empty Space Maximizing into the tree. In order to
 perform Empty Space Maximizing a \textit{loose bounding box} needs to be
 propagated down the tree. A loose bounding box is computed by splitting a
 parents bounding box with its splitting plane. Since the geometry inside a child
-might not touch all sides of a parents bounding box, this propagated bounding
-box provides a loose upper bound on the geometry.
+might not touch all sides of a parents bounding box, the loose bounding box
+provides a loose upper bound on the geometry.
 
 \begin{algorithm}
   \caption{Calculate Empty Space Maximization}
@@ -1361,10 +1364,10 @@ box provides a loose upper bound on the geometry.
                  \ENDFOR
                  \ASSIGN{$emptyAddr$}{\textbf{Prefix-Sum}($emptySplitNodes$)}
                  \PARALLELFOR{$node$}{$activeList$}
-                   \STATE{Cut of empty space and place new nodes
-                     sequentially at addresses specified in
-                     $emptyAddr$. Then rewire parent nodes to point to
-                     new nodes.}
+                   \STATE{Cut of empty space of sides in $emptySides$ and place
+                     new nodes sequentially at addresses specified in
+                     $emptyAddr$. Then rewire parent nodes to point to new
+                     nodes.}
                  \ENDFOR
                  \ENDIF
 
@@ -1387,19 +1390,22 @@ box provides a loose upper bound on the geometry.
 The algorithm for performing Empty Space Maximization is inserted right after
 computing the nodes' tight bounding boxes and before the new child nodes are
 created. Whether or not Empty Space Maximization should be performed on any of
-the nodes in $activeNodes$ is then checked in parallel for all nodes. Each side
-of a node is checked sequentially and if it is found that the amount of empty
-space between the tight bounding box and the loose bounding box on a given side
-is above a certain threshold, then that side is added to the $emptySides$
-list. Each empty split results in two new nodes, one node that refers to the
-empty space and one node injected between the parent node and its child node in
-active list. This injection is depicted in \reffig{fig:noEmptySpaceExample} and
-\reffig{fig:emptySpaceExample}.
+the nodes in $activeNodes$ is then checked in parallel for all nodes. The sides
+of a node's bounding box is checked sequentially to see if the empty space
+between the loose and the tight bounding box is above a certain threshold, which
+means that the empty space should be cut away. These sides are added to the list
+$emptySides$, which will be used later when the nodes are split. Each such split
+results in two new nodes, one node that refers to the empty space and one node
+injected between the parent node and its child node in active list. This
+injection is depicted in \vreffig{fig:noEmptySpaceExample} and
+\vreffig{fig:emptySpaceExample}. The number of new nodes created per node in
+$activeList$ by performing Empty Space maximization is stored in
+$emptySplitNodes$.
 
-Once the amount of empty splits per node has been determined, where to place
-those nodes is computed by calculating the prefix-sum of
-$emptySplitNodes$. Empty Space Maximization nodes are injected into to the list
-of nodes shown in \reffig{fig:nodeStructure} as described on
+Once the sides that should have empty space cut away has been determined, where
+to place the nodes created by these splits are computed by calculating the
+prefix-sum of $emptySplitNodes$. Empty Space Maximization nodes are injected
+into to the list of nodes shown in \reffig{fig:nodeStructure} as described on
 \reffig{fig:emptyNodeStructure}, which again preserves the invariant that the
 next batch of active nodes are located at the end of the list. The arrows in
 \reffig{fig:emptyNodeStructure} symbolize the parent$\rightarrow$child
@@ -1441,7 +1447,7 @@ tree.
   \caption[The structure of the kd-trees nodes in memory with Empty Space
     Maximization.]{The structure of the kd-trees nodes in memory with Empty
     Space Maximization. The arrows symbolize the parent$\rightarrow$child
-    relationship}
+    relationship.}
   \label{fig:emptyNodeStructure}
 \end{figure}
 
@@ -1461,10 +1467,7 @@ the quality and construction speed of trees with and without this optimization.
 Compared with the upper tree creation phase, the lower tree creation is quite
 simple and only requires a few kernels. Since there can be thousands of active
 nodes at the lower node phase, parallization can effectively be done over nodes
-instead of primitives.
-
-\fixme{Note that this procedure can cause false primitives and that they can
-  accumulate over succesive splits.}
+instead of triangles.
 
 \zhou{} proposes that the surface area heuristic is used when deciding which
 splitting candidate to use and that the set of splitting candidates is
@@ -1479,6 +1482,8 @@ anyway is
   postives from accumulating over future splits, our experiments indicate that
   clipping rarely improves ray tracing performance.}{1409079}
 
+\fixme{This means?}
+
 %% Later in this section I will propose two simplifications to the standard SAH
 %% approach. These simplifications may both produce acceleration structures of
 %% lower quality than the computationally heavy SAH, but they make up for this
@@ -1488,18 +1493,21 @@ anyway is
 
 % Explain the Plane struct
 
-\fixme{Explain that this amounts to box inclusion.}
+\fixme{Explain that this amounts to box inclusion?}
 
-Before splitting any nodes however, the split condidate structure used in the
-lower node phase must be explained. To efficiently compute the size of a nodes
-triangle set and performing node/triangle association in one instruction, I
-adopt \zhou's novel approach of storing the triangle set of a node, $n$, as an
-index, $i$, and a bit mask, $b$. If the $k$'th bit in $b$ is set, this means
-that the $i+k$'th triangle in the list of all triangles is associated with the
-node. Recall from earlier that a node stored the reference to its associated
-triangles as an index and a range, $r$. The bit mask corrosponding to $r$ would
-then simply have all it's first $r$ bits set. A more thorough example of how bit
-masks are used is given in \reffig{fig:bitmap}.
+Before splitting any nodes however, I first introduce the split condidate
+structure used in the lower node phase. Recall from
+\refsection{sec:treeRepresentation} that a node stores the reference to its
+associated triangles as an index, $i$, and a range, $r$, into the list of all
+triangles. To efficiently compute the number of triangle associated with a node
+and performing triangle/node association in one instruction, I adopt \zhou's
+novel approach of storing a node's triangle association using an index, $i$, and
+a bit mask, $b$. If the $k$'th bit in $b$ is set, this means that the $i+k$'th
+triangle in the list of all triangles is associated with the node. The bit mask
+corrosponding to $r$ would then simply have all its first $r$ bits set. A more
+thorough example of how bit masks are used is given in \reffig{fig:bitmap}.
+
+\fixme{Better explanation of how planes are precomputed and used, example!}
 
 \newcommand{\nodeBitmap}[5]{
   \begin{tabular}{c}
@@ -1560,46 +1568,50 @@ masks are used is given in \reffig{fig:bitmap}.
     storing triangles as bit masks. The bit masks are represented by a grid
     containing the triangles. If a grid cell contains a triangle, then that bit
     is set. Node 0 contains all triangles, as evidenced by its bit mask. Node 0
-    is then split along the splitting plane drawn in the scene, which has the
-    left triangle set mask $[1,1,1,0]$ and right mask $[0,1,0,1]$. The result of
-    splitting is leafs 1 and 2, whose triangle set is a bitwise \textbf{AND}
-    between node 0's bit mask and the left and right bit mask respectively.}
+    is then split along the precomputed split candidate drawn in the scene,
+    which has the left triangle bit mask $[1,1,1,0]$ and right mask
+    $[0,1,0,1]$. The result of splitting is leafs 1 and 2, whose triangle bit
+    masks are the result of a bitwise \textbf{AND} between node 0's bit mask and
+    the split candidate's left and right bit mask respectively.}
   \label{fig:bitmap}
 \end{figure}
 
 % Example of how to store splitting planes as bitmasks
 
-Since the split candidates are local to the lower subtree, they too can benefit
-from the bit mask representation. Each split candidate needs to store two
-triangle sets, the triangles below the splitting plane and the triangles
-above. If these are stored as bit masks it becomes trivial to associate a
-triangle with a child node after a split. E.g. a new left child's triangle set
-would simply be the bitwise \textbf{AND} of its parent's triangle set and the
-triangle set below the splitting plane. \Reffig{fig:bitmap} also gives an
-example of this, as Node 0 is split by a splitting plane with the triangle sets
-$[1,1,1,0]$ below and $[0,1,0,1]$ above. Hereafter the triangle set below a
-split candidate will be refered to as its left triangle set and the set above is
-its right.
-
-The method for precomputing the split candidates is shown in
-\refalg{alg:calcSplittingPlanes}, which only computes them along the x-axis, but
-is trivially extended to handle more dimensions. The algorithm uses a triangles
-axis aligned bounding box, $aabb_t$ to determine on which side of the splitting
-plane the triangle is located. If $aabb_t$'s minimum cornor is below the
-splitting plane, then the $t$'th bit in the planes left triangle bit mask is
-set. If the maximum cornor of $aabb_t$ is above the plane, then the plane's
-right triangle bit mask will have its $t$'th bit set.
+Since the split candidates are local to the lower subtree, they too benefit from
+the bit mask representation. Each split candidate needs to store two triangle
+bit masks, the triangles in front of the splitting plane and the triangles
+behind. The method for precomputing the split candidate's triangle masks are
+shown in \refalg{alg:calcSplittingPlanes}, which only computes them along the
+x-axis, but is trivially extended to other dimensions. The algorithm uses a
+triangle's axis aligned bounding box, $aabb_t$ to determine on which side of the
+splitting plane the triangle is located. If $aabb_t$'s minimum cornor is in
+front of the splitting plane, then the $t$'th bit in the triangle bit mask in
+front of the plane is set. If the maximum cornor of $aabb_t$ is behind the
+plane, then the triangle bit mask for the triangles behind the plane will have
+its $t$'th bit set.
 
 % Using shared memory
 
-\refalg{alg:calcSplittingPlanes} loops over the set of triangles twice, once in
+\Refalg{alg:calcSplittingPlanes} loops over the set of triangles twice, once in
 parallel and once for each thread. This results in a lot of global memory
-access, which can potentially slow down the procedure. The fix is the same as in
-\refsection{sec:usingSharedMem}, where the threads in a warp worked together to
-load data into shared memory and then accessed that instead of global memory. To
-better convey the intent of \refalg{alg:calcSplittingPlanes} this optimization
-has been left out.
+access, which can potentially slow down the procedure. This is optimized the
+same way as in \refsection{sec:usingSharedMem}, where the threads in a warp
+worked together to load data into shared memory and then accessed that instead
+of global memory. To better convey the intent of
+\refalg{alg:calcSplittingPlanes} this optimization has been left out.
 
+
+
+With the split candidates precomputed and their left and right triangle sets
+stored as bit masks, it becomes trivial to associate a triangle with a child
+node after a split. E.g. a new left child's triangle bit mask would simply be
+the bitwise \textbf{AND} of its parent's bit mask and the bit mask for the
+triangle set in front of the splitting plane. \Reffig{fig:bitmap} also gives an
+example of this, as Node 0 is split by a splitting plane with the triangle bit
+mask $[1,1,1,0]$ in front and $[0,1,0,1]$ behind. Hereafter the triangle bit
+mask in front of a split candidate will be refered to as its left triangle bit
+mask and the set behind is its right.
 
 \begin{algorithm}
   \caption{Preprocess Lower Nodes.}
@@ -1642,12 +1654,14 @@ nodes. \zhou{} used SAH to chose a splitting plane, so this will also be our
 first approach. While SAH did not fit the upper tree construction phase because
 of too many triangles per node and the assumption that all splits resulted in
 leaf nodes, these are the very reasons that it fits so much better for lower
-tree construction. Since the lower tree is constructed from up to 32 or 64
-triangles, the time complexity for computing $C_{SAH}$ per node is now bounded
-by $O(32^2) = O(1)$ or $O(64^2) = O(1)$, instead of $O(t^2)$, where $t$ is the
-amount of triangles in an upper node and can be hundreds of thousands. Also the
-assumption that a split will result in two leafs is far more likely to be true
-at the lower tree phase than the upper phase.
+tree construction. But, as noted previously in \refsection{sec:kdTreeImpl},
+lower trees are constructed from leaf nodes maximally referencing 32 or 64
+triangles. This means the time complexity for computing $C_{SAH}$ per node is
+now bounded by $O(32^2) = O(1)$ or $O(64^2) = O(1)$, instead of $O(t^2)$ in the
+upper tree phase, where $t$ is the number of triangles in an upper node and can
+be hundreds of thousands. Also the assumption that a split will result in two
+leafs in teh final tree is far more likely to be true at the lower tree phase
+than the upper phase.
 
 \begin{algorithm}
   \caption{Calculate SAH cost}
@@ -1666,7 +1680,7 @@ at the lower tree phase than the upper phase.
                     \ASSIGN{$set_R$}{$node.triangles \cap candidate.right$}
                     \ASSIGN{$C_R$}{$\parallel set_R \parallel$}
                     \ASSIGN{$A_R$}{summed surface area of $set_R$}
-                    \ASSIGN{$weightedArea$}{$C_L * A_L + C_R * A_R$}
+                    \ASSIGN{$weightedArea$}{$C_L \cdot A_L + C_R \cdot A_R$}
                   \ENDFOR
                   \ASSIGN{$splittingPlanes[node] \leftarrow p$}{Split candidate with minimal weighted area}
                   \ASSIGN{$C_{SAH}$}{$C_{trav} + p.weightedArea / node.summedArea$}
@@ -1682,7 +1696,7 @@ The algorithm for computing the SAH cost of a splitting plane is given in
 \refalg{alg:calcSAHCost}. As described earlier the algorithm is paralized over
 all nodes. A node must then iterate over all useful split candidates, i.e. those
 split candidates that are associated with its current triangle set. For each
-split candidate the weighted area, $C_L * A_L + C_R * A_R$, is computed and the
+split candidate the weighted area, $C_L \cdot A_L + C_R \cdot A_R$, is computed and the
 one with the lowest is stored as the proposed splitting candidate. The actual
 SAH value of the best split candidate is then computed and compared to the cost
 of leaving the node as a leaf node. The result of this comparison is returned at
@@ -1691,19 +1705,19 @@ the end of the algorithm along with the best splitting candidate.
 % Run prefix sum on leafList and use the result as addresses for the
 % children.
 
-A kernel is then run which creates children to the nodes where $SAH <
-C_{leaf}$. In order to do this however, we must again first apply the
-prefix-sum. This time we apply it to the $leafs$ list and use the result to find
-the addresses where a nodes children should be created. An example is given
-below, where nodes $n_0$ and $n_2$ should have leafs created and these should be
-created at address 0 and 2 respectively.
+A kernel then creates children to the nodes where $SAH < C_{leaf}$. In order to
+do this however, we must again first apply the prefix-sum. This time we apply it
+to the $leafs$ list and use the result to find the addresses where a nodes
+children should be created. An example is given below, where nodes $n_0$ and
+$n_2$ should have leafs created and these should be created at address 0 and 2
+respectively.
 
 \begin{displaymath}
   \begin{array}{r c c c c l}
     node: & [n_0 & n_1 & n_2 & n_3]\\
     leafs: & [1 & 0 & 1 & 0]\\
     prefix\text{-}sum: & [0 & 1 & 1 & 2 & 2]\\
-    address: & [0 & 2 & 2 & 4] & // prefix\text{-}sum * children\text{ }per\text{ } node\\
+    address: & [0 & 2 & 2 & 4] & // prefix\text{-}sum \cdot children\text{ }per\text{ } node\\
   \end{array}
 \end{displaymath}
 
@@ -1713,7 +1727,7 @@ created at address 0 and 2 respectively.
 
 % SAH is slow, so explore alternatives.
 
-While SAH's time complexity is $O(1)$, the iteration over all triangles
+While SAH's time complexity per node is $O(1)$, the iteration over all triangles
 assocated with a node to compute $A_L$ and $A_R$ is still quite expensive. For
 dynamic scenes I propose the following simplifying assumptions: That all
 triangles have the same surface area, specifically the surface area
@@ -1762,7 +1776,8 @@ be simplified as follows.
 The algorithm for computing this \textit{Simplified Surface Area Heuristic} or
 \textit{SSAH} can be seen in \refalg{alg:calcBalancedCost} and works similarly
 to \refalg{alg:calcSAHCost}. Just as with the SAH approach, child nodes are
-created in a seperat kernel after prefix-sum has been applied to $leafs$.
+created in a seperat kernel after prefix-sum has been applied to the list
+$leafs$.
 
 \subsubsection{No Tree Construction}
 
@@ -1770,18 +1785,18 @@ The final tree construction algorithm I will propose for the lower tree phase is
 extremely simple: Do not create any tree!
 
 Recall from \refsection{sec:memoryModel} that the latency of global memory
-access becomes harder for the multiprocessor to hide if the access pattern is
-fragmented. Warps of threads traversing the tree will most likely diverge at
-some point and start to require different global memory. This becomes an even
-bigger problem when they reach the leaf nodes and different threads have to test
-intersection with different triangles. Favoring leaf nodes with more triangles
-associated would reduce this fragmentation and serve to streamline global data
-fetching across warps. I therefore propose that no lower tree be created. This
-would save both the time spent preprocessing the nodes to compile the list of
-split candidates and the time spent actually creating the subtree.
+access becomes harder for the multiprocessor to hide if threads' global memory
+access can not be coalesced. This can happen for threads in the same warp
+traversing a tree, since at some point they are likely to diverge and traverse
+different parts of the tree, which results in scattered global memory
+accesses. Favoring leaf nodes with more triangles associated would reduce the
+size of the tree and thus the thread divergence. Reducing thread divergence
+would then in turn allow the warp to better coalesce global memory access and
+thereby reducing memory transaction and easier hide memory latency. I therefore
+propose not to create a lower tree but instead terminate after having created
+teh upper tree. This would save both the time spent preprocessing the nodes to
+compile the list of split candidates and the time spent actually creating the
+subtree.
 
 Which of the lower tree construction methods proves the best will be evaluated
-in \refsection{sec:evaluateLowerTree}
-
-
-
+in \refsection{sec:evaluateLowerTree}.

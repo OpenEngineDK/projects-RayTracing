@@ -30,21 +30,21 @@ In \refchapter{chp:results} I tested an exhaustive ray tracer and compared it
 against hierarchical ray tracer solutions. The result was that the exhaustive
 ray tracer did not scale nearly as well with scene complexity as the
 hierarchical approaches and I can therefore conclude that acceleration
-structures should still be used for dynamic scenes.
+structures should be used for dynamic scenes.
 
 % Short stack overhead making it only useful in large scenes.
 
-Both packets and leaf skipping proved to be reliable optimizations that only
+Both Packets and Leaf Skipping proved to be reliable optimizations that only
 provided a small overhead in the very simple Cornell Box scene, but otherwise
-always sped up ray tracing. The short-stack optimization did not provide such a
-stable increase in speed. Even for the fairly complex reflecting dragon scene,
-the overhead from maintaining a stack was still too much to provide any
-performance boost. However in the Sponza scene, where the tree was twice as
-large compared to the dragon scene, adding a short-stack allowed the rays to
-avoid re-traversing large parts of the tree and thus improve their overall
-performance. I can therefore conclude that while the short-stack optimization may
-not always provide a decreased rendering time, using it allows the ray tracer to
-perform better in complex scenes.
+sped up ray tracing. The short-stack optimization did not provide such a stable
+increase in speed. Even for the fairly complex reflecting dragon scene, the
+overhead from maintaining a stack was still too much to provide any performance
+boost. However in the Sponza scene, where the tree was twice as large compared
+to the dragon scene, adding a short-stack allowed the rays to avoid
+re-traversing large parts of the tree and thus improve their overall
+performance. I can therefore conclude that while the short-stack optimization
+may not always provide a decreased rendering time, using it allows the ray
+tracer to perform better in complex scenes.
 
 
 % Conclude on kd-trees
@@ -57,8 +57,8 @@ During the the upper tree creation phase I have shown that using Empty Space
 Maximization adds very little overhead to the tree creation phase, but
 significantly improves the quality of the tree. I have also shown that while
 kd-trees produced with Box Inclusion are larger and slower to ray trace compared
-with the Triangle/Node Overlap scheme, they can be produced mush faster and
-generally speed up the overall cost of ray tracing.
+with the Triangle/Node Overlap scheme, they can be produced much faster and
+therefore decreases the overall time spend ray tracing the scene.
 
 In the lower tree creation phase I was surprised to see that applying the
 Surface Area Heuristic during tree construction yielded trees of roughly the
@@ -98,7 +98,7 @@ structure.
   always increases.}{Norman Augustine}
 
 While I am quite content with the performance of the kd-trees and ray tracers
-produced as part of this project, there is still room for optimizations.
+produced as part of this thesis, there is still room for optimizations.
 
 % New node layout
 
@@ -124,7 +124,7 @@ produce trees at a speed comparable to Box Inclusion would be worthwile. This
 might be done by utilizing the knowledge we have about the splitting axis. When
 splitting an interior node by a splitting plane, the resulting childrens
 bounding box will consist of five of the same sides as their parent node's
-bounding box. This knowledge can be utilized to skip som of the intersection
+bounding box. This knowledge can be utilized to skip some of the intersection
 tests described in \citebook{Moller:2005} and thus decrease construction
 time. It would be implemented by a switch with a case for each axis and since
 all triangles in a segment belong to the same node, all threads in a warp would
@@ -137,7 +137,7 @@ the switch to avoid branching and thus creates a large overhead.
 Finally I might be able to speed up Empty Space Maximization by caching the
 empty space nodes in a list in shared memory and then writting that list
 coalesced to global memory once every thread in a warp is done creating empty
-space node. Since the time spend creating empty space nodes is already relative
+space nodes. Since the time spend creating empty space nodes is already relative
 low, 4-6ms in the test scenes, this optimization has a very low priority.
 
 

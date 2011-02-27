@@ -20,20 +20,28 @@ The implementations have been tested on a dual core Intel Core i7 2.66GHz CPU
 with 4GB RAM. The GPU used is an NVIDIA 330M with CUDA Compute Capability 1.2, 6
 multiprocessors running at 1.1GHz and 512MB RAM. CUDA 3.1 was installed on the
 machine. All tests where performed with a screen resolution of 640x480, which
-equals 307200 primary rays traced into the scene.
+equals 307200 primary rays traced into the scene. The timing results presented
+below where obtained by rendering the scene at least 20 times. Due to a lack of
+precision in the method used to time the results, they could vary by
+approximately 2\% between rendered images. In an attempt to prevent this
+variance from affecting the results, the timings presented below are the lowest
+measured over those 20 renderings. Fortunately the variance will not affect the
+evaluation of the kd-tree implementation, as the performance difference between
+the kd-tree implementations far exceed 2\%.
+
 
 \begin{figure}
   \centering
-  \subfloat[The Cornell Box - 36 Triangles.]{
+  \subfloat[The Cornell Box - 36 triangles.]{
     \includegraphics[width=0.3\textwidth]{cornellBox}
   }
-  \subfloat[The Reflecting Stanford Dragon - 203k Triangles.]{
+  \subfloat[The Reflecting Stanford Dragon - 203k triangles.]{
     \includegraphics[width=0.3\textwidth]{semiReflectingDragon}
   }
-  \subfloat[Sponza - 279k Triangles.]{
+  \subfloat[Sponza - 279k triangles.]{
     \includegraphics[width=0.3\textwidth]{sponza}
   }
-  \caption[Test scenes.]{The 3 test scenes used in this chapter.}
+  \caption[Test scenes.]{The three test scenes used in this chapter.}
   \label{fig:testScenes}
 \end{figure}
 
@@ -156,7 +164,7 @@ described in the figure's caption.
   \caption[Ray tracing results.]{The table shows the time it took different ray
     tracer configurations to render each of the three test scenes.  The bold
     faced render times performed the best for a given ray tracer and scene. The
-    ones in red performed the worst. The kd-trees for the scenes were
+    ones in gray performed the worst. The kd-trees for the scenes were
     constructed with Empty Space Maximization enabled and a threshold of 25\%,
     the triangle/node association scheme employed was Triangle/Node Overlap. The
     threshold for the lower tree was 32, but no lower tree was constructed. The
@@ -171,16 +179,16 @@ described in the figure's caption.
 From \reffig{fig:rayTracerEvaluation} it can be seen that the exhaustive ray
 tracer generally performs worst of all the ray tracers. This was to be expected,
 since the exhaustive ray tracers time complexity is $O(nm)$ and the hierarchical
-ray tracers' are $O(n \log m)$, for $n$ rays and $m$ triangles. As expected
-Woop's simpler Triangle/Ray intersection performs better than Moeller-Trumbore's
-for all exhaustive ray tracer configurations. The screen space packet
-optimization has also been applied to the exhaustive ray tracer, but generally
-causes a small overhead instead of a performance improvement. This was to be
-expected, since all rays intersect the triangles in the same order, and
-therefore it does not matter which rays are traced together. In the Reflecting
-Dragon scene we see a small speed increase when using packets. This may be the
-result of fewer warps tracing reflection rays, but can also be caused by an
-acceptable deviation in timing precision.
+ray tracers' are $O(n \log m)$, for $n$ rays and $m$ triangles. As expected the
+implementation of Woop's simpler ray/triangle intersection performs better than
+Moeller-Trumbore's for all exhaustive ray tracer configurations. The screen
+space packet optimization has also been applied to the exhaustive ray tracer,
+but generally causes a small overhead instead of a performance improvement. This
+was to be expected, since all rays intersect the triangles in the same order,
+and therefore it does not matter which rays are traced together. In the
+Reflecting Dragon scene we see a small speed increase when using packets. This
+may be the result of fewer warps tracing reflection rays, but can also be caused
+by a deviation in timing precision.
 
 In the Cornell Box scene, the kd-restart implementation performed worse than the
 exhaustive ray tracer, even without taking the kd-tree construction time of 1ms
@@ -206,7 +214,7 @@ simple. In general enabling Packets decreased rendering time by 27-37\%.
 Enabling Leaf Skipping decrased rendering time by 28-54\%. The largest decrease
 in rendering time was seen in configurations that used Moeller-Trumbore's
 ray/triangle intersection tests, again confirming that Moeller-Trumbore is the
-slowest ray/triangle intersectiong compared to Woop's.
+slowest ray/triangle intersection compared to Woop's.
 
 The short-stack implementation performed very similar to kd-restart. In the
 simple Cornell Box scene it performed slightly worse, due to the overhead of
@@ -267,11 +275,11 @@ number in parenthesis is the amount of nodes in the constructed kd-tree.
     it took to create the kd-tree in milliseconds, the time it took to render
     the scene and the number of nodes in the kd-tree is the number in
     parenthesis. The scene was ray traced using the short stack configuration
-    that performed best above. To keep the lower tree construction phase from
+    that performed best in previous tests. To keep the lower tree construction phase from
     having as little influence on the results as possible, no lower tree will be
     constructed and lower tree threshold has been set to 32. As in
     \reffig{fig:rayTracerEvaluation} the boldfaced text denotes the fastest
-    configuration and red the slowest.}
+    configuration and gray the slowest.}
   \label{fig:upperResults}
 \end{figure}
 
@@ -353,7 +361,7 @@ construction speed and ray tracing time.
     was used and the overall best ray tracer from
     \refsection{sec:evaluateRayTracer} was used to evaluate the quality of the
     tree. As in \reffig{fig:rayTracerEvaluation} the boldfaced text denotes the
-    fastest configuration and red the slowest.}
+    fastest configuration and gray the slowest.}
   \label{fig:lowerResults}
 \end{figure}
 

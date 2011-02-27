@@ -8,12 +8,13 @@
 
 \newcommand{\Reffig}[1]{Figure \ref{#1}}
 \newcommand{\reffig}[1]{figure \ref{#1}}
+\newcommand{\vreffig}[1]{figure \vref{#1}}
 \newcommand{\refchapter}[1]{chapter \ref{#1}}
 \newcommand{\Refchapter}[1]{Chapter \ref{#1}}
 \newcommand{\refsection}[1]{section \ref{#1}}
 \newcommand{\Refsection}[1]{Section \ref{#1}}
-\newcommand{\reflst}[1]{listing \ref{#1}}
-\newcommand{\refalg}[1]{Algorithm \ref{#1}}
+\newcommand{\refalg}[1]{algorithm \ref{#1}}
+\newcommand{\Refalg}[1]{Algorithm \ref{#1}}
 
 % Cite macroes
 \newcommand{\chapterquote}[2]{
@@ -76,14 +77,14 @@
   \hspace{-0.6em}\begin{turn}{45}\begin{tabular}{c}#1\end{tabular}\end{turn}\hspace{-0.6em}
 }
 \newcommand{\bestResult}[1]{\textbf{#1}}
-\newcommand{\worstResult}[1]{{\color{red}#1}}
+\newcommand{\worstResult}[1]{{\color{lightgray}#1}}
 
 %Tikz macroes
 \tikzset{
   node/.style={circle, fill=white, draw, drop shadow},
-  visitedNode/.style={circle, fill=green!40, draw, drop shadow},
+  visitedNode/.style={circle, fill=gray!40, draw, drop shadow},
   leaf/.style={rectangle, rounded corners=1mm, fill=white, draw, drop shadow},
-  visitedLeaf/.style={rectangle, rounded corners=1mm, fill=green!40, draw, drop shadow},
+  visitedLeaf/.style={rectangle, rounded corners=1mm, fill=gray!40, draw, drop shadow},
   applyOp/.style={-stealth}
 }
 \newcommand{\drawTri}[3]{
@@ -93,7 +94,7 @@
     \draw[dashed] (#1) -- (#2) -- (#3) -- (#4) -- (#1);
 }
 \newcommand{\drawRay}[2]{
-    \draw[line width=0.5pt, dashed, ->] (#1) -- (#2);
+    \draw[line width=0.5pt, dashed, -stealth] (#1) -- (#2);
 }
 \newcommand{\drawNode}[4]{
     \draw (#1) -- (#2) -- (#3) -- (#4) -- (#1);
