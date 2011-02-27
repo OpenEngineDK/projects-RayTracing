@@ -152,8 +152,8 @@ namespace OpenEngine {
              &TriangleMapWrapper::SetSplitMethod, "SplittingScheme");
         splitScheme->name = "Splitting Scheme";        
         splitScheme->AddEnum("Box", TriangleMap::BOX);
-        splitScheme->AddEnum("Divide", TriangleMap::DIVIDE);
-// splitScheme->AddEnum("Split", TriangleMap::SPLIT);
+        splitScheme->AddEnum("Triangle/Box Overlap", TriangleMap::DIVIDE);
+        // splitScheme->AddEnum("Split", TriangleMap::SPLIT);
         values.push_back(splitScheme);
 
         RWValueCall<TriangleMapWrapper, bool> *emptySplit
