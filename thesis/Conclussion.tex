@@ -30,14 +30,14 @@ In \refchapter{chp:results} I tested an exhaustive ray tracer and compared it
 against hierarchical ray tracer solutions. The result was that the exhaustive
 ray tracer did not scale nearly as well with scene complexity as the
 hierarchical approaches and I can therefore conclude that acceleration
-structures should be used for dynamic scenes.
+structures should still be used when ray tracing dynamic scenes.
 
 % Short stack overhead making it only useful in large scenes.
 
 Both Packets and Leaf Skipping proved to be reliable optimizations that only
 provided a small overhead in the very simple Cornell Box scene, but otherwise
 sped up ray tracing. The short-stack optimization did not provide such a stable
-increase in speed. Even for the fairly complex reflecting dragon scene, the
+increase in speed. Even for the fairly complex Reflecting Dragon scene, the
 overhead from maintaining a stack was still too much to provide any performance
 boost. However in the Sponza scene, where the tree was twice as large compared
 to the dragon scene, adding a short-stack allowed the rays to avoid
@@ -74,7 +74,7 @@ no lower tree.
 %% quality.
 
 
-Generally I have proven that when creating kd-trees to accelerate ray tracing of
+Generally, I have shown that when creating kd-trees to accelerate ray tracing of
 dynamic scenes, one should always consider the tradeoff between constructing a
 kd-tree of high quality or quickly constructing a lower quality acceleration
 structure.
@@ -107,19 +107,19 @@ First of all the layout of the individual nodes can be optimized. As stated in
 children, which provided me with the flexibility I needed to inject nodes
 produced by Empty Space Maximization into the tree. The standard layout of nodes
 in a kd-tree is to place sibling nodes next to each other, so they can both be
-referenced by one pointer. Compared to the standard layout my kd-tree therefore
-takes up four extra bytes per node, which must be loaded each time a ray
-traverses a node. It is therefore quite possible that converting my current
-kd-tree constructor to work with the standard layout would improve ray tracing
-performance, since less data would have to be fetched from global memory per
-node visited.
+referenced by one pointer. Compared to the standard layout, the interior nodes
+of my kd-tree therefore take up four extra bytes per node, which must be loaded
+each time a ray traverses a node. It is therefore quite possible that converting
+my current kd-tree constructor to work with the standard layout would improve
+ray tracing performance, since less data would have to be fetched from global
+memory per node visited.
 
 
 % Optimize triangle divide by excluding uninteresting test cases.
 
 In \reffig{fig:upperResults} we saw that the Triangle/Node Overlap association
 scheme produced kd-trees of superior quality compared with Box
-Inclusion. Therefore improving the execution time of the Dividing approach to
+Inclusion. Therefore improving the execution time of Triangle/Node Overlap to
 produce trees at a speed comparable to Box Inclusion would be worthwile. This
 might be done by utilizing the knowledge we have about the splitting axis. When
 splitting an interior node by a splitting plane, the resulting childrens
@@ -129,16 +129,17 @@ tests described in \citebook{Moller:2005} and thus decrease construction
 time. It would be implemented by a switch with a case for each axis and since
 all triangles in a segment belong to the same node, all threads in a warp would
 follow the same execution path. Unfortunately my preliminary attempts at
-implementing this optimization has been hindered by the compiler, which inlines
-the switch to avoid branching and thus creates a large overhead.
+implementing this optimization has been hindered by the CUDA compiler, which
+seem to inline the switch in order to avoid branching and thus creates a large
+overhead.
 
 % Speed up empty space splitting
 
-Finally I might be able to speed up Empty Space Maximization by caching the
-empty space nodes in a list in shared memory and then writting that list
-coalesced to global memory once every thread in a warp is done creating empty
-space nodes. Since the time spend creating empty space nodes is already relative
-low, 4-6ms in the test scenes, this optimization has a very low priority.
+Finally, I might be able to speed up Empty Space Maximization by caching the
+created nodes in a list in shared memory and then writting that list coalesced
+to global memory once every thread in a warp is done creating nodes. Since the
+time spend creating those nodes is already relative low, 4-6ms in the test
+scenes, this optimization has a very low priority.
 
 
 % Optimize SAH/SSAH

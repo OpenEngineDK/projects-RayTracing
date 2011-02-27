@@ -28,11 +28,12 @@
 image and lies at the heart of \textit{computer graphics}. The ability to render
 complex scenes realistically or distinctly is vital in several areas; computer
 games, movies and even medical imaging. A scene is made up of models, which can
-consist of several thousand geometric primitives, usually triangles. \fixme{Kan
-  dette gøres mere læsevenligt?}Information about these triangles are stored at
-the vertices and can be its position, a normal perpendicular to its surface or
-its color among other things. Such information stored at a triangle's vertices
-are called \textit{vertex attributes}.
+consist of several thousand geometric primitives, usually triangles. 
+%\fixme{Kan dette gøres mere læsevenligt?}
+Information about these triangles are stored at the vertices and can be its
+position, a normal perpendicular to its surface or its color among other
+things. Such information stored at triangle vertices are called \textit{vertex
+  attributes}.
 
 
 % Rasterization and cube mapping
@@ -55,7 +56,7 @@ objects can be approximated by \textit{environment mapping} or \textit{cube
   mapping}, of which a short describtion can be found on \reffig{fig:cubemap}. A
 problem with cube mapping is that the scene must to be rendered once for each
 side of the cube map, which increases the cost of rendering a scene
-drastically. Another shortcoming of cube mapping is that it doesn't support
+drastically. Another shortcoming of cube mapping is that it does not support
 \textit{self reflection}, since it is only the surrounding environment that is
 rendered onto the map.
 
@@ -79,7 +80,7 @@ reflection and refraction by tracing rays from the viewer's eye and into the
 scene, spawning and tracing new reflection- and refraction rays as needed when
 geometry is intersected. 
 A comparisson of cube mapping and ray tracing can be seen on
-\reffig{fig:reflectingDragons}. The reflecting stanford dragon on
+\reffig{fig:reflectingDragons}. The reflecting Stanford Dragon on
 \reffig{fig:reflectingDragons} has been rendered by me, as have all images in
 this thesis unless explicitly stated
 %% A comparisson of cube mapping and ray tracing is given in
@@ -123,8 +124,8 @@ Scenes of approximately 100k triangles can now be ray traced in real-time, even
 with effects such as shadows, reflection and refraction added. This makes ray
 tracing an increasingly more interesting alternative to rasterization. In this
 thesis I will examine \textit{ray tracing of dynamic scenes}, with the express
-goal to minimize the time between modifying the scene and presenting a user with
-visual feedback of the change. This would be very interesting in the film
+goal to minimize the time between modifying the scene and presenting a viewer
+with visual feedback of the change. This would be very interesting in the film
 industry, where ray tracers are used to create
 \textit{CGI}\footnote{Computer-generated Imagery} effects and 3D artists need
 fast visual feedback while modifying the scene.
@@ -173,16 +174,16 @@ consider.
 In order to facilitate dynamic scenes, the data structure must also be
 dynamic. It is possible to dynamically add and remove elements to a kd-tree, but
 doing so can degrade the quality of the kd-tree or its subtrees. If a subtree's
-quality has degraded too much, it will have to be reconstructed to again
-facilitate fast ray tracing. In the worst case scenario this reconstruction
-needs to be performed on the entire tree and is equivelant to a complete
+quality has degraded too much, it will have to be restructured to facilitate
+fast ray tracing again. In the worst case scenario this restructuring needs to
+be performed on the entire tree and is equivelant to a complete
 reconstruction. Because of this, the algorithms for creating and restructuring
 kd-trees needs to be very fast, and might even have to sacrifice tree quality
 for improved construction speed. This tradeoff between speed and quality is also
 what makes dynamic scenes interesting compared to static scenes. Ray tracers
 rendering static scenes can use as much time as needed to produce acceleration
 structures of high quality. This may not be possible in dynamic scenes, where a
-user that modifies the scene will want visual feedback of the modifications made
+user modifying the scene will want visual feedback of the modifications made
 as fast as possible.
 
 In general there are three ways to optimize ray tracing with respect to dynamic
@@ -193,7 +194,7 @@ scenes to achieve maximum efficiency:
     acceleration structure of higher quality will reduce the time it takes the
     ray tracer to find the nearest intersecting point between a ray and the
     scene. Algorithms for producing kd-tree's of different quality is the topic
-    of \refsection{sec:splittingPlane}.
+    of \refsection{sec:buildingTrees}.
   \item \textbf{Build the acceleration structure faster -} As described above,
     the acceleration structure may need to be entirely reconstructed each time a
     dynamic scene is rendered. Being able to rebuild it fast is therefore
@@ -210,14 +211,14 @@ scenes to achieve maximum efficiency:
 % Why do it on the GPU, yes why indeed? Leaves the CPU free to do
 % other things than rendering.
 
-As observed at the beginning of this chapter, GPU's have grown quite powerful
-over the last decade, and since the introduction of programmable GPU's and
+As observed at the beginning of this chapter, GPUs have grown quite powerful
+over the last decade, and since the introduction of programmable GPUs and
 NVIDIA's \textit{CUDA}\footnote{Compute Unified Device Architecture.}
 framework, many algorithms have been succesfully ported to utilize the resources
 of the GPU. In this thesis I too will use the massive computational power of the
 GPUs to accelerate the creation of data structures and ray tracing them. The
 most compelling reason to do this, is that it leaves the CPU free to handle
-other aspects of a graphics application, such as game logic and networking
+other aspects of a graphics application, such as user input and network
 communication.
 
 %% However, the results achieved in this thesis with respect to ray tracing dynamic
@@ -239,10 +240,10 @@ constructing a kd-tree and its resulting quality, i.e. how fast can it
 accelerate ray tracing. Building on the kd-tree implementation presented by
 \zhou{}, I will investigate different parts of the kd-tree construction phase
 for dynamic scenes and whether it is worthwile in dynamic scenes to sacrifice
-tree quality to gain faster kd-tree construction. The two parts of the kd-tree
-creation phase that will be investigated is the choice of splitting plane and
-how geometry is associated with child nodes after a split. As part of this
-investigation I will describe several different solutions and show how to
+tree quality in order to gain faster kd-tree construction. The two parts of the
+kd-tree creation phase that will be investigated is the choice of splitting
+plane and how geometry is associated with child nodes after a split. As part of
+this investigation I will describe several different solutions and show how to
 implement them efficiently on dataparallel GPUs using CUDA.
 
 The kd-trees created by the different methods above will be evaluated by how
@@ -275,24 +276,15 @@ continued use of acceleration structures for dynamic scenes.
 
 The rest of the thesis is structured as follows:
 
-% Previous work
-
-%% The next section details previous work in the area of ray tracing and
-%% kd-tree construction. This includes a brief history of when ray
-%% tracing was introduced, aswell as key points in time for different
-%% acceleration structures. The last part of this section will focus on
-%% kd-trees and ray tracing on graphics hardware. Changes in this thesis
-%% compared to previous work in the area are also outlined in this
-%% section.
-
 % Understanding CUDA
 
 \Refchapter{chp:GPGPU} introduces NVIDIA's CUDA framework. Here I will describe
 its thread and memory model. I will then go on to describe a new primitive
-proposed by \sengupta{}, which will be needed, e.g. when assigning triangles to
-child nodes after their parent node has been split. The last part of this
-chapter will focus on optimization techniques specific to CUDA and apply these
-incrementally in a case study of a global minima algorithm.
+proposed by \sengupta{}, which will be needed during kd-tree construction,
+e.g. when assigning triangles to child nodes after their parent node has been
+split. The last part of this chapter will focus on optimization techniques
+specific to CUDA and apply these incrementally in a case study of a global
+minima algorithm.
 
 % kd-trees
 

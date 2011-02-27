@@ -12,7 +12,7 @@
 %% difference between my work and X is...”.
 
 \clearpage
-\fixme{Make sure this starts on a newline if needed}
+%\fixme{Make sure this starts on a newline if needed}
 
 \section{Previous Work}
 
@@ -23,11 +23,11 @@
 
 Arthur Appel\citebook{Appel:1968} is credited as the being the first to describe
 the basic idea of ray casting, applying it to solve the \textit{hidden surface
-  problem} and to enhance the perception of depth by computing shadows in opaque
+problem} and to enhance the perception of depth by computing shadows in opaque
 polygonal scenes. Whitted\citebook{Whitted:1979} extended the idea of ray
 casting into the general recursive ray tracing algorithm still used today. If a
-ray would hit a surface, then depending on the surface's material proporties it
-could generate any number of new rays, reflection, refraction or shadow.
+ray would hit a surface, it could generate any number of new rays, reflection,
+refraction or shadow, depending on the surface's material proporties.
 
 % Data structures for acceleration
 
@@ -67,7 +67,7 @@ kd-tree was the best known acceleration structure for ray tracing. While a lot
 of new data structures have since appeared, the kd-tree is still one of the most
 widely used structures due to its low memory footprint, fast ray/plane
 intersection test and countless research papers devoted to both optimal creation
-and ray tracing. For these same reasons this thesis will focus on the use of
+and traversal. For these same reasons this thesis will focus on the use of
 kd-trees as its acceleration structure.
 
 
@@ -75,7 +75,7 @@ kd-trees as its acceleration structure.
 % GPU acceleration structures
 
 Because of the lack of looping and branching on early programmable graphics
-hardware, the first all GPU based ray tracers had to make use of non
+hardware, the first completely GPU based ray tracers had to make use of non
 hierarchical acceleration structures like grids\citebook{844181}. Grid's,
 however, do not scale aswell as hierarchical structures and, in large sparse
 scenes, fine-grained grids run the risk of wasting memory on a lot of empty
@@ -94,16 +94,18 @@ on the graphics card made this optimization technique infeasable for GPU
 solutions. Instead Popov et al.\citebook{popov:07:GPURT} in 2007 introduced a
 stackless ray tracer rivalling CPU ray tracers in speed, which preprocessed the
 kd-tree and adds \textit{ropes}, or references, between neighbouring
-nodes. Concurrently \horn{} proposed a different but equally effective
-solution. Instead of storing the entire stack of possible neighbouring nodes, a
-\textit{short-stack} of only the $N$ lowest possible nodes was stored in
-memory. Horn et al. also introduced an optimization called \textit{push-down},
-where each ray did not restart at the root of the tree, but instead at the root
-of the smallest subtree enclosing the ray. Finally they showed how this could be
-implemented together with \textit{packet tracing}, where several rays are traced
-in packets by one thread to amortize the cost of traversing the tree.
+nodes. These ropes would then allow the rays to quickly locate neighbouring
+nodes while traversing the kd-tree. Concurrently \horn{} proposed a different
+but equally effective solution. Instead of storing the entire stack of possible
+neighbouring nodes, a \textit{short-stack} was stored in memory, containing only
+the $N$ lowest nighbouring nodes that a ray could traverse. Horn et al. also
+introduced an optimization called \textit{push-down}, where each ray did not
+restart at the root of the tree, but instead at the root of the smallest subtree
+enclosing the ray. Finally they showed how this could be implemented together
+with \textit{packet tracing}, where several rays are traced in packets by one
+thread to amortize the cost of traversing the tree.
 
-%% In this thesis I've adopted Horn et al.'s idea of a short stack to
+%% In this thesis I've adopted Horn et al.'s idea of a short-stack to
 %% improve our ray tracer. In a worst case scenario where all the rays
 %% are intersecting the root node's splitting plane, the push-down approch
 %% yields no improvement, but only adds a computational overhead, which

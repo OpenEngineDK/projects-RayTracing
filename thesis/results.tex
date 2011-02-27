@@ -11,8 +11,8 @@
 
 % Intro
 
-In this chapter I will compare the speed and quality of different kd-tree
-construction schemes implemented as part of this thesis.
+In this chapter I will compare the construction speed and quality of different
+kd-tree construction schemes implemented as part of this thesis.
 
 % Hardware
 
@@ -111,18 +111,18 @@ described in the figure's caption.
       \tabelScene{Sponza \\ 263ms (98779)}\\
       \hline\hline
       \multirow{4}{*}{Exhaustive\footnote{The exhaustive ray tracer only ray traces the first 4096 triangles in a scene. Even with this hard upper limit it is clear that an exhaustive approach will not work for detailed scenes.}} & 
-        \multirow{2}{*}{\tabelMoeller} & No & N/A & 11.2ms & \worstResult{1118ms} & \worstResult{964ms} \\
+        \multirow{2}{*}{\tabelMoeller} & None & N/A & 11.2ms & \worstResult{1118ms} & \worstResult{964ms} \\
       \cline{3-7}
       & & 4x8 & N/A & \worstResult{11.6ms} & 1114ms & \worstResult{964ms} \\
       \cline{2-7}
-      & \multirow{2}{*}{Woop} & No & N/A & \bestResult{9.3ms} & \bestResult{898ms} & \bestResult{650ms}\\
+      & \multirow{2}{*}{Woop} & None & N/A & \bestResult{9.3ms} & \bestResult{898ms} & \bestResult{650ms}\\
       \cline{3-7}
       & & 4x8 & N/A & 9.7ms & 903ms & 651ms\\
       \hline
       \hline
 
       % KD-Restart
-      \multirow{8}{*}{KD-Restart} & \multirow{4}{*}{\tabelMoeller} & \multirow{2}{*}{No} & No & 17.9ms & \worstResult{790ms} & \worstResult{592ms} \\
+      \multirow{8}{*}{KD-Restart} & \multirow{4}{*}{\tabelMoeller} & \multirow{2}{*}{None} & No & 17.9ms & \worstResult{790ms} & \worstResult{592ms} \\
       \cline{4-7}
       & & & Yes & \worstResult{18.1ms} & 486ms & 287ms \\
       \cline{3-7}
@@ -130,7 +130,7 @@ described in the figure's caption.
       \cline{4-7}
       & & & Yes & 17.4ms & \bestResult{355ms} & \bestResult{196ms} \\
       \cline{2-7}
-      & \multirow{4}{*}{Woop} & \multirow{2}{*}{No} & No & 15.5ms & 690ms & 549ms \\
+      & \multirow{4}{*}{Woop} & \multirow{2}{*}{None} & No & 15.5ms & 690ms & 549ms \\
       \cline{4-7}
       & & & Yes & 15.8ms & 500ms & 287ms \\
       \cline{3-7}
@@ -141,7 +141,7 @@ described in the figure's caption.
       \hline
       
       % Short-Stack
-      \multirow{8}{*}{Short-Stack} & \multirow{4}{*}{\tabelMoeller} & \multirow{2}{*}{No} & No & 20.0ms & \worstResult{808ms} & \worstResult{595ms} \\
+      \multirow{8}{*}{Short-Stack} & \multirow{4}{*}{\tabelMoeller} & \multirow{2}{*}{None} & No & 20.0ms & \worstResult{808ms} & \worstResult{595ms} \\
       \cline{4-7}
       & & & Yes & \worstResult{20.2ms} & 503ms & 266ms \\
       \cline{3-7}
@@ -149,7 +149,7 @@ described in the figure's caption.
       \cline{4-7}
       & & & Yes & 19.8ms & \bestResult{360ms} & \bestResult{167ms} \\
       \cline{2-7}
-      & \multirow{4}{*}{Woop} & \multirow{2}{*}{No} & No & 18.5ms & 738ms & 560ms \\
+      & \multirow{4}{*}{Woop} & \multirow{2}{*}{None} & No & 18.5ms & 738ms & 560ms \\
       \cline{4-7}
       & & & Yes & 18.7ms & 522ms & 270ms \\
       \cline{3-7}
@@ -169,7 +169,7 @@ described in the figure's caption.
     the triangle/node association scheme employed was Triangle/Node Overlap. The
     threshold for the lower tree was 32, but no lower tree was constructed. The
     number of nodes in the kd-tree is reported in parenthesis below the name of
-    the scene. The size of the short stack was 4 elements, which has been found
+    the scene. The size of the short-stack was 4 elements, which has been found
     to perform well in practice.}
   \label{fig:rayTracerEvaluation}
 \end{figure}
@@ -178,34 +178,34 @@ described in the figure's caption.
 
 From \reffig{fig:rayTracerEvaluation} it can be seen that the exhaustive ray
 tracer generally performs worst of all the ray tracers. This was to be expected,
-since the exhaustive ray tracers time complexity is $O(nm)$ and the hierarchical
-ray tracers' are $O(n \log m)$, for $n$ rays and $m$ triangles. As expected the
+since the exhaustive ray tracers time complexity $O(m)$ per ray and the
+hierarchical ray tracers' is $O(\log m)$, for $m$ triangles. As expected the
 implementation of Woop's simpler ray/triangle intersection performs better than
-Moeller-Trumbore's for all exhaustive ray tracer configurations. The screen
-space packet optimization has also been applied to the exhaustive ray tracer,
-but generally causes a small overhead instead of a performance improvement. This
-was to be expected, since all rays intersect the triangles in the same order,
-and therefore it does not matter which rays are traced together. In the
-Reflecting Dragon scene we see a small speed increase when using packets. This
-may be the result of fewer warps tracing reflection rays, but can also be caused
-by a deviation in timing precision.
+Moeller-Trumbore's for all exhaustive ray tracer configurations. The packet
+optimization has also been applied to the exhaustive ray tracer, but generally
+causes a small overhead instead of a performance improvement. This was also to
+be expected, since all rays intersect the triangles in the same order, and
+therefore it does not matter which rays are traced together. In the Reflecting
+Dragon scene we see a small speed increase when using packets. This may be the
+result of fewer warps tracing reflection rays, but can also be caused by a
+deviation in timing precision.
 
 In the Cornell Box scene, the kd-restart implementation performed worse than the
 exhaustive ray tracer, even without taking the kd-tree construction time of 1ms
 into account. This is not entirely unexpected, since the exhaustive ray tracer
 only needs to intersect every ray with 36 triangles, where the kd-restart
 implementation needs to first traverse the root node, before it can begin
-ray/triangle intersection in leafs that can reference up to 32 triangles. In the
-more complex scenes, kd-restart outperformed exhaustive ray tracing by a wide
-margin. Unsurprisingly the configuration consisting of Moeller-Trumbore
-intersection, no packets and no leaf skipping performed the worst. It was a bit
-more surprising to see that with packets and leaf skipping enabled, it did not
-matter much if Moeller-Trumbore's or Woop's intersection method was
-used. Especially since Woop's intersection test generally outperformed
-Moeller-Trumbore. However, this makes sense since the rays in the same warp are
-spatially close and are therefore able to skip most of the leaf nodes they
-visit, and thus a lot of intersection computations, before reaching their
-intersection point.
+ray/triangle intersection tests in leafs that can reference up to 32
+triangles. In the more complex scenes, kd-restart outperformed exhaustive ray
+tracing by a wide margin. Unsurprisingly, the configuration consisting of
+Moeller-Trumbore intersection, no packets and no leaf skipping performed the
+worst. It was a bit more surprising to see that with packets and leaf skipping
+enabled, it did not matter much if Moeller-Trumbore's or Woop's intersection
+method was used. Especially since Woop's intersection test generally
+outperformed Moeller-Trumbore. However, this makes sense since the rays in the
+same warp are spatially close and are therefore able to skip most of the leaf
+nodes they visit, and thus a lot of intersection computations, before reaching
+their intersection point.
 
 The packet size 4x8 was found to perform best and is therefore the only packet
 size represented in \reffig{fig:rayTracerEvaluation} to keep the table
@@ -226,8 +226,8 @@ kd-restart implementation.
 Overall the short-stack implementation with Moeller-Trumber intersection,
 packets and leaf skipping enabled performed the best. While it may have been
 outperformed in the Cornell Box, it was by far the best ray tracer in the
-complex Sponza scene. I will therefore use it to evaluate the quality of
-kd-trees in the following sections.
+complex Sponza scene. This ray tracer configuration will therefore be used in
+the following sections to evaluate the quality of kd-trees.
 
 
 \section{Evaluate Upper Tree Creation}\label{sec:evaluateUpperTree}
@@ -274,7 +274,7 @@ number in parenthesis is the amount of nodes in the constructed kd-tree.
   \caption[Upper tree creation results.]{The entries in the table show the time
     it took to create the kd-tree in milliseconds, the time it took to render
     the scene and the number of nodes in the kd-tree is the number in
-    parenthesis. The scene was ray traced using the short stack configuration
+    parenthesis. The scene was ray traced using the short-stack configuration
     that performed best in previous tests. To keep the lower tree construction phase from
     having as little influence on the results as possible, no lower tree will be
     constructed and lower tree threshold has been set to 32. As in
@@ -284,27 +284,27 @@ number in parenthesis is the amount of nodes in the constructed kd-tree.
 \end{figure}
 
 From the results it is clear that using the Triangle/Node Overlap association
-scheme produces trees of trees of highest quality. In the Reflecting Dragon
-scene, trees build with Triangle/Node Overlap are generally ray traced 10ms, or
-2.5\%, faster and contain 3k fewer nodes than their Box Inclusion
+scheme produces trees of higher quality than Box Inclusion. In the Reflecting
+Dragon scene, trees build with Triangle/Node Overlap are generally ray traced
+10ms, or 2.5\%, faster and contain 3k fewer nodes than their Box Inclusion
 counterparts. In the Sponza scene the difference is even more noticeable at up
-to 8.7\%. Unfortunately producing kd-trees using the Triangle/Node Overlap scheme
-is a lot slower than using Box Inclusion. In the above scenes this means that
-while Triangle/Node Overlap produces the highest quality trees, Box Inclusion
-makes up for its slower ray tracing results by producing trees up to 19\%
-faster.
+to 8.7\%. Unfortunately producing kd-trees using the Triangle/Node Overlap
+scheme is a lot slower than using Box Inclusion. In the above scenes this means
+that while Triangle/Node Overlap produces the highest quality trees, Box
+Inclusion makes up for its slower ray tracing results by producing trees up to
+19\% faster.
 
 As can be seen on the table, enabling Empty Space Maximization adds 4-6ms to the
 kd-tree construction time and a few thousand extra nodes to the tree. Enabling
-it also increase the tree quality though and ray tracing improvements lie in the
-range of 8\% for the Reflecting Dragon and 24\% in Sponza's great hall. The
+it also increase the tree quality however and ray tracing improvements lie in
+the range of 8\% for the Reflecting Dragon and 24\% in Sponza's great hall. The
 substantial increase in Sponza is a direct consequence of all the empty space in
 the middle of the scene that the rays have to traverse. As for setting the Empty
 Space Threshold, 35\% seems to be marginally better than 25\%. They achieve
 roughly the same tree quality, but with a 35\% Empty Space Threshold the tree
 becomes 4-10\% smaller than a tree with a 25\% threshold. The tree will thus
-take up less memory, which can become important on GPU's where memory is
-limited.
+take up less memory, which can become important on GPUs that have limited
+memory.
 
 Overall configuring the tree constructor to use Box Inclusion and Empty Space
 Maximization with a 35\% threshold yielded the best tradeoff between
@@ -386,11 +386,11 @@ latency and does little for performance.
 
 Looking at the results for kd-trees with 32bit bit masks, constructing no lower
 tree performs best overall. Obviously kd-tree constructors that do not construct
-any lower tree will have the fastest construction time, but that they have the
-fastest ray tracing time and therefore the highest tree quality. This data seems
-to verify my idea from the No Tree Construction subsection in
-\refsection{sec:lowerNodes}, that favoring larger leaf nodes on GPUs can reduce
-thread divergence and increase performance.
+any lower tree will have the fastest construction time, but it was surprising
+that they also had the fastest ray tracing time and therefore the highest tree
+quality. This data seems to verify my idea from the No Tree Construction
+subsection in \refsection{sec:lowerNodes}, that favoring larger leaf nodes on
+GPUs can reduce thread divergence and increase performance.
 
 Using the Surface Area Heuristic to construct the lower trees instead of no
 construction increases construction time by up to 253\% in the worst case, while
@@ -405,4 +405,4 @@ In all cases constructing no lower tree performed best, and only when the bit
 masks allowed the lower tree to associate up to 64 triangles per leaf was SAH
 and SSAH able to produce trees of higher quality than a solution not producing
 any lower trees. However, the cost of producing these trees were to high to be
-of any use in a dynamic scene.
+of any practical use in a dynamic scene.
