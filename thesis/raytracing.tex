@@ -310,9 +310,8 @@ process is restarted for $r'(t)$.
     \label{fig:simpleScene}
   }
   \hspace{20pt}
-  \subfloat[The kd-tree matching the scene. Nodes contain information
-    about which axis have been divided and where. Leaf nodes contain a
-    set of the triangles they overlap.]{
+  \subfloat[The kd-tree matching the scene. The gray shaded nodes represent the
+    ray's traversal of the kd-tree.]{
     \begin{tikzpicture}[y=0.5cm, x=.5cm,font=\sffamily,
         level/.style={sibling distance=40mm/#1}]
       \node [visitedNode] (0){$\begin{array}{c}0\\x:4\end{array}$}
@@ -596,20 +595,22 @@ increase in performance, the GPU is still tracing rays in warp-sized packets and
 an effective ray tracer needs to address this.
 
 On the GPU the rays are stored in rows from left to right in a linear list. For
-an image with a resolution of 64x48, ray tracing this list results in the
-ray/warp classification seen in \reffig{fig:sequentialRayWarp}, which I will
-call \textit{sequantial ray tracing}. As seen on the figure, a large number of
-warps are intersecting the detailed dragon geometry. The threads in those warps
-who quickly intersect their rays with the simple box will then have to idle,
-while waiting for the rays intersecting the detailed dragon to finish.
+an image with a resolution of 64x48, processing the $n$'th ray with the $n$'th
+tread results in the ray/warp classification seen in
+\reffig{fig:sequentialRayWarp}, which I will call \textit{sequantial ray
+  tracing}. As seen on the figure, a large number of warps are intersecting the
+detailed dragon geometry. The threads in those warps who quickly intersect their
+rays with the simple background will then have to idle, while waiting for the
+rays intersecting the detailed dragon to finish.
 
 Instead I propose to take advantage of the spatial coherence between
 neighbouring rays and organize spatially coherent rays into warpsized packets as
 done in \reffig{fig:coherentRayWarp}, where the rays are organized into packets
 with a width, $p_{width}$, of 4 and a height, $p_{height}$, of 8. As the figure
-demonstrates not only does fewer warps ray trace the detailed dragon, but the
-spatial coherence between the rays in a warp causes more warps to ray trace
-spatially local geometry.
+demonstrates, not only does fewer warps ray trace the detailed dragon, but the
+spatial coherence between the rays in a warp causes more warps to ray trace the
+same spatially local geometry, which results in fewer global memory transactions
+per warp.
 
 \begin{figure}
   \subfloat[Sequential ray tracing. Notice how almost all of the
@@ -637,8 +638,8 @@ spatially local geometry.
 
 The calculations needed to transform sequentially ordered ray ids into spatially
 local ray ids are quite simple and can be seen in \refalg{alg:packet}. The
-performance benefits gained by tracing spatially coherent rays and sharing
-fetched global data among the rays in a warp are enormous, as seen in
+performance benefits gained by tracing spatially coherent rays and fewer global
+memory transactions are enormous though, as seen in
 \vreffig{fig:rayTracerEvaluation}.
 
 It should be noted that a possibility exists that rays reflected multiple times
