@@ -111,7 +111,7 @@ tree's root node it can be seen that the plane splits along the x-axis at $x=4$,
 which corrosponds to what is seen in the scene.
 
 \begin{figure}
-  \centering \subfloat[A simple scene and it's corrosponding
+  \centering \subfloat[A simple scene and its corrosponding
     kd-tree. The entire scene is contained in the root node.]{
     \begin{tikzpicture}[y=0.5cm, x=0.5cm,font=\sffamily]
       \drawNode{0,0}{8,0}{8,6}{0,6}
@@ -481,10 +481,9 @@ the node, which is demonstrated on \reffig{fig:aabbContained}.
   \end{tikzpicture}
     
   \vspace{3mm}
-  \parbox{5cm}{\caption[A tree node's bounding box contained in a
-      triangle's bounding box.]{The kd-tree node's bounding box
-      completely contained inside the triangles bounding
-      box.}\label{fig:aabbContained}}
+  \parbox{5cm}{\caption[A tree node's bounding box contained in a triangle's
+      bounding box.]{The kd-tree node's bounding box is completely contained
+      inside the triangles bounding box.}\label{fig:aabbContained}}
 \end{figure}
 
 A solution to this is to continuously \textit{clip} the bounding box of the
@@ -808,8 +807,8 @@ split triangle always produces three new triangles.
   }
 
   \vspace{3mm}
-  \parbox{8cm}{\caption[Excessive splitting of a triangle.]{The triangle splitting
-      algorithm performing excessive splits on a triangle.}\label{fig:excessiveSplitting}}
+  \parbox{8cm}{\caption[Excessive splitting of a triangle.]{Triangle splitting
+      performing excessive splits on a triangle.}\label{fig:excessiveSplitting}}
 \end{figure}
 
 Since splitting a triangle almost always leads to three new triangles being
@@ -1148,7 +1147,7 @@ effectively over all triangles using the algorithm in \refalg{alg:triangleSort}.
     \draw (22,1) -- (22,0);
 
   \end{tikzpicture}
-  \caption{The structure of the kd-trees nodes in memory.}
+  \caption{The structure of the kd-tree's nodes in memory.}
   \label{fig:nodeStructure}
 \end{figure}
 
@@ -1441,13 +1440,14 @@ tree.
     \draw (29,1) -- (29,0);
 
     \draw[rounded corners=20mm, ->] (6,1) -- (11.75, 3) -- (17.5,1.1);
+    \draw[rounded corners=7mm, ->] (6,1) -- (8, 1.8) -- (10,1.1);
     \draw[rounded corners=7mm, ->] (15.5,1) -- (13.75,2) -- (12,1.1);
     \draw[rounded corners=20mm, ->] (12,0) -- (17.25,-1) -- (22.5,-0.1);
     \draw[rounded corners=20mm, ->] (12,0) -- (19.25,-1.4) -- (26.5,-0.1);
 
   \end{tikzpicture}
-  \caption[The structure of the kd-trees nodes in memory with Empty Space
-    Maximization.]{The structure of the kd-trees nodes in memory with Empty
+  \caption[The structure of the kd-tree's nodes in memory with Empty Space
+    Maximization.]{The structure of the kd-trees node's in memory with Empty
     Space Maximization. The arrows symbolize the parent$\rightarrow$child
     relationship.}
   \label{fig:emptyNodeStructure}
@@ -1572,9 +1572,9 @@ thorough example of how bit masks are used is given in \reffig{fig:bitmap}.
     is set. Node 0 contains all triangles, as evidenced by its bit mask. Node 0
     is then split along the precomputed split candidate drawn in the scene,
     which has the left triangle bit mask $[1,1,1,0]$ and right mask
-    $[0,1,0,1]$. The result of splitting is leafs 1 and 2, whose triangle bit
-    masks are the result of a bitwise \textbf{AND} between node 0's bit mask and
-    the split candidate's left and right bit mask respectively.}
+    $[0,1,0,1]$. The result of splitting node 0 is leafs 1 and 2, whose triangle
+    bit masks are the result of a bitwise \textbf{AND} between node 0's bit mask
+    and the split candidate's left and right bit mask respectively.}
   \label{fig:bitmap}
 \end{figure}
 
@@ -1760,7 +1760,6 @@ be simplified as follows.
                 \COMMENTIT{Calculate the simplified SAH cost for each split candidate and
                   return the split candidate with minimal cost.}
                 \PARALLELFOR{$node$}{$activeList$}
-                  \ASSIGN{$p$}{$noSplitCandidate$}
                   \FOREACH{$candidate$}{$node.splitCandidates$}
                     \ASSIGN{$set_l$}{$node.triangles \cap candidate.left$}
                     \ASSIGN{$set_r$}{$node.triangles \cap candidate.right$}

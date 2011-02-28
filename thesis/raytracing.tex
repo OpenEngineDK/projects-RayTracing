@@ -186,13 +186,15 @@ and determine which intersected triangle is nearest, if any. If the ray
 intersects a triangle, then it reports this intersection, otherwise it needs to
 continue traversing the tree. How this is done is the topic of
 \refsection{sec:kdRestart} and \refsection{sec:shortStack}. The general
-algorithm for ray tracing a kd-tree can be seen in \refalg{alg:generalTracing}.
+algorithm for rays traversing a hierarchical acceleration structure can be seen
+in \refalg{alg:generalTracing}.
 
 \begin{algorithm}
-  \caption{A general kd-tree traversal algorithm for ray tracing}
+  \caption{A general algorithm for rays a traversing hierarchical acceleration
+    structure.}
   \label{alg:generalTracing}
   \begin{algorithmic}
-    \PROCEDURE{ClostestIntersectingTriangle}
+    \PROCEDURE{ClosestIntersectingTriangle}
               {$ray$ : Ray, $tree$ : kd-tree}
               {$t_{near}$ : Triangle}{
                 \ASSIGN{$t_{near}$}{$NULL$}
@@ -354,7 +356,7 @@ to determine how far a ray has traveled.
   \caption{A kd-restart implementation of ClosestIntersectingTriangle}
   \label{alg:KDRestart}
   \begin{algorithmic}
-    \PROCEDURE{ClosestIntersectingriangle}
+    \PROCEDURE{ClosestIntersectingTriangle}
               {$ray$ : Ray, $tree$ : kd-tree}
               {$t_{near}$ : Triangle}{
                 \ASSIGN{$t_{near}$}{$NULL$}
@@ -425,8 +427,8 @@ visited in a kd-restart traversal. The reasoning for this is that if a ray
 advances beyond the splitting plane of one of its parent nodes, it effectively
 means the ray should never visit that nodes nearest subtree again and therefore
 no nodes from that subtree should be stored in the short-stack. An
-implementation of kd-restart with the short-stack optimization is shown in
-\refalg{alg:ShortStack}.
+implementation of ClostestIntersectingTriangle for \refalg{alg:generalRayTracer}
+using the short-stack optimization is shown in \refalg{alg:ShortStack}.
 
 \begin{algorithm}
   \caption{A short-stack implementation of ClosestIntersectingTriangle}
@@ -614,7 +616,7 @@ per warp.
 
 \begin{figure}
   \subfloat[Sequential ray tracing. Notice how almost all of the
-    warps overlap both the dragon and box.]{
+    warps overlap both the dragon and the background.]{
     \begin{tikzpicture}[y=0.45cm, x=.45cm,font=\sffamily]
       \node {\includegraphics[width=7.2cm, height=5.4cm]{RefractionDragon}};
       \foreach \x in {-8,0,...,8} \draw[color=black] (\x,-6) -- (\x, 6);
@@ -622,10 +624,9 @@ per warp.
     \end{tikzpicture}
     \label{fig:sequentialRayWarp}
   }
-  \hspace{20pt}
-  \subfloat[Spatially coherent ray tracing. Fewer warps will now
-    ray trace the dragon and the spatial coherence between rays
-    results in entire warps raytracing the same side of the box.]{
+  \hspace{20pt} \subfloat[Spatially coherent ray tracing. Fewer warps will now
+    ray trace the dragon and the spatial coherence between rays results in
+    entire warps raytracing only the background.]{
     \begin{tikzpicture}[y=0.45cm, x=.45cm,font=\sffamily]
       \node {\includegraphics[width=7.2cm, height=5.4cm]{RefractionDragon}};
       \foreach \x in {-8,-7,...,8} \draw (\x,-6) -- (\x, 6);
@@ -689,7 +690,7 @@ not even intersect. \Reffig{fig:waywardRay} is a simple example of
 this. Extending the ray, $R(t) = t \vectwoT{1}{1} + \vectwoT{-4}{0}$, we can
 clearly see that it will intersect leaf node 2. Unfortunately, when using
 kd-trees, the only information available to the ray is that the node is split
-along the y-axis at position 3, which in the above example causes the ray to get
+along the y-axis at  $y=3$, which in the above example causes the ray to get
 sidetracked into leaf 1. This is a problem in scenes with large empty areas that
 a ray has to traverse. Each time the ray intersects a splitting plane in those
 empty areas, it can get sidetracked and traverse subtrees, whose associated
@@ -744,7 +745,7 @@ and will not be applicable in scenes where only a kd-tree is available.
     \end{tikzpicture}
     \label{fig:waywardTree}
   }
-  \caption{A ray straying into a tree node, whose bounding box it does
+  \caption{A ray traversing a leaf node, whose bounding box it does
     not intersect.}
   \label{fig:waywardRay}
 \end{figure}
@@ -871,20 +872,20 @@ the barycentric coordinates.
   \label{alg:moellerTrumbore}
   \begin{algorithmic}
     \PROCEDURE{Möller-Trumbore}
-              {$T$ : triangle, $R$ : ray}
-              {$hit$ : bool, $t$ : distance, $(u,v)$ : barycentric coordinates}
-              {\ASSIGN{$E_1$}{$T.b - T.a$}
-                \ASSIGN{$E_2$}{$T.c - T.a$}
-                \ASSIGN{$T$}{$R.O - T.a$}
-                \ASSIGN{$P$}{$R.D - E_2$}
-                \ASSIGN{$Q$}{$T - E_1$}
-                \ASSIGN{$determinant$}{$P \cdot E_1$}
-                \ASSIGN{$t$}{$(Q \cdot E_2) / determinant$}
+              {$T$ : Triangle, $R$ : Ray}
+              {$hit$ : Bool, $t$ : Distance, $(u,v)$ : Barycentric Coordinates}
+              {\ASSIGN{$e_1$}{$T_b - T_a$}
+                \ASSIGN{$e_2$}{$T_c - T_a$}
+                \ASSIGN{$r$}{$R_{ori} - T_a$}
+                \ASSIGN{$p$}{$R_{dir} - e_2$}
+                \ASSIGN{$q$}{$r - e_1$}
+                \ASSIGN{$determinant$}{$p \cdot e_1$}
+                \ASSIGN{$t$}{$(q \cdot e_2) / determinant$}
                 \COMMENTIT{Provide early out if the triangle is behind
                   the ray.}
                 \IF{$0 < t$}
-                  \ASSIGN{$u$}{$(P \cdot T) / determinant$}
-                  \ASSIGN{$v$}{$(Q \cdot R.D) / determinant$}
+                  \ASSIGN{$u$}{$(p \cdot r) / determinant$}
+                  \ASSIGN{$v$}{$(q \cdot R_{dir}) / determinant$}
                   \ASSIGN{$hit$}{$0 \le u$ \textbf{and} $0 \le v$
                     \textbf{and} $u+v \le 1$}
                 \ELSE

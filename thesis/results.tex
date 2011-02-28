@@ -162,15 +162,15 @@ described in the figure's caption.
     \renewcommand{\footnoterule}{}
   \end{minipage}
   \caption[Ray tracing results.]{The table shows the time it took different ray
-    tracer configurations to render each of the three test scenes.  The bold
-    faced render times performed the best for a given ray tracer and scene. The
-    ones in gray performed the worst. The kd-trees for the scenes were
-    constructed with Empty Space Maximization enabled and a threshold of 25\%,
-    the triangle/node association scheme employed was Triangle/Node Overlap. The
-    threshold for the lower tree was 32, but no lower tree was constructed. The
-    number of nodes in the kd-tree is reported in parenthesis below the name of
-    the scene. The size of the short-stack was 4 elements, which has been found
-    to perform well in practice.}
+    tracer configurations to render each of the three test scenes. The result of
+    the ray tracer configurations that performed the best on a scene are written
+    boldfaced, while the results in gray performed the worst. The kd-trees for
+    the scenes were constructed with Empty Space Maximization enabled and a
+    threshold of 25\%, the triangle/node association scheme employed was
+    Triangle/Node Overlap. The threshold for the lower tree was 32, but no lower
+    tree was constructed. The number of nodes in the kd-tree is reported in
+    parenthesis below the name of the scene. The size of the short-stack was 4
+    elements, which has been found to perform well in practice.}
   \label{fig:rayTracerEvaluation}
 \end{figure}
 
@@ -273,11 +273,11 @@ number in parenthesis is the amount of nodes in the constructed kd-tree.
   \end{tabular}
   \caption[Upper tree creation results.]{The entries in the table show the time
     it took to create the kd-tree in milliseconds, the time it took to render
-    the scene and the number of nodes in the kd-tree is the number in
+    the scene and the number of nodes in the kd-tree is shown in
     parenthesis. The scene was ray traced using the short-stack configuration
-    that performed best in previous tests. To keep the lower tree construction phase from
-    having as little influence on the results as possible, no lower tree will be
-    constructed and lower tree threshold has been set to 32. As in
+    that performed best in previous tests. To keep the lower tree construction
+    phase from having as little influence on the results as possible, no lower
+    tree was constructed and the lower tree threshold was set to 32. As in
     \reffig{fig:rayTracerEvaluation} the boldfaced text denotes the fastest
     configuration and gray the slowest.}
   \label{fig:upperResults}

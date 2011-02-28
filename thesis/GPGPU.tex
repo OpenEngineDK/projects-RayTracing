@@ -30,14 +30,14 @@ be read from or stored into memory by one of the processing units and is around
     \label{fig:gpuCpuGFLOPS}
   }
   \hspace{0.05\textwidth}
-  \subfloat[Comparison of memory bandwidth in gigabyte per second.]{
+  \subfloat[Comparison of memory bandwidth in gigabytes per second.]{
     \includegraphics[width=0.45\textwidth]{throughput}
     \label{fig:gpuCpuThroughput}
   }
   
   \caption[Comparison of FLOPS and memory bandwidth on GPUs and CPUs.]{A comparison
     of the development of floating point operations per second and memory
-    bandwidth on GPUs and CPUs over the last decade. \\The figures are from Chapter 1 in
+    bandwidth of GPUs and CPUs over the last decade. \\The figures are from chapter 1 in
     \citebook{CUDAPG}.}\label{fig:gpuCpuCompare}
 \end{figure}
 
@@ -195,9 +195,11 @@ calculated as
 
 \begin{figure}
   \centering
+
   \includegraphics[width=8cm]{ThreadLayout}
+
   \caption[CUDA's thread hierarchy.]{A figure of CUDA's thread
-    hierarchy.\\ The figure is from Chapter 2 in \citebook{CUDAPG}.}
+    hierarchy.\\ The figure is from chapter 2 in \citebook{CUDAPG}.}
   \label{fig:threadLayout}
 \end{figure}
 
@@ -719,8 +721,8 @@ done using $right_i = i - prefix\text{-}sum_i + nf$.
   \end{array}
 \end{displaymath}
 
-The address that a thread should move it's triangle to is then simply
-$address_i = side_i == l$ ? $prefix_i$ : $right_i$ and becomes
+The address that a thread should move its triangle to is then simply $address_i
+= side_i == l$ ? $prefix_i$ : $right_i$ and becomes
 
 
 \begin{displaymath}
@@ -738,7 +740,7 @@ associated with both the left and right side. In \refsection{sec:upperNodes} I
 will show how this specific sorting problem can be solved.
 
 
-% TODO? the data keeps it's relation to other elements, which is good
+% TODO? the data keeps its relation to other elements, which is good
 % for coalescence.
 
 
