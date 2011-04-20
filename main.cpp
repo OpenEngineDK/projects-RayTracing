@@ -9,6 +9,7 @@
 
 // OpenEngine stuff
 #include <Core/Engine.h>
+#include <Core/IListener.h>
 #include "Display/BoundedCamera.h"
 #include <Display/PerspectiveViewingVolume.h>
 #include <Logging/Logger.h>
@@ -19,6 +20,8 @@
 #include <Scene/PointLightNode.h>
 #include <Scene/ISceneNode.h>
 #include <Scene/RenderStateNode.h>
+#include <Scene/OscCUDAMeshNode.h>
+#include <Scene/SearchTool.h>
 
 // SDL extension
 #include <Display/SDLEnvironment.h>
@@ -67,7 +70,18 @@ using namespace OpenEngine::Renderers::OpenGL;
 using namespace OpenEngine::Scene;
 using namespace OpenEngine::Utils;
 
+class Rotator : public IListener<Core::ProcessEventArg> {
+private:
+    TransformationNode *trans;    
+public:
+    Rotator(TransformationNode *g) : trans(g) {}
+    void Handle(Core::ProcessEventArg arg){
+        trans->Rotate(0.0f, 0.0000001f * arg.approx, 0.0f);
+    }
+};
+
 TransformationNode *geomTrans = new TransformationNode();
+Engine *engine;
 
 ISceneNode* SetupScene(std::string name, BoundedCamera* cam){
 
@@ -90,6 +104,14 @@ ISceneNode* SetupScene(std::string name, BoundedCamera* cam){
     geomTrans = new TransformationNode();
 
     SceneCreator::CreateScene(name, rsNode, cam, geomTrans);
+
+    if (name.compare("bunny") == 0){
+        Rotator* rot = new Rotator(geomTrans);
+        engine->ProcessEvent().Attach(*rot);
+        SearchTool tool;
+        OscCUDAMeshNode* osc = tool.DescendantOscCUDAMeshNode(rsNode);
+        engine->ProcessEvent().Attach(*osc);
+    }
 
     return rsNode;
 }
@@ -135,7 +157,7 @@ int main(int argc, char** argv) {
     logger.info << "Press F5 to bring up the menu." << logger.end;
 
     // setup the engine
-    Engine* engine = new Engine;
+    engine = new Engine;
     IEnvironment* env = new SDLEnvironment(SCREEN_WIDTH, SCREEN_HEIGHT, 32);
     //IEnvironment* env = new SDLEnvironment(SCREEN_WIDTH, SCREEN_HEIGHT, 32, FRAME_FULLSCREEN);
     engine->InitializeEvent().Attach(*env);

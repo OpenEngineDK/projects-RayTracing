@@ -17,6 +17,7 @@
 #include <Resources/ResourceManager.h>
 #include <Scene/ISceneNode.h>
 #include <Scene/MeshNode.h>
+#include <Scene/OscCUDAMeshNode.h>
 #include <Scene/TransformationNode.h>
 #include <Utils/MeshCreator.h>
 
@@ -38,7 +39,7 @@ namespace OpenEngine {
             CreateBunny(scene, cam, geomTrans);
         else if (name.compare("cornell") == 0)
             CreateCornell(scene, cam, geomTrans);
-        else        {
+        else {
             logger.info << "Unknown scene, defaulting to Cornell Box" << logger.end;
             CreateCornell(scene, cam, geomTrans);
         }
@@ -116,6 +117,9 @@ namespace OpenEngine {
         MeshNode* cornell = CreateCornellBox();
         sceneRoot->AddNode(cornell);
 
+        OscCUDAMeshNode* oscNode = new OscCUDAMeshNode(10.0f, 10.0f, -4, 50);
+        sceneRoot->AddNode(oscNode);
+
         geomTrans->SetScale(Vector<3, float>(40, 40, 40));
         geomTrans->SetPosition(Vector<3, float>(0, -6.5, 0));
         sceneRoot->AddNode(geomTrans);
@@ -127,6 +131,22 @@ namespace OpenEngine {
 
         //cam->SetPosition(Vector<3, float>(-4.5f, 3.0f, 4.5f));
         //cam->LookAt(Vector<3, float>(-0.8f, -1.0f, 0.0f));
+    }
+
+    void SceneCreator::CreateTieFighter(Scene::ISceneNode *sceneRoot, Display::BoundedCamera *cam, 
+                                        Scene::TransformationNode * geomTrans){
+        logger.info << "Creating Tie Fighter Scene" << logger.end;
+        MeshNode* cornell = CreateCornellBox();
+        sceneRoot->AddNode(cornell);
+
+        geomTrans->SetScale(Vector<3, float>(40, 40, 40));
+        geomTrans->SetPosition(Vector<3, float>(0, 0, 0));
+        sceneRoot->AddNode(geomTrans);
+        ISceneNode* fighter = LoadTieFighter();
+        geomTrans->AddNode(fighter);
+
+        cam->SetMinimumBound(Vector<3, float>(-4.9f));
+        cam->SetMaximumBound(Vector<3, float>(4.9f));
     }
 
     MeshNode* SceneCreator::CreateCornellBox() {
@@ -193,7 +213,7 @@ namespace OpenEngine {
     }
 
     ISceneNode* SceneCreator::LoadBunny() {
-        IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("bunny/bun_zipper.ply");
+        IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("bunny/bun_zipper_res2.ply");
         duckRes->Load();
         MeshNode* bunny = (MeshNode*) duckRes->GetSceneNode()->GetNode(0)->GetNode(0)->GetNode(0);
 
@@ -205,6 +225,13 @@ namespace OpenEngine {
             color->SetElement(i, bakersChocolate);
 
         geom->AddAttributeList("color", color);        
+
+        return duckRes->GetSceneNode();
+    }    
+
+    ISceneNode* SceneCreator::LoadTieFighter() {
+        IModelResourcePtr duckRes = ResourceManager<IModelResource>::Create("vadertie/45vadertie.3ds");
+        duckRes->Load();
 
         return duckRes->GetSceneNode();
     }    

@@ -31,12 +31,15 @@ namespace OpenEngine {
                                  Scene::TransformationNode * geomTrans);
         static void CreateBunny(Scene::ISceneNode *sceneRoot, Display::BoundedCamera *cam, 
                                 Scene::TransformationNode * geomTrans);
+        static void CreateTieFighter(Scene::ISceneNode *sceneRoot, Display::BoundedCamera *cam, 
+                                     Scene::TransformationNode * geomTrans);
 
         static Scene::MeshNode* CreateCornellBox();
         static Scene::ISceneNode* CreateSmallBox();
         static Scene::ISceneNode* LoadSponza();
         static Scene::ISceneNode* LoadDragon();
         static Scene::ISceneNode* LoadBunny();
+        static Scene::ISceneNode* LoadTieFighter();
     };
 
 }
