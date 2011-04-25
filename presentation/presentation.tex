@@ -8,6 +8,10 @@
 \usepackage[utf8]{inputenc}
 \usepackage{listings}
 
+\usepackage{multirow}
+\newcommand{\bestResult}[1]{\textbf{#1}}
+\newcommand{\worstResult}[1]{{\color{gray}#1}}
+
 \setbeamerfont{frametitle}{family=\rmfamily,series=\bfseries,size={\fontsize{11}{11}}}
 \setbeamertemplate{footline}[page number]
 \setbeamertemplate{navigation symbols}{} % remove navigation bar
@@ -427,100 +431,122 @@ struct KDNode {
   
   \begin{itemize}
     \item Initialize the root node.
-    \item $nodes[0] \leftarrow KDLeaf($CHILD$, 0, primitives)$
+    \item $nodes[0] \leftarrow KDLeaf($CHILD$, 0, \|primitives\|)$
   \end{itemize}
 
-\end{frame}
-
-\begin{frame}[fragile]
-  \frametitle{Upper Node Example: Segments}
-  \begin{itemize}
-  \item Partition the active nodes into segments of up to 2 primitives per
-    segment.\\
-  \begin{lstlisting}[language=C++]
-struct Segment {
-  int owner; // Associated interior node
-  int index, range;
-};
-    \end{lstlisting}
-
-   $\begin{array}{lccc}
-    owner: & n_0 & n_0 & n_0\\
-    index: & 0 & 2 & 4\\
-    range: & 2 & 2 & 2\\
-  \end{array}$
-  \end{itemize}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Upper Node Example: Position Split Plane}
+  \frametitle{Upper Node Example: Initalize Setup}
+  \begin{minipage}{0.4\textwidth}
+    \begin{tikzpicture}[y=0.3cm, x=.3cm,font=\sffamily]
+      \footnotesize
+      \scene
+    \end{tikzpicture}
+  \end{minipage}
+  \begin{minipage}{0.5\textwidth}
+    \centering
+    \begin{tikzpicture}[y=0.3cm, x=.3cm,font=\sffamily,
+        level 1/.style={sibling distance=20mm}]
+      \footnotesize
+      \node [leaf] {$\begin{array}{c}0\\0 \rightarrow 6\end{array}$};
+    \end{tikzpicture}
+  \end{minipage}
+  \vspace{10pt}
+  \begin{itemize}
+    \item[] $primitives: t_0, t_1, t_2, t_3, t_4, t_5$
+  \end{itemize}
+\end{frame}
+
+%% \begin{frame}[fragile]
+%%   \frametitle{Upper Node Example: Segments}
+%%   \begin{itemize}
+%%   \item Partition the active nodes into segments of up to 2 primitives per
+%%     segment.\\
+%%   \begin{lstlisting}[language=C++]
+%% struct Segment {
+%%   int owner; // Associated interior node
+%%   int index, range;
+%% };
+%%     \end{lstlisting}
+
+%%    $\begin{array}{lccc}
+%%     owner: & n_0 & n_0 & n_0\\
+%%     index: & 0 & 2 & 4\\
+%%     range: & 2 & 2 & 2\\
+%%   \end{array}$
+%%   \end{itemize}
+%% \end{frame}
+
+%% \begin{frame}
+%%   \frametitle{Upper Node Example: Position Split Plane}
   
-  \begin{itemize}
-    \item Compute segments AABB in parallel.\\
-      $\begin{array}{lccc}
-      owner: & n_0 & n_0 & 0\\
-      min: & (0,4) & (2,4) & (6,0)\\
-      max: & (4,8) & (9,8) & (10,3)\\
-    \end{array}$
-    \item Reduce $min$ and $max$ to owner node in parallel.\\
-      $\begin{array}{lc}
-      node: & n_0 \\
-      min: & (0,0)\\
-      max: & (10,8)\\
-    \end{array}$
-    \item Place splitting plane at the spatial median of the largest axis (in
-      parallel).\\
-      $\begin{array}{lc}
-      node: & n_0 \\
-      type: & X\\
-      position: & 5\\
-    \end{array}$
-  \end{itemize}
-\end{frame}
+%%   \begin{itemize}
+%%     \item Compute segments AABB in parallel.\\
+%%       $\begin{array}{lccc}
+%%       owner: & n_0 & n_0 & 0\\
+%%       min: & (0,4) & (2,4) & (6,0)\\
+%%       max: & (4,8) & (9,8) & (10,3)\\
+%%     \end{array}$
+%%     \item Reduce $min$ and $max$ to owner node in parallel.\\
+%%       $\begin{array}{lc}
+%%       node: & n_0 \\
+%%       min: & (0,0)\\
+%%       max: & (10,8)\\
+%%     \end{array}$
+%%     \item Place splitting plane at the spatial median of the largest axis (in
+%%       parallel).\\
+%%       $\begin{array}{lc}
+%%       node: & n_0 \\
+%%       type: & X\\
+%%       position: & 5\\
+%%     \end{array}$
+%%   \end{itemize}
+%% \end{frame}
 
-\begin{frame}
-  \frametitle{Upper Node Example: Sort primitives}
+%% \begin{frame}
+%%   \frametitle{Upper Node Example: Sort primitives}
   
-  \begin{itemize}
-  \item Sort primitives according to their associated nodes splitting plane.
-  \item Flag which side of the plane the primitives belong to.\\
-    $\begin{array}{lcccccc}
-    primitive: & t_0 & t_1 & t_2 & t_3 & t_4 & t_5 \\
-    left:  & 1 & 1 & 0 & 1 & 0 & 0 \\
-    right: & 0 & 0 & 1 & 0 & 1 & 1 \\
-    \end{array}$
-  \item Compute where to sort the primitives to.\\
-    $\begin{array}{lccccccccccccc}
-    left+right: & 1 & 1 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 0 & 1 & 1 \\
-    address:    & 0 & 1 & 2 & 2 & 3 & 3 & 3 & 3 & 3 & 4 & 4 & 5 & 6\\
-    \end{array}$
-  \item Finally sort the primitives.\\
-    $primitives: [t_0, t_1, t_3, t_2, t_4, t_5]$
-  \end{itemize}
-\end{frame}
+%%   \begin{itemize}
+%%   \item Sort primitives according to their associated nodes splitting plane.
+%%   \item Flag which side of the plane the primitives belong to.\\
+%%     $\begin{array}{lcccccc}
+%%     primitive: & t_0 & t_1 & t_2 & t_3 & t_4 & t_5 \\
+%%     left:  & 1 & 1 & 0 & 1 & 0 & 0 \\
+%%     right: & 0 & 0 & 1 & 0 & 1 & 1 \\
+%%     \end{array}$
+%%   \item Compute where to sort the primitives to.\\
+%%     $\begin{array}{lccccccccccccc}
+%%     left+right: & 1 & 1 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 0 & 1 & 1 \\
+%%     address:    & 0 & 1 & 2 & 2 & 3 & 3 & 3 & 3 & 3 & 4 & 4 & 5 & 6\\
+%%     \end{array}$
+%%   \item Finally sort the primitives.\\
+%%     $primitives: [t_0, t_1, t_3, t_2, t_4, t_5]$
+%%   \end{itemize}
+%% \end{frame}
 
-\begin{frame}
-  \frametitle{Upper Node Example: Construct new leaf nodes}
-  \begin{itemize}
-    \item Compute the index and range of the new leaf nodes in parallel using $address$.\\
-      $\begin{array}{lcc}
-      child: & n_0.left & n_0.right \\
-      index: & 0 & 3 \\
-      range: & 3 & 3 \\
-      \end{array}$
-    \item Compute their location in the list of nodes in parallel\\
-      $\begin{array}{lcc}
-      child: & n_0.left & n_0.right \\
-      address: & 1 & 2 \\
-      \end{array}$
-    \item Create the new nodes as leaf nodes.\\
-      $\begin{array}{lcc}
-      node: & n_1 & n_2\\
-      index: & 0 & 3\\
-      range: & 3 & 3\\
-      \end{array}$
-  \end{itemize}
-\end{frame}
+%% \begin{frame}
+%%   \frametitle{Upper Node Example: Construct new leaf nodes}
+%%   \begin{itemize}
+%%     \item Compute the index and range of the new leaf nodes in parallel using $address$.\\
+%%       $\begin{array}{lcc}
+%%       child: & n_0.left & n_0.right \\
+%%       index: & 0 & 3 \\
+%%       range: & 3 & 3 \\
+%%       \end{array}$
+%%     \item Compute their location in the list of nodes in parallel\\
+%%       $\begin{array}{lcc}
+%%       child: & n_0.left & n_0.right \\
+%%       address: & 1 & 2 \\
+%%       \end{array}$
+%%     \item Create the new nodes as leaf nodes.\\
+%%       $\begin{array}{lcc}
+%%       node: & n_1 & n_2\\
+%%       index: & 0 & 3\\
+%%       range: & 3 & 3\\
+%%       \end{array}$
+%%   \end{itemize}
+%% \end{frame}
 
 \begin{frame}
   \frametitle{Upper Node Example: First Iteration}
@@ -549,11 +575,18 @@ struct Segment {
   \end{itemize}
 \end{frame}
 
-\begin{frame}
+\begin{frame}[fragile]
   \frametitle{Upper Node Example: Segments}
   \begin{itemize}
   \item Partition the active nodes into segments of up to 2 primitives per
     segment.\\
+  \begin{lstlisting}[language=C++]
+struct Segment {
+  int owner; // Associated interior node
+  int index, range;
+};
+    \end{lstlisting}
+
     $\begin{array}{lcccc}
       owner: & n_1 & n_1 & n_2 & n_2 \\
       index: & 0 & 2 & 3 & 5 \\
@@ -591,6 +624,7 @@ struct Segment {
   \frametitle{Upper Node Example: Sort primitives}
   
   \begin{itemize}
+  \item Sort primitives according to their associated nodes splitting plane.
   \item Flag which side of the plane the primitives belong to.\\
     $\begin{array}{lcccccc}
       primitive: & t_0 & t_1 & t_3 & t_2 & t_4 & t_5 \\
@@ -757,15 +791,74 @@ struct Segment {
   \end{itemize}
 \end{frame}
 
+\begin{frame}
+    \frametitle{Lower Nodes: SAH}
+    \begin{itemize}
+    \item Parallize splitting plane decision over all active nodes.
+    \item Chose optimal splitting plane based on local greedy SAH cost.\\
+      $C_{SAH}(n \rightarrow \{l, r\}) = C_{trav} + \frac{C_{leaf}(l) A_l}{A_n} +
+      \frac{C_{leaf}(r) A_r}{A_n}$, \\
+      where $C_{leaf}(n) = \|T_n\| C_i$
+    \item Termination criteria: $C_{leaf}(n) <= C_{SAH}(n)$
+    \item Store associated primitives as an index and a bitmap to enable
+      $O(n)$ sorting.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Lower Nodes: SAH Algorithm}
+  \scriptsize
+  \begin{algorithmic}
+    \PROCEDURE{ComputeSAHCost}
+              {$activeNodes$ : Node List}
+              {$splittingPlanes$ : Plane List, $leafs$ : Boolean List}{
+                \PARALLELFOR{$node$}{$activeNodes$}
+                  \FOREACH{$candidate$}{$node.splitCandidates$}
+                    \ASSIGN{$set_l$}{$node.triangles \cap candidate.left$}
+                    \ASSIGN{$C_l$}{$\parallel set_l \parallel$}
+                    \ASSIGN{$A_l$}{summed surface area of $set_l$}
+                    \ASSIGN{$set_r$}{$node.triangles \cap candidate.right$}
+                    \ASSIGN{$C_r$}{$\parallel set_r \parallel$}
+                    \ASSIGN{$A_r$}{summed surface area of $set_r$}
+                    \ASSIGN{$weightedArea$}{$C_l \cdot A_l + C_r \cdot A_r$}
+                  \ENDFOR
+                  \ASSIGN{$splittingPlanes[node] \leftarrow p$}{Split candidate with minimal weighted area}
+                  \ASSIGN{$C_{SAH}$}{$C_{trav} + p.weightedArea / node.summedArea$}
+                  \ASSIGN{$leafs[node]$}{$C_{SAH} < C_{leaf}$}
+                \ENDFOR
+              }
+  \end{algorithmic}
+\end{frame}
 
 \section{Results}
-\begin{frame}
+\begin{frame}[fragile]
   \frametitle{Results}
-
-  \begin{itemize}
-    \item Empty Space Maximization ratio
-    \item Node association algorithm
-  \end{itemize}
+  \tiny
+  \begin{tabular} {c | c || c || c |}
+    % Title
+    \multicolumn{1}{c}{\begin{tabular}{c}\textit{Association} \\ \textit{scheme:}\end{tabular}} &
+    \multicolumn{1}{c||}{\begin{tabular}{c}\textit{Empty Space}
+        \\ \textit{Maximization} \\ \textit{Ratio:} \end{tabular}} &
+    \includegraphics[width=2.2cm]{semiReflectingDragon} & 
+    \includegraphics[width=2.2cm]{sponza} \\
+    \hline\hline % Title end
+    \multirow{4}{*}{\begin{tabular}{c}Triangle/Node\\Overlap\end{tabular}} & None & \worstResult{146/385ms (38k)} & \worstResult{258/220ms (87k)}\\
+    \cline{2-4}
+    & 15\% & 150/376ms (56k) & 263/167ms (104k) \\
+    \cline{2-4}
+    & 25\% & \bestResult{150/355ms} (50k) & \bestResult{263/167ms (99k)}\\
+    \cline{2-4}
+    & 35\% & 150/357ms (45k) & \bestResult{263/167ms (95k)}\\
+    \hline\hline
+    \multirow{4}{*}{Box Inclusion} & None & \worstResult{116/397ms (41k)} & \worstResult{213/241ms (112k)} \\
+    \cline{2-4}
+    & 15\% & 121/386ms (59k) & 219/182ms (130k) \\
+    \cline{2-4}
+    & 25\% & 121/373ms (53k) & 219/182ms (125k)\\
+    \cline{2-4}
+    & 35\% & \bestResult{121/366ms (48k)} & \bestResult{219/180ms (120k)}\\
+    \hline
+  \end{tabular}
 \end{frame}
 
 \end{document}
