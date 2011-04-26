@@ -657,8 +657,8 @@ with any of the triangles in leaf 1.
         level/.style={sibling distance=40mm/#1}]
       \node [node] {$\begin{array}{c}0\\x:6\end{array}$}
         child {node [node] {$\begin{array}{c}3\\y:6\end{array}$}
-            child {node [leaf] {$\begin{array}{c}1\\\{0,1,2,3,4\}\end{array}$}}
             child {node [leaf] {$\begin{array}{c}4\\\emptyset\end{array}$}}
+            child {node [leaf] {$\begin{array}{c}1\\\{0,1,2,3,4\}\end{array}$}}
         }
         child {node [leaf] {$\begin{array}{c}2\\\{5, 6\}\end{array}$}};
     \end{tikzpicture}
@@ -1302,10 +1302,10 @@ triangles spanned by a child node.
               {$left$ : Node, $right$ : Node}{
                 \ASSIGN{$left.triangleIndex$}{$associateAddr[parent.triangleIndex]$}
                 \ASSIGN{$leftEndAddr$}{$associateAddr[parent.triangleIndex + parent.triangleRange]$}
-                \ASSIGN{$left.triangleIndex$}{$leftEndAddr - left.triangleIndex$}
+                \ASSIGN{$left.triangleRange$}{$leftEndAddr - left.triangleIndex$}
                 \ASSIGN{$right.triangleIndex$}{$associateAddr[parent.triangleIndex + \|triangles\|]$}
                 \ASSIGN{$rightEndAddr$}{$associateAddr[parent.triangleIndex + parent.triangleRange]$}
-                \ASSIGN{$right.triangleIndex$}{$rightEndAddr - right.triangleIndex$}
+                \ASSIGN{$right.triangleRange$}{$rightEndAddr - right.triangleIndex$}
               }
   \end{algorithmic}
 \end{algorithm}
