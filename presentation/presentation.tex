@@ -2,7 +2,7 @@
 
 \usetheme{Berkeley}
 
-\graphicspath{{../thesis/graphics/}}
+\graphicspath{{graphics/}}
 \DeclareGraphicsExtensions{.pdf,.jpeg,.jpg,.png}
 
 \usepackage[utf8]{inputenc}
@@ -17,8 +17,8 @@
 \setbeamertemplate{navigation symbols}{} % remove navigation bar
 
 \logo{\includegraphics[width=1.5cm, height=1.5cm]{semiReflectingDragon}}
-\author{\textsc{Asger Dam Hoedt}}
-\title{\textsc{Efficient Ray Tracing of Dynamic Scenes on the GPU}}
+%\author{\textsc{Asger Dam Hoedt}}
+%\title{\textsc{Efficient Ray Tracing of Dynamic Scenes on the GPU}}
 
 \usepackage{algorithmic}
 % Algorithm macros
@@ -133,55 +133,41 @@
 
 \section{Introduction}
 \begin{frame}
-  \frametitle{Motivation and Goals}
+  \frametitle{Motivation}
 
-  Motivation
   \begin{itemize}
   \item Increasing interest in ray tracing for creating photo realistic images.
   \item Usecases include CGI effects in modern films, CAD rendering and lighting
     in games.
   \end{itemize}
-
-  Goals
-  \begin{itemize}
-    \item Minimize the time betwen modifying a scene and presenting visual
-      feedback.
-    \item Achieve this by examining the relationship between tree quality and
-      construction time.
-    \item GPU implementation to exploit the massive computational power of
-      todays graphics cards.
-  \end{itemize}
 \end{frame}
 
-%% \begin{frame}
-%%   \frametitle{Domain}
-%%   \begin{itemize}
-%%   \item Use KD-tree to accelerate ray tracing.
-%%   \item GPU implementation to utilize the massive computational power of today's
-%%     graphics hardware.
-%%   \end{itemize}
-%% \end{frame}
-
-%% \begin{frame}
-%%   \frametitle{Goals}
-%%   \begin{itemize}
-%%     \item Minimize the time betwen modifying a scene and presenting visual
-%%       feedback.
-%%     \item Achieve this by examining the relationship between tree quality and
-%%       construction time.
-%%   \end{itemize}
-%% \end{frame}
-
-\section{KD-Trees}
 \begin{frame}
   \frametitle{KD-Trees}
 
   \begin{itemize}
     \item Exhaustive ray tracing is too expensive.
-    \item Introduce hierarchical data structures to spatially subdivide scenes.
+    \item Use hierarchical acceleration structures, which spatially subdivide
+      the scene.
     \item I chose KD-trees and based it on the paper by Zhou et al.
+    \item Dataparallel GPU implementation, which exploits the massive
+      computational power of todays graphics cards.
   \end{itemize}
 \end{frame}
+
+\begin{frame}
+  \frametitle{Goals}
+  \begin{itemize}
+  \item Efficient Rendering of dynamic scenes - i.e. minimize the time betwen
+    modifying a scene and presenting visual feedback.
+  \item Achieved by examining the relationship between acceleration structure
+    quality and construction time.
+  \item Quality is defined as the speed with which a scene can be rendered using
+    an acceleration structure.
+  \end{itemize}
+\end{frame}
+
+\section{KD-Trees}
 
 \subsection{Example}
 \begin{frame}
@@ -200,8 +186,8 @@
     \end{tikzpicture}
   \end{minipage}
 
-  Note to self: All the brilliance in costructing kd-trees comes down to where
-  to place the splitting plane and how to associate triangles with new nodes.
+  %% Note to self: All the brilliance in costructing kd-trees comes down to where
+  %% to place the splitting plane and how to associate triangles with new nodes.
 
 \end{frame}
 
@@ -221,6 +207,13 @@
     \begin{tikzpicture}[y=0.3cm, x=.3cm,font=\sffamily,
         level 1/.style={sibling distance=20mm}]
       \footnotesize
+      \draw (0,8) node [leaf] {$\begin{array}{c}0\\\{0,1,2,3,4,5\}\end{array}$};
+
+      \draw (0,3) -- (-1,4);
+      \draw (0,3) -- (1,4);
+      \draw (0.33,3.33) -- (0.33,5);
+      \draw (-0.33,3.33) -- (-0.33,5);
+
       \node [node] {$\begin{array}{c}0\\x:5\end{array}$}
         child {node [leaf] {$\begin{array}{c}1\\\{0,1,3\}\end{array}$}}
         child {node [leaf] {$\begin{array}{c}2\\\{2,4,5\}\end{array}$}};
@@ -228,35 +221,34 @@
   \end{minipage}
 \end{frame}
 
-\begin{frame}
-  \frametitle{Second level splits}
-  \begin{minipage}{0.4\textwidth}
-    \begin{tikzpicture}[y=0.3cm, x=.3cm,font=\sffamily]
-      \footnotesize
-      \scene
+%% \begin{frame}
+%%   \frametitle{Second level splits}
+%%   \begin{minipage}{0.4\textwidth}
+%%     \begin{tikzpicture}[y=0.3cm, x=.3cm,font=\sffamily]
+%%       \footnotesize
+%%       \scene
       
-      % splits
-      \drawSplit{5,0}{5,9}
-      \drawSplit{2,0}{2,9}
-      \drawSplit{5,3.5}{11,3.5}
-    \end{tikzpicture}
-  \end{minipage}
-  \begin{minipage}{0.5\textwidth}
-    \centering
-    \begin{tikzpicture}[y=0.3cm, x=.3cm,font={\sffamily\scriptsize},
-        level 1/.style={sibling distance=30mm}, 
-        level 2/.style={sibling distance=15mm}]
-      \node [node] {$\begin{array}{c}0\\x:5\end{array}$}
-        child {node [node] {$\begin{array}{c}1\\x:2\end{array}$}
-          child {node [leaf] {$\begin{array}{c}4\\\{0\}\end{array}$}}
-          child {node [leaf] {$\begin{array}{c}5\\\{1,3\}\end{array}$}}}
-        child {node [node] {$\begin{array}{c}2\\y:3.5\end{array}$}
-          child {node [leaf] {$\begin{array}{c}6\\\{4,5\}\end{array}$}}
-          child {node [leaf] {$\begin{array}{c}7\\\{2\}\end{array}$}}};
-    \end{tikzpicture}
-  \end{minipage}
-\end{frame}
-
+%%       % splits
+%%       \drawSplit{5,0}{5,9}
+%%       \drawSplit{2,0}{2,9}
+%%       \drawSplit{5,3.5}{11,3.5}
+%%     \end{tikzpicture}
+%%   \end{minipage}
+%%   \begin{minipage}{0.5\textwidth}
+%%     \centering
+%%     \begin{tikzpicture}[y=0.3cm, x=.3cm,font={\sffamily\scriptsize},
+%%         level 1/.style={sibling distance=30mm}, 
+%%         level 2/.style={sibling distance=15mm}]
+%%       \node [node] {$\begin{array}{c}0\\x:5\end{array}$}
+%%         child {node [node] {$\begin{array}{c}1\\x:2\end{array}$}
+%%           child {node [leaf] {$\begin{array}{c}4\\\{0\}\end{array}$}}
+%%           child {node [leaf] {$\begin{array}{c}5\\\{1,3\}\end{array}$}}}
+%%         child {node [node] {$\begin{array}{c}2\\y:3.5\end{array}$}
+%%           child {node [leaf] {$\begin{array}{c}6\\\{4,5\}\end{array}$}}
+%%           child {node [leaf] {$\begin{array}{c}7\\\{2\}\end{array}$}}};
+%%     \end{tikzpicture}
+%%   \end{minipage}
+%% \end{frame}
 
 \subsection{Memory Representation}
 \begin{frame}
@@ -311,10 +303,10 @@ struct KDLeaf {
   
   \begin{lstlisting}[language=C++]
 struct KDNode {
-  char nodeType; // {Child, X, Y, Z}
-  float splitPosition;
-  KDNode *left, *right;
-  int triangleIndex, triangleRange;
+  char *nodeType; // {LEAF, X, Y, Z}
+  float *splitPosition;
+  KDNode **left, **right;
+  int *triangleIndex, *triangleRange;
 };
   \end{lstlisting}
 \end{frame}
@@ -355,7 +347,6 @@ struct KDNode {
     
   \item This structure allows for coallesced access to the nodes currently being
     processed.
-  \item Data is stored as a struct of arrays instead of arrays of structs.
   \item Geometric primitives are also stored in a linear array
   \end{itemize}
 \end{frame}
@@ -380,58 +371,35 @@ struct KDNode {
   \item Construct in breath-first order.
   \item Parallize over all primitives.
   \item Use spatial median splitting to place splitting planes.
-  \item Improve tree quality by adding Empty Space Maximization.
+%  \item Improve tree quality by adding Empty Space Maximization.
   \end{itemize}
 \end{frame}
 
-\begin{frame}
-  \frametitle{Upper Node Construction Algorithm}
-  
-  \begin{algorithmic}
-    \scriptsize
-    \PROCEDURE{CreateNodes}
-              {$activeNodes$ : Node List}
-              {$leafNodes, nextNodes$ : Node List}
-              {\PARALLELFOR{$n$}{$activeNodes$}
-                  \STATE{Determine $n$'s splitting plane using spatial median splitting.}
-                \ENDFOR
-                \PARALLELFOR{$p$}{$primitives$}
-                  \STATE{Sort $p$ to its new position to maintain
-                    node/prim association.}
-                \ENDFOR
-                \PARALLELFOR{$n$}{$activeNodes$}
-                  \STATE{Create $n$'s children and store in $leafNodes$ and $nextNodes$.}
-                \ENDFOR}
-  \end{algorithmic}
-  
-\end{frame}
+%% \begin{frame}
+%%   \frametitle{Upper Node Example: Initial primitives}
 
-\begin{frame}
-  \frametitle{Upper Node Example: Initial primitives}
-
-  \begin{itemize}
-  \item First calculate axis aligned bounding volumes for the geometry.
-  \end{itemize}
+%%   \begin{itemize}
+%%   \item First calculate axis aligned bounding volumes for the geometry.
+%%   \end{itemize}
   
-  \begin{tikzpicture}[y=0.3cm, x=.3cm,font={\sffamily\footnotesize}]
-    \scene
-    \sceneAabb
-  \end{tikzpicture}
+%%   \begin{tikzpicture}[y=0.3cm, x=.3cm,font={\sffamily\footnotesize}]
+%%     \scene
+%%     \sceneAabb
+%%   \end{tikzpicture}
 
-  \begin{itemize}
-  \item $primitive \leftarrow [t_0,t_1,t_2,t_3,t_4,t_5]$
-  \item $primAabbMin \leftarrow [(0,4),(2,6),(7,4),(2,4),(6,0),(6,1)]$
-  \item $primAabbMax \leftarrow [(2,8),(4,8),(9,8),(4,6),(10,3),(8,3)]$
-  \end{itemize}
-  
-\end{frame}
+%%   \begin{itemize}
+%%   \item $primitive \leftarrow [t_0,t_1,t_2,t_3,t_4,t_5]$
+%%   \item $primAabbMin \leftarrow [(0,4),(2,6),(7,4),(2,4),(6,0),(6,1)]$
+%%   \item $primAabbMax \leftarrow [(2,8),(4,8),(9,8),(4,6),(10,3),(8,3)]$
+%%   \end{itemize}
+%% \end{frame}
 
 \begin{frame}
   \frametitle{Upper Node Example: Root Node}
   
   \begin{itemize}
     \item Initialize the root node.
-    \item $nodes[0] \leftarrow KDLeaf($CHILD$, 0, \|primitives\|)$
+    \item $nodes[0] \leftarrow KDNode($LEAF$, 0, \|primitives\|)$
   \end{itemize}
 
 \end{frame}
@@ -457,6 +425,55 @@ struct KDNode {
     \item[] $primitives: t_0, t_1, t_2, t_3, t_4, t_5$
   \end{itemize}
 \end{frame}
+
+\begin{frame}
+  \frametitle{Upper Node Example: First Iteration}
+  \begin{minipage}{0.4\textwidth}
+    \begin{tikzpicture}[y=0.3cm, x=.3cm,font=\sffamily]
+      \footnotesize
+      \scene
+      
+      % splits
+      \drawSplit{5,0}{5,8}
+    \end{tikzpicture}
+  \end{minipage}
+  \begin{minipage}{0.5\textwidth}
+    \centering
+    \begin{tikzpicture}[y=0.3cm, x=.3cm,font=\sffamily,
+        level 1/.style={sibling distance=20mm}]
+      \footnotesize
+      \node [node] {$\begin{array}{c}0\\x:5\end{array}$}
+        child {node [leaf] {$\begin{array}{c}1\\0 \rightarrow 3\end{array}$}}
+        child {node [leaf] {$\begin{array}{c}2\\3 \rightarrow 3\end{array}$}};
+    \end{tikzpicture}
+  \end{minipage}
+  \vspace{10pt}
+  \begin{itemize}
+    \item[] $primitives: t_0, t_1, t_3, t_2, t_4, t_5$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Upper Node Construction Algorithm}
+  
+  \begin{algorithmic}
+    \scriptsize
+    \PROCEDURE{CreateNodes}
+              {$activeNodes$ : Node List}
+              {$leafNodes, nextNodes$ : Node List}
+              {\PARALLELFOR{$n$}{$activeNodes$}
+                  \STATE{Determine $n$'s splitting plane using spatial median splitting.}
+                \ENDFOR
+                \PARALLELFOR{$p$}{$primitives$}
+                  \STATE{Sort $p$ to its new position to maintain
+                    node/prim association.}
+                \ENDFOR
+                \PARALLELFOR{$n$}{$activeNodes$}
+                  \STATE{Create $n$'s children and store in $leafNodes$ and $nextNodes$.}
+                \ENDFOR}
+  \end{algorithmic}
+\end{frame}
+
 
 %% \begin{frame}[fragile]
 %%   \frametitle{Upper Node Example: Segments}
@@ -548,33 +565,6 @@ struct KDNode {
 %%   \end{itemize}
 %% \end{frame}
 
-\begin{frame}
-  \frametitle{Upper Node Example: First Iteration}
-  \begin{minipage}{0.4\textwidth}
-    \begin{tikzpicture}[y=0.3cm, x=.3cm,font=\sffamily]
-      \footnotesize
-      \scene
-      
-      % splits
-      \drawSplit{5,0}{5,8}
-    \end{tikzpicture}
-  \end{minipage}
-  \begin{minipage}{0.5\textwidth}
-    \centering
-    \begin{tikzpicture}[y=0.3cm, x=.3cm,font=\sffamily,
-        level 1/.style={sibling distance=20mm}]
-      \footnotesize
-      \node [node] {$\begin{array}{c}0\\x:5\end{array}$}
-        child {node [leaf] {$\begin{array}{c}1\\0 \rightarrow 3\end{array}$}}
-        child {node [leaf] {$\begin{array}{c}2\\3 \rightarrow 3\end{array}$}};
-    \end{tikzpicture}
-  \end{minipage}
-  \vspace{10pt}
-  \begin{itemize}
-    \item[] $primitives: t_0, t_1, t_3, t_2, t_4, t_5$
-  \end{itemize}
-\end{frame}
-
 \begin{frame}[fragile]
   \frametitle{Upper Node Example: Segments}
   \begin{itemize}
@@ -645,17 +635,17 @@ struct Segment {
 \begin{frame}
   \frametitle{Upper Node Example: Construct new leaf nodes}
   \begin{itemize}
+    \item Compute their location in the list of nodes in parallel\\
+      $\begin{array}{lcccc}
+        child: & n_1.left & n_1.right & n_2.left & n_2.right \\
+        address: & 3 & 4 & 5 & 6 \\
+      \end{array}$
     \item Compute the index and range of the new leaf nodes in parallel using
       $address$.\\
       $\begin{array}{lcccc}
         child: & n_1.left & n_1.right & n_2.left & n_2.right \\
         index: & 0 & 4 & 2 & 6 \\
         range: & 2 & 2 & 2 & 1 \\
-      \end{array}$
-    \item Compute their location in the list of nodes in parallel\\
-      $\begin{array}{lcccc}
-        child: & n_1.left & n_1.right & n_2.left & n_2.right \\
-        address: & 3 & 4 & 5 & 6 \\
       \end{array}$
     \item Create the new nodes as leaf nodes.\\
   \end{itemize}
@@ -681,11 +671,11 @@ struct Segment {
         level 2/.style={sibling distance=15mm}]
       \node [node] {$\begin{array}{c}0\\x:5\end{array}$}
         child {node [node] {$\begin{array}{c}1\\y:6\end{array}$}
-          child {node [leaf] {$\begin{array}{c}4\\0 \rightarrow 2\end{array}$}}
-          child {node [leaf] {$\begin{array}{c}5\\4 \rightarrow 2\end{array}$}}}
+          child {node [leaf] {$\begin{array}{c}3\\0 \rightarrow 2\end{array}$}}
+          child {node [leaf] {$\begin{array}{c}4\\4 \rightarrow 2\end{array}$}}}
         child {node [node] {$\begin{array}{c}2\\y:4\end{array}$}
-          child {node [leaf] {$\begin{array}{c}6\\2 \rightarrow 2\end{array}$}}
-          child {node [leaf] {$\begin{array}{c}7\\6 \rightarrow 1\end{array}$}}};
+          child {node [leaf] {$\begin{array}{c}5\\2 \rightarrow 2\end{array}$}}
+          child {node [leaf] {$\begin{array}{c}6\\6 \rightarrow 1\end{array}$}}};
     \end{tikzpicture}
   \end{minipage}
   \vspace{10pt}
@@ -701,7 +691,7 @@ struct Segment {
   \item Improves the quality of the constructed tree by adding ``early out''
     empty leafs.
   \item Increases construction time due to extra processing of each tree node.
-  \item Must be implemented as a plugable solution for testing purposes.
+%  \item Must be implemented as a plugable solution for testing purposes.
   \item Empty Space nodes are injected between the active nodes and leaf nodes.
     \begin{tikzpicture}[y=0.4cm, x=0.4cm,font={\sffamily\footnotesize}]
       
@@ -732,16 +722,6 @@ struct Segment {
       \draw[dashed] (22,1) -- (22,0);
       
     \end{tikzpicture}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Empty Space Maximization}
-
-  \begin{itemize}
-  \item Compute new empty space nodes for each active node in parallel.
-  \item Use scan to compute address of empty space nodes.
-  \item Create nodes.
   \end{itemize}
 \end{frame}
 
@@ -781,7 +761,17 @@ struct Segment {
   \end{itemize}
 \end{frame}
 
-\subsubsection{Upper Node Results}
+\begin{frame}
+  \frametitle{Empty Space Maximization}
+
+  \begin{itemize}
+  \item Compute new empty space nodes for each active node in parallel.
+  \item Use scan to compute address of empty space nodes.
+  \item Create nodes.
+  \end{itemize}
+\end{frame}
+
+\section{Results}
 \begin{frame}[fragile]
   \frametitle{Upper Node Results}
   \tiny
@@ -790,7 +780,7 @@ struct Segment {
     \multicolumn{1}{c}{\begin{tabular}{c}\textit{Association} \\ \textit{scheme:}\end{tabular}} &
     \multicolumn{1}{c||}{\begin{tabular}{c}\textit{Empty Space}
         \\ \textit{Maximization} \\ \textit{Ratio:} \end{tabular}} &
-    \includegraphics[width=2.2cm]{semiReflectingDragon} & 
+    \includegraphics[width=2.2cm]{../thesis/graphics/semiReflectingDragon} & 
     \includegraphics[width=2.2cm]{sponza} \\
     \hline\hline % Title end
     \multirow{4}{*}{\begin{tabular}{c}Triangle/Node\\Overlap\end{tabular}} & None & \worstResult{146/385ms (38k)} & \worstResult{258/220ms (87k)}\\
@@ -812,7 +802,19 @@ struct Segment {
   \end{tabular}
 \end{frame}
 
-\subsection{Lower Nodes}
+\begin{frame}
+  \frametitle{The End}
+  \begin{center}
+  ... in closing ...
+
+  \includegraphics[width=6cm]{reflectingBunny}
+
+  ... a reflecting chocolate bunny.
+  \end{center}
+\end{frame}
+
+\appendix
+\subsection*{Lower Nodes}
 \begin{frame}
   \frametitle{Lower Nodes}
   \begin{itemize}
@@ -861,7 +863,7 @@ struct Segment {
   \end{algorithmic}
 \end{frame}
 
-\subsubsection{Lower Node Results}
+\subsubsection*{Lower Node Results}
 \begin{frame}[fragile]
   \frametitle{Lower Node Results: 32bit masks}
   \tiny
