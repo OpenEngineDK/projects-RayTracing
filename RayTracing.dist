@@ -2,13 +2,13 @@
 # http://www.openengine.dk/wiki/Projects/PhotonMapping
 
 # main repository
-darcs / http://openengine.dk/code/openengine
-darcs-dev / fh.daimi.au.dk:/users/cgd/code/openengine
+git / https://github.com/OpenEngineDK/openengine.git
+git-dev / git@github.com:OpenEngineDK/openengine.git
 
 # project repository
 # (uncomment the following two lines after uploading your project)
-darcs /projects/RayTracing http://openengine.dk/code/projects/RayTracing
-darcs-dev /projects/RayTracing fh.daimi.au.dk:/users/cgd/code/projects/RayTracing
+git /projects/RayTracing https://github.com/OpenEngineDK/projects-RayTracing.git
+git-dev /projects/RayTracing git@github.com:OpenEngineDK/projects-RayTracing.git
 
 # dist dependencies
 dist /extensions/PhotonMapping/PhotonMapping.dist http://www.openengine.dk/code/extensions/PhotonMapping/PhotonMapping.dist
@@ -16,17 +16,17 @@ dist /extensions/Assimp/Assimp.dist               http://www.openengine.dk/code/
 dist /extensions/InspectionBar/InspectionBar.dist       http://www.openengine.dk/code/extensions/InspectionBar/InspectionBar.dist
 
 # required extensions
-darcs /extensions/SDL                    http://openengine.dk/code/extensions/SDL
-darcs /extensions/FreeImage       	 http://openengine.dk/code/extensions/FreeImage
-darcs /extensions/OpenGLRenderer         http://openengine.dk/code/extensions/OpenGLRenderer
-darcs /extensions/GenericHandlers        http://openengine.dk/code/extensions/GenericHandlers
-darcs /extensions/MeshUtils        	 http://openengine.dk/code/extensions/MeshUtils
+git /extensions/SDL                    https://github.com/OpenEngineDK/extensions-SDL.git
+git /extensions/FreeImage       	 https://github.com/OpenEngineDK/extensions-FreeImage.git
+git /extensions/OpenGLRenderer         https://github.com/OpenEngineDK/extensions-OpenGLRenderer.git
+git /extensions/GenericHandlers        https://github.com/OpenEngineDK/extensions-GenericHandlers.git
+git /extensions/MeshUtils        	 https://github.com/OpenEngineDK/extensions-MeshUtils.git
 
-darcs-dev /extensions/SDL                    fh.daimi.au.dk:/users/cgd/code/extensions/SDL
-darcs-dev /extensions/FreeImage  	     fh.daimi.au.dk:/users/cgd/code/extensions/FreeImage
-darcs-dev /extensions/OpenGLRenderer         fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLRenderer
-darcs-dev /extensions/GenericHandlers        fh.daimi.au.dk:/users/cgd/code/extensions/GenericHandlers
-darcs-dev /extensions/MeshUtils        	     fh.daimi.au.dk:/users/cgd/code/extensions/MeshUtils
+git-dev /extensions/SDL                    git@github.com:OpenEngineDK/extensions-SDL.git
+git-dev /extensions/FreeImage  	     git@github.com:OpenEngineDK/extensions-FreeImage.git
+git-dev /extensions/OpenGLRenderer         git@github.com:OpenEngineDK/extensions-OpenGLRenderer.git
+git-dev /extensions/GenericHandlers        git@github.com:OpenEngineDK/extensions-GenericHandlers.git
+git-dev /extensions/MeshUtils        	     git@github.com:OpenEngineDK/extensions-MeshUtils.git
 
 # windows libraries
 win32 /libraries http://openengine.dk/data/libraries/cairo-win32.zip   
